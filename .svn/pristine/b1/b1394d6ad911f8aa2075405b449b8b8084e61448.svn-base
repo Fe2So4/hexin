@@ -1,0 +1,1820 @@
+<template>
+  <div id="insComBusiness_mgr">
+    <ui-notice-bar slot="breadcast" >
+      <el-breadcrumb slot="location" separator=">">
+        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+        <el-breadcrumb-item>协议费率管理</el-breadcrumb-item>
+        <el-breadcrumb-item>合作经代公司寿险协议管理</el-breadcrumb-item>
+        <el-breadcrumb-item>合作经代公司寿险协议管理</el-breadcrumb-item>
+      </el-breadcrumb>
+    </ui-notice-bar>
+    <el-form class="agent_manage_form">
+      <el-row>
+        <el-col :span="12">
+          <el-form-item>
+            <ui-label-text label="协议代码：" labelWidth="150" >
+              <el-input slot="text" clearable v-model="info.agreementno" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item>
+            <ui-label-text label="协议名称：" labelWidth="150" >
+              <el-select v-model="info.agreementname" slot="text" placeholder="请选择">
+                <el-option label="合作协议" value="1"></el-option>
+                <el-option label="产品补充协议" value="2"></el-option>
+                <el-option label="推动方案" value="3"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+    </el-form>
+    <el-form class="verify-content" :model="info" >
+      <el-row class="ri-line" v-for="(item, index) in queryList" :key="index">
+        <el-col :span="12" v-for="i in item" :key="i.id">
+          <el-form-item :prop="i.prop">
+            <ui-label-text labelWidth="150" :label="i.label+':'" >
+              <el-input
+              v-model="info[i.model]"
+              slot="text"
+              placeholder="双击可选择"
+              clearable
+              :data-arr="i.arrId"
+              @clear="onClearInput(i.arrId, '0')"
+              @dblclick.native="dbqueryCom(info, '0')"
+              @blur="onBlurVerify(i.arrId, info, '0')"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+    </el-form>
+    <el-form class="agent_manage_form">
+      <el-row>
+        <el-col :span="12">
+          <el-form-item>
+            <ui-label-text labelWidth="160" label="审核状态:" >
+              <el-select v-model="info.verifystatus" slot="text" placeholder="请选择">
+                <el-option label="最新" value="0"></el-option>
+                <el-option label="审核通过" value="1"></el-option>
+                <el-option label="审核不通过" value="2"></el-option>
+                <el-option label="待审核" value="3"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+    </el-form>
+    <div class='btn-container'>
+        <el-button type="primary" :disabled="quanxian.query" @click.native.prevent="searchClick">查询</el-button>
+        <el-button type="primary" :disabled="quanxian.add" @click.native.prevent="addOrg">新增</el-button>
+        <el-button size="primary" :disabled="quanxian.modify" @click.native.prevent="modifyOrg">修改</el-button>
+        <el-button type="danger" :disabled="quanxian.del" @click.native.prevent="deleteOrg" >删除</el-button>
+        <el-button type="primary" :disabled="quanxian.review" @click.native.prevent="auditDialog">审核</el-button>
+        <el-button type="primary" :disabled="quanxian.export" @click.native.prevent="exportData">导出</el-button>
+    </div>
+    <el-table  @selection-change="handleSelectionChange" stripe ref="multipleTable"
+     :data="tableData" v-if='isShowTable' tooltip-effect="dark" style="width: 100%">
+      <el-table-column type="selection" width="80"></el-table-column>
+      <el-table-column label="协议代码" width="120">
+        <template slot-scope="scope">
+          <a href="javascript:void(0)" @click="beforshowDetail(scope.row)">{{scope.row.agreementno}}</a>
+        </template>
+      </el-table-column>
+      <el-table-column prop="agreementname" label="协议名称"></el-table-column>
+      <el-table-column prop="comcode" label="佰盈机构代码"> </el-table-column>
+      <el-table-column prop="comcname" label="佰盈机构名称"> </el-table-column>
+      <el-table-column prop="insurercode" label="合作经代公司代码" ></el-table-column>
+      <el-table-column prop="insurername" label="合作经代公司名称" ></el-table-column>
+      <!-- <el-table-column prop="organizationname" label="合作经代机构名称" ></el-table-column> -->
+      <el-table-column prop="verifystatus" label="审核状态" width="80"></el-table-column>
+      <el-table-column prop="remark1" label="审核类型" width="80"></el-table-column>
+      <el-table-column label="操作">
+        <template slot-scope="scope">
+          <el-button
+            type="text" v-show="scope.row.verifystatus === '待审核' && scope.row.remark1 === '修改审核'"
+            size="small" @click.native.prevent="aftershowDetail(scope.row)">查看</el-button>
+        </template>
+      </el-table-column>
+      <el-table-column label="审核历史">
+        <template slot-scope="scope">
+          <el-button type="text" size="small" @click.native.prevent="modRecord(scope.row)">查看</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <div class="pagination" v-if='isShowTable'>
+      <el-pagination @current-change="handleDiaCurrentChange" @size-change="handleSizeChange"
+      :current-page="tablePage.currentPage" :pager-count='5' :page-size='tablePage.size'
+      :total="tablePage.totalRecords" :page-sizes="tablePage.sizes"
+      layout="total, sizes, prev, pager, next, jumper" :page-count="totalPages"></el-pagination>
+    </div>
+    <div v-if="add_dialog">
+      <!-- 新增弹框 -->
+      <el-dialog @open="closeFun('baseCoolifeagreementhis')" center
+        :title="info.title" :append-to-body='true' width="70%" :visible.sync="add_dialog" @close='closeCoo'>
+        <el-form
+        :rules="rules" class="mesg_form form_addmod" :model="baseCoolifeagreementhis" ref="baseCoolifeagreementhis">
+          <ui-line-tittle :collapsible="true" >
+            <span slot="title" >
+                <i class="font_family icon-jy-menu-4"></i>{{info.xytitle}}
+            </span>
+            <div class="ri-content" slot="content">
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item prop="sumtype">
+                    <ui-label-text :required="true" labelWidth="160" label="协议类型:">
+                        <el-radio-group slot="text" v-model="baseCoolifeagreementhis.sumtype"  @change="changeRadio">
+                          <el-radio :disabled="info.title === '合作经代公司寿险协议详情'||(info.title === '合作经代公司寿险协议修改' && orgList.length !== 0 && orgList[0]['verifystatus'] === '审核通过') || userComCode!=='01'" label="1">总公司协议</el-radio>
+                          <el-radio :disabled="info.title === '合作经代公司寿险协议详情'||(info.title === '合作经代公司寿险协议修改' && orgList.length !== 0 && orgList[0]['verifystatus'] === '审核通过')" label="2">分公司协议</el-radio>
+                        </el-radio-group>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <!-- <el-col :span="12">
+                  <el-form-item>
+                    <ui-label-text labelWidth="160" label="关联协议代码:">
+                      <el-select :disabled="info.title === '合作经代公司寿险协议详情'" @change="getselectModel"
+                      v-model="baseCoolifeagreementhis.sumtosum" slot="text" placeholder="请选择">
+                        <el-option v-for="(item, index) in sumtosumOption" value-key="index" :key="index" :label="item" :value="index"></el-option>
+                      </el-select>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col> -->
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item prop="companyCode">
+                    <ui-label-text :required="true" labelWidth="160" label="合作经代公司代码:">
+                      <el-input v-model="baseCoolifeagreementhis.companyCode" slot="text" data-arr="2"
+                      :disabled="info.title === '合作经代公司寿险协议详情'"
+                      placeholder="双击可选择" clearable  @dblclick.native="dbqueryCom(baseCoolifeagreementhis, '1')"
+                      @clear="onClearInput('2', '1')"  @blur="onBlurVerify('2', baseCoolifeagreementhis), '1'"></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item prop="comCode">
+                    <ui-label-text :required="true" labelWidth="160" label="佰盈机构代码:">
+                      <el-input v-model="baseCoolifeagreementhis.comCode" slot="text" data-arr="1"
+                      :disabled="baseCoolifeagreementhis.sumtype === '1' || info.title === '合作经代公司寿险协议详情'"
+                      placeholder="双击可选择" clearable @dblclick.native="dbqueryCom(baseCoolifeagreementhis, '1')"
+                      @clear="onClearInput('1', '1')" @blur="onBlurVerify('1', baseCoolifeagreementhis), '1'"></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <!-- <el-col :span="12">
+                  <el-form-item prop="orgCode">
+                    <ui-label-text :required="true" labelWidth="160" label="合作经代公司机构代码:">
+                      <el-input v-model="baseCoolifeagreementhis.orgCode" slot="text" data-arr="3"
+                      placeholder="双击可选择" clearable @dblclick.native="dbqueryCom(baseCoolifeagreementhis, '1')"
+                      @clear="onClearInput('3', '1')"
+                      :disabled="baseCoolifeagreementhis.sumtype === '1' || info.title === '合作经代公司寿险协议详情'"
+                      @blur="onBlurVerify('3', baseCoolifeagreementhis), '1'"></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col> -->
+              </el-row>
+              <!-- <el-row>
+                <el-col :span="12">
+                  <el-form-item prop="orgName">
+                    <ui-label-text :required="true" labelWidth="160" label=" 合作经代公司机构名称:">
+                      <el-input v-model="baseCoolifeagreementhis.orgName" slot="text" data-arr="33"
+                      placeholder="双击可选择" clearable @dblclick.native="dbqueryCom(baseCoolifeagreementhis, '1')"
+                      @clear="onClearInput('33', '1')"
+                      :disabled="baseCoolifeagreementhis.sumtype === '1' || info.title === '合作经代公司寿险协议详情'"
+                      @blur="onBlurVerify('33', baseCoolifeagreementhis), '1'"></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row> -->
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item prop="companyName">
+                    <ui-label-text :required="true" labelWidth="160" label="合作经代公司名称:">
+                      <el-input v-model="baseCoolifeagreementhis.companyName" slot="text" data-arr="22"
+                      :disabled="info.title === '合作经代公司寿险协议详情'"
+                      placeholder="双击可选择" clearable @dblclick.native="dbqueryCom(baseCoolifeagreementhis, '1')"
+                      @clear="onClearInput('22', '1')" @blur="onBlurVerify('22', baseCoolifeagreementhis), '1'"></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item prop="comCName">
+                    <ui-label-text :required="true" labelWidth="160" label="佰盈机构名称:">
+                      <el-input v-model="baseCoolifeagreementhis.comCName" slot="text" data-arr="11"
+                      :disabled="baseCoolifeagreementhis.sumtype === '1' || info.title === '合作经代公司寿险协议详情'"
+                      placeholder="双击可选择" clearable @dblclick.native="dbqueryCom(baseCoolifeagreementhis, '1')"
+                      @clear="onClearInput('11', '1')" @blur="onBlurVerify('11', baseCoolifeagreementhis), '1'"></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item prop="agreementname">
+                    <ui-label-text :required="true" labelWidth="160" label="协议名称:">
+                      <el-select v-model="baseCoolifeagreementhis.agreementname" slot="text"
+                      :disabled="info.title === '合作经代公司寿险协议详情'" placeholder="请选择">
+                        <el-option label="合作协议" value="1"></el-option>
+                        <el-option label="产品补充协议" value="2"></el-option>
+                        <el-option label="推动方案" value="3"></el-option>
+                      </el-select>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item>
+                    <ui-label-text labelWidth="160" label="协议代码:">
+                      <el-input v-model="baseCoolifeagreementhis.agreementno"
+                      :disabled="info.title === '合作经代公司寿险协议详情'" slot="text" readonly></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item prop="agreementtype">
+                    <ui-label-text :required="true" labelWidth="160" label="协议分类:">
+                      <el-select v-model="baseCoolifeagreementhis.agreementtype" slot="text"
+                      :disabled="info.title === '合作经代公司寿险协议详情'" placeholder="请选择">
+                        <el-option label="合作协议" value="2"></el-option>
+                        <el-option label="补充协议" value="3"></el-option>
+                        <el-option label="推动方案" value="4"></el-option>
+                        <el-option label="备忘" value="1"></el-option>
+                      </el-select>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item prop="startdate">
+                    <ui-label-text  :required="true" labelWidth="160" label="协议生效日期:">
+                      <el-date-picker :disabled="info.title === '合作经代公司寿险协议详情'"
+                      slot="text" v-model="baseCoolifeagreementhis.startdate" type="date" value-format="timestamp" placeholder="选择日期"></el-date-picker>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item prop="jgslyhfa">
+                    <ui-label-text  :required="true" labelWidth="160" label="价格税率优惠方案:" >
+                      <el-select v-model="baseCoolifeagreementhis.jgslyhfa" slot="text"
+                      :disabled="info.title === '合作经代公司寿险协议详情'" placeholder="请选择">
+                        <el-option label="0%" value="0"></el-option>
+                        <el-option label="3%" value="3"></el-option>
+                        <el-option label="6%" value="6"></el-option>
+                      </el-select>
+                      </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item prop="enddate">
+                    <ui-label-text :required="true" labelWidth="160" label="协议终止日期:" >
+                      <el-date-picker :disabled="info.title === '合作经代公司寿险协议详情'"
+                      slot="text" v-model="baseCoolifeagreementhis.enddate" value-format="timestamp"
+                      type="date" placeholder="选择日期"></el-date-picker>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item>
+                    <ui-label-text labelWidth="160" label="是否自动续签:" >
+                      <el-select v-model="baseCoolifeagreementhis.renewalflag"
+                      :disabled="info.title === '合作经代公司寿险协议详情'" slot="text" placeholder="请选择">
+                        <el-option label="是" value="1"></el-option>
+                        <el-option label="否" value="0"></el-option>
+                      </el-select>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item>
+                    <ui-label-text labelWidth="160" label="上一年协议号:" >
+                      <el-input :disabled="info.title === '合作经代公司寿险协议详情'"
+                      v-model="baseCoolifeagreementhis.renewalno" slot="text" ></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item>
+                    <ui-label-text labelWidth="160" label="代理许可证编号:" >
+                      <el-input :disabled="info.title === '合作经代公司寿险协议详情'"
+                      v-model="baseCoolifeagreementhis.permitno"  slot="text" ></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item prop="permitnosdate">
+                    <ui-label-text labelWidth="160" label="代理许可证有效起期:" >
+                      <el-date-picker :disabled="info.title === '合作经代公司寿险协议详情'" value-format="timestamp"
+                      slot="text" v-model="baseCoolifeagreementhis.permitnosdate" type="date" placeholder="选择日期"></el-date-picker>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item>
+                    <ui-label-text labelWidth="160" label="代理许可证有效止期:" >
+                      <el-date-picker :disabled="info.title === '合作经代公司寿险协议详情'" value-format="timestamp"
+                      slot="text" v-model="baseCoolifeagreementhis.permitnoedate"
+                      type="date" placeholder="选择日期"></el-date-picker>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item prop="relation">
+                    <ui-label-text  :required="true" labelWidth="160" label="关联交易:" >
+                      <el-select :disabled="info.title === '合作经代公司寿险协议详情'"
+                      v-model="baseCoolifeagreementhis.relation" slot="text" placeholder="请选择">
+                        <el-option label="是" value="1"></el-option>
+                        <el-option label="否" value="0"></el-option>
+                      </el-select>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item>
+                    <ui-label-text labelWidth="160" label="支付方式:">
+                      <el-select :disabled="info.title === '合作经代公司寿险协议详情'"
+                      v-model="baseCoolifeagreementhis.commissionpayment" slot="text" placeholder="请选择">
+                        <el-option label="现金" value='1'></el-option>
+                        <el-option label="支票" value='2'></el-option>
+                        <el-option label="转账" value='3'></el-option>
+                        <el-option label="其他" value='4'></el-option>
+                      </el-select>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item prop="settlecycle">
+                    <ui-label-text :required="true" labelWidth="160" label="结算周期（月）:">
+                      <el-input :disabled="info.title === '合作经代公司寿险协议详情'" placeholder="请输入1-12"
+                      v-model="baseCoolifeagreementhis.settlecycle"  slot="text" ></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item prop="bank">
+                    <ui-label-text :required="true" labelWidth="160" label="手续费开户银行:" >
+                      <el-input :disabled="info.title === '合作经代公司寿险协议详情'"
+                      v-model="baseCoolifeagreementhis.bank"  slot="text" ></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item prop="accountname">
+                    <ui-label-text :required="true" labelWidth="160" label="手续费收款账户名:" >
+                      <el-input :disabled="info.title === '合作经代公司寿险协议详情'"
+                      v-model="baseCoolifeagreementhis.accountname"  slot="text" ></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item prop="account">
+                    <ui-label-text :required="true" labelWidth="160" label="手续费收款银行帐号:" >
+                      <el-input :disabled="info.title === '合作经代公司寿险协议详情'"
+                      v-model="baseCoolifeagreementhis.account"  slot="text" ></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item>
+                    <ui-label-text :required="true" labelWidth="160" label="合作协议/产品补充协议上传：" >
+                      <el-button v-if="info.title === '合作经代公司寿险协议详情'" slot="text" @click="showFj(0)">附件管理</el-button>
+                      <el-button v-if="info.title === '合作经代公司寿险协议新增'" slot="text" @click="showFj(1)">附件管理</el-button>
+                      <el-button v-if="info.title === '合作经代公司寿险协议修改'" slot="text" @click="showFj(2)">附件管理</el-button>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item>
+                    <ui-label-text labelWidth="160" label="备注:" >
+                      <el-input :disabled="info.title === '合作经代公司寿险协议详情'"
+                      type="textarea" :rows="1" v-model="baseCoolifeagreementhis.remark"  slot="text" ></el-input>
+                    </ui-label-text>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </div>
+          </ui-line-tittle>
+        </el-form>
+        <div style="text-align: center; margin-top: 30px;" >
+          <el-button
+          type='primary' @click.native.prevent="addPut('baseCoolifeagreementhis')"
+          v-if="info.title !== '合作经代公司寿险协议详情'"
+          >提交审核</el-button>
+        </div>
+      </el-dialog>
+    </div>
+    <!-- 主页数据弹窗 -->
+    <el-dialog append-to-body :title="dialogTitle.title"
+    center :visible.sync="dialogVisible" width="60%">
+      <!-- db-select-dialog -->
+      <div class="btn" v-show="!dialogSelect">
+        <el-table :data="dbTableData" highlight-current-row @row-click="onselectTabelRow" style="width: 100%">
+          <el-table-column
+            v-for="(item, index) in dbSelect"
+            :key="index"
+            :prop="item.prop"
+            :label="item.label">
+          </el-table-column>
+        </el-table>
+        <el-pagination v-show="this.dbPage.total!=0" @current-change="handleDiaCurrentChangeDb"
+          @size-change="handleSizeChangeDb" :current-page="dbPage.currentPage"
+          :page-size="dbPage.size" :page-sizes="dbPage.sizes"
+          layout="total, sizes, prev, pager, next, jumper" :total="dbPage.total">
+        </el-pagination>
+      </div>
+    </el-dialog>
+    <!-- 新增数据弹窗 -->
+    <el-dialog append-to-body center :title="dialogTitle.title"
+      :visible.sync="dialogVisible2" width="60%" >
+      <!-- db-select-dialog -->
+      <div class="btn" v-show="!dialogSelect2">
+        <el-table :data="dbTableData" highlight-current-row
+          @row-click="onselectTabelRow2" style="width: 100%">
+          <el-table-column
+            v-for="(item, index) in dbSelect"
+            :key="index"
+            :prop="item.prop"
+            :label="item.label">
+          </el-table-column>
+        </el-table>
+        <el-pagination v-show="this.dbPage.total!=0" @current-change="handleDiaCurrentChangeDb"
+          @size-change="handleSizeChangeDb" :current-page="dbPage.currentPage"
+          :page-size="dbPage.size" :page-sizes="dbPage.sizes"
+          layout="total, sizes, prev, pager, next, jumper" :total="dbPage.total">
+        </el-pagination>
+      </div>
+    </el-dialog>
+    <!-- 修改轨迹弹窗 -->
+    <el-dialog title="审核历史" center :append-to-body='true' :visible.sync="ismodRecord" width="80%" >
+      <el-table stripe ref="multipleTable" :data="modrecordModel" tooltip-effect="dark" style="width: 100%">
+        <!-- <el-table-column prop="exaId" label="协议号"></el-table-column>
+        <el-table-column prop="title" label="协议名称"> </el-table-column>
+        <el-table-column prop="personUCode" label="操作人" ></el-table-column>
+        <el-table-column prop="updateDate" label="操作时间" :formatter="timestampToTime"></el-table-column>
+        <el-table-column prop="exaType" label="操作类型"></el-table-column>
+        <el-table-column prop="status" label="审核类型"></el-table-column>
+        <el-table-column prop="exaStatus" label="审核内容"></el-table-column> -->
+        <el-table-column prop="verifyStatus" label="审核状态" center ></el-table-column>
+        <el-table-column prop="verifyType" label="审核类型" center ></el-table-column>
+        <el-table-column prop="verifyReview" label="审核意见" center ></el-table-column>
+        <el-table-column prop="verifyTime" label="操作时间" center ></el-table-column>
+        <el-table-column prop="verifyUser" label="操作员" center ></el-table-column>
+      </el-table>
+    </el-dialog>
+    <!-- 删除提示 -->
+    <el-dialog title="提示" center :append-to-body='true' :before-close="delClose" :visible.sync="isDelete" width="30%" >
+      <p style='text-align: center; '>确定删除？</p>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="isDelete = false">取 消</el-button>
+        <el-button type="primary" @click="deleteTrue">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!-- 审核弹框 -->
+    <el-dialog title="协议审核" :append-to-body='true' :before-close="auditClose" center :visible.sync="audit_dialog">
+       <ui-line-tittle :collapsible="true" >
+         <span slot="title" >
+            <i class="font_family icon-jy-menu-4" ></i>协议审核
+          </span>
+          <div class="ri-content" slot="content">
+            <el-form :model="auditResult">
+              <el-form-item label="审核结果:">
+                <el-radio v-model="auditResult.verifyStatus" label="1">审核通过</el-radio>
+                <el-radio v-model="auditResult.verifyStatus" label="2">审核不通过</el-radio>
+              </el-form-item>
+              <el-form-item label="审核意见:">
+                <el-input type="textarea"  :rows='5' style="width: 85%; "  v-model="auditResult.reviews" ></el-input>
+                <!-- <el-input type="textarea"  :rows='5' style="width: 85%; "  v-model="auditResult.reviews" ></el-input> -->
+              </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+              <el-button @click="audit_dialog = false">返 回</el-button>
+              <el-button type="primary" @click="auditPut">审 核</el-button>
+            </div>
+          </div>
+       </ui-line-tittle>
+    </el-dialog>
+    <!-- 附件弹框 -->
+    <el-dialog title="附件管理" :before-close='closeupLoad' center :append-to-body='true' :visible.sync="isFj" width="70%" >
+      <el-upload class="upload-demo" v-if="tag_4" accept='.jpg,.PDF,.png,.gif' :on-success='picSuccess' multiple :action='uploadUrl()' :file-list="FjfileList">
+        <el-button type="primary" >点击上传</el-button>
+      </el-upload>
+      <el-table stripe ref="multipleTable" :data="picData"  tooltip-effect="dark" style="width: 100%;" >
+        <el-table-column label="文件名" prop="fileName"></el-table-column>
+        <el-table-column label="操作人" prop="operUser"></el-table-column>
+        <el-table-column label="操作时间" prop="operTime"></el-table-column>
+        <el-table-column label="操作">
+          <template slot-scope="scope">
+            <el-button type="text" size="small" v-if="tag_1" @click="downPic(scope.row.fileName)">下载</el-button>
+            <el-button type="text" size="small" v-if="tag_2" @click="checkPic(scope.row.fileName)">预览</el-button>
+            <el-button type="text" size="small" v-if="tag_3" @click="delPic(scope.row.fileName, scope.$index)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+  </div>
+</template>
+<script>
+import NoticeBar from '@/components/notice-bar'
+import LabelText from '@/components/label-text'
+import LineTittle from '@/components/line-tittle'
+import FirstAllocation from '@/components/firstyearrateAllocation'
+import RenewalAllocation from '@/components/renewalrateAllocation'
+import api from '@/api/agreeRate_mgr/util/zxcrequest'
+import { Loading } from 'element-ui'
+import IsEmpty from '@/utils/IsEmpty'
+export default {
+  name: '',
+  data () {
+    const { settlecycleValidator } = this.$store.getters.validators
+    return {
+      isFj: false, // 是否显示附件
+      tag_1: false, // 下载
+      tag_2: false, // 预览
+      tag_3: false, // 删除
+      tag_4: false, // 上传
+      picData: [],
+      FjfileList: [], // 附件列表
+      tempFjfileList: [],
+      delFlag: true,
+      activeName: 'first', // 选项卡默认
+      activeName2: 'one', // 选项卡默认
+      isDelete: false,
+      loading: '',
+      ismodRecord: false, // 轨迹记录显示
+      modrecordModel: [], // 轨迹记录数据
+      orgList: [], // 查询 勾选条目
+      auditResult: {
+        reviews: ''
+      }, // 审核提交数据
+      audit_dialog: false, // 是否显示审核弹框
+      userComCode: this.$store.state.login.showComName.split('(')[1].split(')')[0],
+      info: {
+        agreementno: '',
+        agreementname: '',
+        title: '合作经代公司寿险协议新增',
+        xytitle: '合作经代公司寿险协议新增',
+        verifystatus: '0',
+        companyCode: '',
+        companyName: '',
+        orgCode: '',
+        orgName: '',
+        comCode: '',
+        comCName: '',
+        currentPage: 1,
+        pageSize: 5
+      },
+      quanxian: {
+        query: true,
+        add: true,
+        modify: true,
+        review: true,
+        del: true,
+        export: true
+      },
+      dialogTitle: { title: '佰盈机构' },
+      queryList: [
+        [{label: '佰盈机构代码', model: 'comCode', prop: 'comCode', arrId: '1'}, {label: '佰盈机构名称', model: 'comCName', prop: 'comCName', arrId: '11'}],
+        [{label: '合作经代公司代码', model: 'companyCode', prop: 'companyCode', arrId: '2'}, {label: '合作经代公司名称', model: 'companyName', prop: 'companyName', arrId: '22'}]
+        // [{label: '合作经代公司机构代码', model: 'orgCode', prop: 'orgCode', arrId: '3'}, {label: '合作经代公司机构名称', model: 'orgName', prop: 'orgName', arrId: '33'}]
+      ],
+      sumtosumOption: [],
+      tablePage: {
+        currentPage: 1,
+        totalRecords: 0,
+        size: 5,
+        sizes: [5, 10, 20, 50]
+      },
+      multipleSelection: [],
+      dbTableData: [],
+      dbPage: {
+        currentPage: 1,
+        total: 0,
+        size: 5,
+        sizes: [5, 10, 20, 50]
+      },
+      dbSelect: [],
+      fileList: [],
+      dialogSelect: false,
+      dialogSelect2: false,
+      dialogVisible: false,
+      dialogVisible2: false,
+      dbArrId: '',
+      searchData: {}, // 查询条件
+      totalRecords: 0, // 分页总条数
+      totalPages: 0, // 分页总页数
+      current: 1,
+      tableData: [], // 查询数据
+      isShowTable: false, // 是否显示查询数据
+      add_dialog: false,
+      baseCoolifeagreementhis: { // 新增数据
+        companyCode: '',
+        companyName: '',
+        orgCode: '',
+        orgName: '',
+        comCode: '',
+        comCName: '',
+        sumtosum: '',
+        agreementno: '',
+        agreementname: '',
+        currentPage: 1,
+        pageSize: 5
+      },
+      firstMonthFeecongigModel: { // 首年费率配置 月度
+        feekind: '1,2,3,4',
+        flag11: '1',
+        flag12: '0',
+        flag13: '0',
+        flag21: '0',
+        flag22: '0',
+        flag23: '0',
+        flag24: '0',
+        flag25: '0',
+        flag31: '0',
+        flag32: '0',
+        flag33: '0',
+        flag41: '0',
+        flag42: '0'
+      },
+      firstQuarterFeecongigModel: { // 季度
+        feekind: '1,2,3,4',
+        flag11: '1',
+        flag12: '0',
+        flag13: '0',
+        flag21: '0',
+        flag22: '0',
+        flag23: '0',
+        flag24: '0',
+        flag25: '0',
+        flag31: '0',
+        flag32: '0',
+        flag33: '0',
+        flag41: '0',
+        flag42: '0'
+      },
+      firstYearFeecongigModel: { // 年度
+        feekind: '1,2,3,4',
+        flag11: '1',
+        flag12: '0',
+        flag13: '0',
+        flag21: '0',
+        flag22: '0',
+        flag23: '0',
+        flag24: '0',
+        flag25: '0',
+        flag31: '0',
+        flag32: '0',
+        flag33: '0',
+        flag41: '0',
+        flag42: '0'
+      },
+      renewalMonthFeecongigModel: { // 续期费率配置 月度
+        feekind: '5,6,7',
+        flag51: '0',
+        flag52: '0',
+        flag53: '0',
+        flag54: '0',
+        flag55: '0',
+        flag56: '0',
+        flag61: '0',
+        flag62: '0',
+        flag63: '0',
+        flag64: '0',
+        flag71: '0',
+        flag72: '0',
+        flag73: '0',
+        flag74: '0',
+        flag75: '0'
+      },
+      renewalYearFeecongigModel: { // 续期费率配置 年度
+        feekind: '5,6,7',
+        flag51: '0',
+        flag52: '0',
+        flag53: '0',
+        flag54: '0',
+        flag55: '0',
+        flag56: '0',
+        flag61: '0',
+        flag62: '0',
+        flag63: '0',
+        flag64: '0',
+        flag71: '0',
+        flag72: '0',
+        flag73: '0',
+        flag74: '0',
+        flag75: '0'
+      },
+      rules: {
+        comCode: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        comCName: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        companyCode: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        companyName: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        // orgCode: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        // orgName: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        sumtype: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        relation: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        agreementname: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        agreementtype: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        startdate: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        enddate: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        jgslyhfa: [{ required: true, message: '必填项不能为空', trigger: 'change' }],
+        settlecycle: settlecycleValidator,
+        bank: [{ required: true, message: '必填项不能为空', trigger: 'blur' }],
+        accountname: [{ required: true, message: '必填项不能为空', trigger: 'blur' }],
+        account: [{ required: true, message: '必填项不能为空', trigger: 'blur' }]
+      },
+      arr1: { 1: '新增审核', 2: '修改审核', 3: '删除审核' },
+      arr2: { 1: '审核通过', 2: '审核不通过', 3: '待审核' },
+      arr3: { 1: '分公司领导审核', 2: '总公司审核岗审核' },
+      arr4: { 1: '合作协议', 2: '产品补充协议', 3: '推动方案' },
+      saveselectModel: {}
+    }
+  },
+  methods: {
+    timestampToTime (row, column) {
+      var date = new Date(row.updateDate) // 时间戳为10位需*1000，时间戳为13位的话不需乘1000
+      var Y = date.getFullYear() + '-'
+      var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '-'
+      var D = date.getDate() + ' '
+      var h = date.getHours() + ':'
+      var m = date.getMinutes() + ':'
+      var s = date.getSeconds()
+      return Y + M + D + h + m + s
+    },
+    foreachList (arr, num, obj) { // 计算公式下拉添加数据
+      arr.forEach(e => {
+        obj[num].feedetailList.push(e)
+      })
+    },
+    changeflagNum (res, obj) { // 更改flag状态
+      if (Array.isArray(res.checklistModel) === true) {
+        Object.keys(obj).forEach(key => {
+          if (res.checklistModel.includes(key) === true) {
+            obj[key] = '1' // 选中的value为1
+          } else {
+            obj[key] = '0' // 没有选中的value全为0
+          }
+        })
+      }
+    },
+    showDialog (num) { // 显示数据弹窗
+      if (num === '0') {
+        this.dialogVisible = true
+        this.dialogSelect = false
+      } else if (num === '1') {
+        this.dialogVisible2 = true
+        this.dialogSelect2 = false
+      }
+    },
+    getfirstData (res, firstMonth) { // 获取首年费率配置数据
+      this.changeflagNum(res, firstMonth)
+      firstMonth.feekind = '1,2,3,4'
+      firstMonth.flag24 = res.gradeSetting.gradesettingSupply
+      firstMonth.flag33 = res.gradeSetting.gradesettingAward
+      firstMonth.baseCoolifefeecongigdetailhisList = [
+        {feekind: '1', feedetailList: []}, {feekind: '2', feedetailList: []},
+        {feekind: '3', feedetailList: []}, {feekind: '4', feedetailList: []}
+      ]
+      let firstKey = firstMonth.baseCoolifefeecongigdetailhisList
+      let firstValue = res.checkboxfirstList
+      if (firstValue !== undefined) {
+        if (firstMonth.flag13 === '1') {
+          this.foreachList(firstValue.list1, 0, firstKey)
+        }
+        if (firstMonth.flag22 === '1' || firstMonth.flag23 === '1') {
+          this.foreachList(firstValue.list2, 1, firstKey)
+          this.foreachList(firstValue.list3, 1, firstKey)
+          this.foreachList(firstValue.list4, 1, firstKey)
+        }
+        if (firstMonth.flag32 === '1') {
+          this.foreachList(firstValue.list5, 2, firstKey)
+          this.foreachList(firstValue.list6, 2, firstKey)
+        }
+        if (firstMonth.flag41 === '1') {
+          this.foreachList(firstValue.list7, 3, firstKey)
+        }
+      }
+    },
+    getrenewalData (res, renewalMonth) { // 获取续期费率配置数据
+      this.changeflagNum(res, renewalMonth)
+      renewalMonth.feekind = '5,6,7'
+      renewalMonth.flag55 = res.gradeSetting.continuityCategory1 // 继续率类别
+      renewalMonth.flag64 = res.gradeSetting.continuityCategory2 // 继续率类别
+      renewalMonth.flag75 = res.gradeSetting.continuityCategory3 // 继续率类别
+      renewalMonth.baseCoolifefeecongigdetailhisList = [
+        {feekind: '5', feedetailList: []}, {feekind: '6', feedetailList: []},
+        {feekind: '7', feedetailList: []}
+      ]
+      let renewalKey = renewalMonth.baseCoolifefeecongigdetailhisList
+      let renewalValue = res.checkboxrenewList
+      if (renewalValue !== undefined) {
+        if (renewalMonth.flag53 === '1' || renewalMonth.flag54 === '1') {
+          this.foreachList(renewalValue.list1, 0, renewalKey)
+          this.foreachList(renewalValue.list2, 0, renewalKey)
+        }
+        if (renewalMonth.flag63 === '1') {
+          this.foreachList(renewalValue.list3, 1, renewalKey)
+        }
+        if (renewalMonth.flag72 === '1' || renewalMonth.flag73 === '1' || renewalMonth.flag74 === '1') {
+          this.foreachList(renewalValue.list4, 2, renewalKey)
+          this.foreachList(renewalValue.list5, 2, renewalKey)
+          this.foreachList(renewalValue.list6, 2, renewalKey)
+        }
+      }
+    },
+    getfirstData1 (res1) { // 首年费率配置 月度
+      this.getfirstData(res1, this.firstMonthFeecongigModel)
+    },
+    getfirstData2 (res2) { // 首年费率配置 季度
+      this.getfirstData(res2, this.firstQuarterFeecongigModel)
+    },
+    getfirstData3 (res3) { // 首年费率配置 年度
+      this.getfirstData(res3, this.firstYearFeecongigModel)
+    },
+    getrenewalData1 (res1) { // 续期 月度
+      this.getrenewalData(res1, this.renewalMonthFeecongigModel)
+    },
+    getrenewalData2 (res2) { // 续期 年度
+      this.getrenewalData(res2, this.renewalYearFeecongigModel)
+    },
+    addPut (formName) { // 提交 校验必填项 rules
+      if (IsEmpty(this.picData)) {
+        this.open('error', '必须上传许合作协议/产品补充协议')
+        return false
+      }
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          this.assignmenAdd(this.baseCoolifeagreementhis)
+          Loading.service({text: 'Loading', spinner: 'el-icon-loading', background: 'rgba(0, 0, 0, 0.6)'})
+          switch (this.baseCoolifeagreementhis.agreementname) {
+            case '合作协议':
+              this.baseCoolifeagreementhis.agreementname = '1'
+              break
+            case '产品补充协议':
+              this.baseCoolifeagreementhis.agreementname = '2'
+              break
+            case '推动方案':
+              this.baseCoolifeagreementhis.agreementname = '3'
+              break
+            default:
+              break
+          }
+          if (this.info.title === '合作经代公司寿险协议新增') {
+            this.delFlag = false
+            this.baseCoolifeagreementhis.agreementno = ''
+            api('/baseCooComAgreement/addAgreement', 'post',
+              {
+                baseCoolifeagreementhis: this.baseCoolifeagreementhis,
+                firstMonthFeecongigModel: this.firstMonthFeecongigModel,
+                firstQuarterFeecongigModel: this.firstQuarterFeecongigModel,
+                firstYearFeecongigModel: this.firstYearFeecongigModel,
+                renewalMonthFeecongigModel: this.renewalMonthFeecongigModel,
+                renewalYearFeecongigModel: this.renewalYearFeecongigModel,
+                pictureFiles: this.picData
+              }).then(res => {
+                this.loadingCLose()
+                if (res.data.code === '000000') {
+                  this.searchList() // 查询
+                  this.add_dialog = false
+                  this.tempFjfileList = []
+                  this.open('success', res.data.msg)
+                } else {
+                  this.open('error', res.data.msg)
+                }
+              })
+          } else {
+            this.delFlag = false
+            api('/baseCooComAgreement/updateAgreement', 'post',
+              {
+                baseCoolifeagreementhis: this.baseCoolifeagreementhis,
+                firstMonthFeecongigModel: this.firstMonthFeecongigModel,
+                firstQuarterFeecongigModel: this.firstQuarterFeecongigModel,
+                firstYearFeecongigModel: this.firstYearFeecongigModel,
+                renewalMonthFeecongigModel: this.renewalMonthFeecongigModel,
+                renewalYearFeecongigModel: this.renewalYearFeecongigModel,
+                pictureFiles: this.picData
+              }).then(res => {
+                this.loadingCLose()
+                if (res.data.code === '000000') {
+                  this.searchList() // 查询
+                  this.add_dialog = false
+                  this.tempFjfileList = []
+                  this.open('success', res.data.msg)
+                } else {
+                  this.open('error', res.data.msg)
+                }
+              })
+          }
+        } else {
+          this.open('error', '有必填项为空，请检查必填项！')
+          return false
+        }
+      })
+    },
+     // 佰盈
+    getAllCom (obj, num, clickType = 2) {
+      this.dialogTitle.title = '佰盈机构'
+      let CodeOrName = obj.comCode
+      if (obj.comCode === '' && obj.comCName !== '') {
+        CodeOrName = obj.comCName
+      }
+      api('/persistency/getAllComP2', 'post', {
+        comCodeOrName: CodeOrName,
+        clickType,
+        currentPage: this.dbPage.currentPage,
+        pageSize: this.dbPage.size
+      }).then(r => {
+        if (r.data.code === '000000') {
+          if (clickType === 2) {
+            this.showDialog(num)
+            this.dbTableData = r.data.data.data
+            this.dbPage.total = r.data.data.totalRecords
+          } else {
+            let model0 = this.dbSelect[0].model
+            let model1 = this.dbSelect[1].model
+            obj[model0] = r.data.data.data[0][model0]
+            obj[model1] = r.data.data.data[0][model1]
+          }
+        } else {
+          if (clickType === 1 || clickType === 2) {
+            if (this.dialogVisible === false && this.dialogVisible2 === false) {
+              obj.comCode = ''
+              obj.comCName = ''
+              this.$message({
+                message: r.data.msg,
+                type: 'error'
+              })
+            }
+          } else {
+            obj.comCode = ''
+            obj.comCName = ''
+            this.$message({
+              message: '无次查询',
+              type: 'error'
+            })
+          }
+        }
+      })
+    },
+      // 公司代码
+    getFindByCodeOrName (obj, num, clickType = 2) {
+      this.dialogTitle.title = '合作经代公司'
+      let CodeOrName = obj.companyCode
+      if (obj.companyCode === '' && obj.companyName !== '') {
+        CodeOrName = obj.companyName
+      }
+      api('/baseCooagencyCompany/findByCodeOrName2', 'post', {
+        companyCodeOrName: CodeOrName,
+        clickType,
+        current: this.dbPage.currentPage,
+        pageSize: this.dbPage.size
+      }).then(r => {
+        if (r.data.code === '000000') {
+          if (clickType === 2) {
+            this.showDialog(num)
+            this.dbTableData = r.data.data.data
+            this.dbPage.total = r.data.data.totalRecords
+          } else {
+            let model0 = this.dbSelect[0].model
+            let model1 = this.dbSelect[1].model
+            obj[model0] = r.data.data.data[0][model0]
+            obj[model1] = r.data.data.data[0][model1]
+          }
+        } else {
+          if (clickType === 1 || clickType === 2) {
+            if (this.dialogVisible === false && this.dialogVisible2 === false) {
+              obj.companyCode = ''
+              obj.companyName = ''
+              this.$message({
+                message: r.data.msg,
+                type: 'error'
+              })
+            }
+          } else {
+            obj.companyCode = ''
+            obj.companyName = ''
+            this.$message({
+              message: '无次查询',
+              type: 'error'
+            })
+          }
+        }
+      })
+    },
+    // 公司机构代码
+    getFindByOrgCodeOrName (obj, num, clickType = 2) {
+      this.dialogTitle.title = '合作经代公司机构'
+      let CodeOrName = obj.orgCode
+      if (obj.orgCode === '' && obj.orgName !== '') {
+        CodeOrName = obj.orgName
+      }
+      api('/baseCooagencyOrganization/findByOrgCodeOrName', 'post', {
+        orgCodeOrName: CodeOrName,
+        clickType,
+        companyCode: obj.companyCode,
+        current: this.dbPage.currentPage,
+        pageSize: this.dbPage.size
+      }).then(r => {
+        if (r.data.code === '000000') {
+          if (clickType === 2) {
+            this.showDialog(num)
+            this.dbTableData = r.data.data.data
+            this.dbPage.total = r.data.data.totalRecords
+          } else {
+            let model0 = this.dbSelect[0].model
+            let model1 = this.dbSelect[1].model
+            obj[model0] = r.data.data.data[0][model0]
+            obj[model1] = r.data.data.data[0][model1]
+          }
+        } else {
+          if (clickType === 1 || clickType === 2) {
+            if (this.dialogVisible === false && this.dialogVisible2 === false) {
+              obj.orgCode = ''
+              obj.orgName = ''
+              this.$message({
+                message: r.data.msg,
+                type: 'error'
+              })
+            }
+          } else {
+            obj.orgCode = ''
+            obj.orgName = ''
+            this.$message({
+              message: '无次查询',
+              type: 'error'
+            })
+          }
+        }
+      })
+    },
+    exportData () {
+      let temp = {}
+      temp['comcode'] = !IsEmpty(this.info.comCode) ? this.info.comCode : ''
+      temp['comcname'] = !IsEmpty(this.info.comCName) ? this.info.comCName : ''
+      temp['insurercode'] = !IsEmpty(this.info.companyCode) ? this.info.companyCode : ''
+      temp['insurername'] = !IsEmpty(this.info.companyName) ? this.info.companyName : ''
+      temp['verifystatus'] = !IsEmpty(this.info.verifystatus) ? this.info.verifystatus : ''
+      temp['agreementno'] = !IsEmpty(this.info.agreementno) ? this.info.agreementno : ''
+      temp['agreementname'] = !IsEmpty(this.info.agreementname) ? this.info.agreementname : ''
+      window.open(`/tabycore/baseCooComAgreement/exportCooagencyAgree?comcode=${temp.comcode}&comcname=${temp.comcname}&insurercode=${temp.insurercode}&insurername=${temp.insurername}&verifystatus=${temp.verifystatus}&agreementno=${temp.agreementno}&agreementname=${temp.agreementname}`)
+    },
+    dbqueryCom (obj, num) { // 双击
+      this.dbPage.currentPage = 1
+      this.dbPage.size = 5
+      this.dbPage.total = 0
+      this.dbTableData = []
+      let e = window.event
+      let arrId = e.target.dataset.arr.substr(0, 1)
+      this.dbArrId = arrId
+      let companyCode = obj.companyCode
+      this.dbSelect = this.queryList[arrId - 1]
+      if (arrId === '1') {
+        this.getAllCom(obj, num)
+      } else if (arrId === '3' && companyCode !== '') {
+        this.getFindByOrgCodeOrName(obj, num)
+      } else if (arrId === '2') {
+        this.getFindByCodeOrName(obj, num)
+      } else {
+        this.$message({
+          message: '请选择合作经代公司代码',
+          type: 'warning'
+        })
+        this.dialogVisible = false
+        this.dialogVisible2 = false
+      }
+    },
+    onBlurVerify (e, obj, num) { // 输入框失去焦点 查询
+      if (this.dialogVisible === false && this.dialogVisible2 === false) { // 模糊查询 限制失焦事件
+        let arrId = e.substr(0, 1)
+        let companyCode = obj.companyCode
+        this.dbSelect = this.queryList[arrId - 1]
+        if (this.dialogVisible === false) {
+          if (arrId === '3') {
+            if (obj.orgCode !== '' || obj.orgName !== '') {
+              if (companyCode === '') {
+                this.$message({
+                  message: '请选择合作经代公司代码',
+                  type: 'warning'
+                })
+                let model0 = this.dbSelect[0].model
+                let model1 = this.dbSelect[1].model
+                obj[model0] = ''
+                obj[model1] = ''
+              } else {
+                this.getFindByOrgCodeOrName(obj, num, 1)
+              }
+            }
+          } else if (arrId === '1') {
+            if (obj.comCode !== '' || obj.comCName !== '') {
+              this.getAllCom(obj, num, 1)
+            }
+          } else if (arrId === '2') {
+            if (obj.companyCode !== '' || obj.companyName !== '') {
+              this.getFindByCodeOrName(obj, num, 1)
+            }
+          }
+        }
+      }
+    },
+    // 双向清除
+    onClearInput (e, num) {
+      let arrId = e.substr(0, 1)
+      this.dbSelect = this.queryList[arrId - 1]
+      let model0 = this.dbSelect[0].model
+      let model1 = this.dbSelect[1].model
+      if (num === '0') {
+        this.info[model0] = ''
+        this.info[model1] = ''
+      } else if (num === '1') {
+        this.baseCoolifeagreementhis[model0] = ''
+        this.baseCoolifeagreementhis[model1] = ''
+      }
+    },
+    handleDiaCurrentChangeDb (val) { // 当前页数
+      this.dbPage.currentPage = val
+      let arrId = this.dbArrId
+      let obj = {}
+      if (this.dialogVisible === true) {
+        obj = this.info
+      } else if (this.dialogVisible2 === true) {
+        obj = this.baseCoolifeagreementhis
+      }
+      if (arrId === '1') {
+        this.getAllCom(obj)
+      } else if (arrId === '2') {
+        this.getFindByCodeOrName(obj)
+      } else {
+        this.getFindByOrgCodeOrName(obj)
+      }
+    },
+    handleSizeChangeDb (val) { // 弹窗 单页显示总条数
+      this.dbPage.size = val
+      let arrId = this.dbArrId
+      let obj = {}
+      if (this.dialogVisible === true) {
+        obj = this.info
+      } else if (this.dialogVisible2 === true) {
+        obj = this.baseCoolifeagreementhis
+      }
+      if (arrId === '1') {
+        this.getAllCom(obj)
+      } else if (arrId === '2') {
+        this.getFindByCodeOrName(obj)
+      } else {
+        this.getFindByOrgCodeOrName(obj)
+      }
+    },
+    onselectTabelRow (row) { // 点击一行数据 赋值到input
+      let before = this.dbSelect[0].model
+      let later = this.dbSelect[1].model
+      this.info[before] = row[this.dbSelect[0].prop]
+      this.info[later] = row[this.dbSelect[1].prop]
+      this.dialogVisible = false
+    },
+    onselectTabelRow2 (row) { // 点击一行数据 赋值到input
+      let before = this.dbSelect[0].model
+      let later = this.dbSelect[1].model
+      this.baseCoolifeagreementhis[before] = row[this.dbSelect[0].prop]
+      this.baseCoolifeagreementhis[later] = row[this.dbSelect[1].prop]
+      this.dialogVisible2 = false
+    },
+    handleDiaCurrentChange (val) { // 查询 当前页数
+      this.tablePage.currentPage = val
+      this.searchList()
+    },
+    handleSizeChange (val) { // 查询 单页显示总条数
+      this.tablePage.size = val
+      this.searchList()
+    },
+    numberforEach (obj) { // 数字转换中文
+      obj.forEach(e => {
+        e.verifystatus = this.arr2[parseInt(e.verifystatus)] // 审核状态
+        e.remark1 = this.arr1[parseInt(e.remark1)] // 审核类型
+        e.agreementname = this.arr4[parseInt(e.agreementname)] // 协议名称
+      })
+    },
+    numberforEach2 (obj) { // 修改历史记录 数字转换中文
+      obj.forEach(e => {
+        e.exaType = this.arr1[parseInt(e.exaType)] // 操作类型
+        e.status = this.arr3[parseInt(e.status)] // 审核类型
+        e.exaStatus = this.arr2[parseInt(e.exaStatus)] // 审核内容
+        e.title = this.arr4[parseInt(e.title)] // 协议名称
+      })
+    },
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    closeLoading () {
+      this.loading.close()
+    },
+    searchList () { // 查询
+      this.Loading()
+      api('/baseCooComAgreement/findByPage', 'post', {
+        agreementno: this.info.agreementno,
+        agreementname: this.info.agreementname,
+        comcode: this.info.comCode,
+        comcname: this.info.comCName,
+        insurercode: this.info.companyCode,
+        insurername: this.info.companyName,
+        organizationcode: this.info.orgCode,
+        organizationname: this.info.orgName,
+        verifystatus: this.info.verifystatus,
+        currentPage: this.tablePage.currentPage,
+        pageSize: this.tablePage.size
+      }).then(r => {
+        this.closeLoading()
+        for (let i = 0; i < r.data.data.data.length; i++) {
+          switch (r.data.data.data[i].agreementname) {
+            case '合作协议':
+              r.data.data.data[i].agreementname = '1'
+              break
+            case '产品补充协议':
+              r.data.data.data[i].agreementname = '2'
+              break
+            case '推动方案':
+              r.data.data.data[i].agreementname = '3'
+              break
+            default:
+              break
+          }
+        }
+        this.tableData = r.data.data.data
+        this.tablePage.totalRecords = r.data.data.totalRecords
+        this.isShowTable = true
+        if (r.data.code === '000000') {
+          this.numberforEach(r.data.data.data) // 数字转换中文
+        }
+      })
+    },
+    searchClick () { // 查询
+      this.tablePage.currentPage = 1
+      this.tablePage.size = 5
+      this.searchList()
+    },
+    // 表格勾选
+    handleSelectionChange (val) {
+      // if (!IsEmpty(val)) {
+      //   this.orgList = val
+      // } else {
+      //   this.orgList = ['1']
+      // }
+      this.orgList = val
+    },
+    deleteOrg () { // 删除弹窗
+      let tempComCode = this.$store.state.login.showComName.split('(')[1].split(')')[0] // 拿到登录用户comcode
+      if (this.orgList.length > 0) {
+        this.orgList.forEach(e => {
+          if (e.verifystatus !== '审核通过') {
+            this.open('error', '仅可对审核通过的记录进行删除！')
+            return false
+          } else if (e.remark2 !== tempComCode && tempComCode !== '01') {
+            this.open('error', '您不能对本公司外的，其他公司的记录进行操作')
+            return false
+          } else {
+            this.isDelete = true
+          }
+        })
+      } else {
+        this.open('error', '请先选择数据记录！')
+      }
+    },
+    deleteTrue () { // 确认删除
+      let str = []
+      this.orgList.forEach(e => { str.push(e.agreementno) })
+      str = str.join(',')
+      api('/baseCooComAgreement/deleteAgreement', 'post', {
+        agreementnos: str
+      }).then(res => {
+        if (res.data.code === '000000') {
+          str = []
+          this.isDelete = false
+          this.open('success', res.data.msg)
+          this.searchList() // 查询
+        } else {
+          this.open('error', res.data.msg)
+        }
+      })
+    },
+    auditDialog () { // 审核弹窗
+      this.auditResult.reviews = '' // 清空审核意见
+      let tempComCode = this.$store.state.login.showComName.split('(')[1].split(')')[0] // 拿到登录用户comcode
+      if (this.orgList.length > 0) {
+        this.orgList.forEach(e => {
+          if (e.verifystatus !== '待审核') {
+            this.open('error', '仅可对待审核的记录进行审核！')
+            return false
+          } else if (e.remark2 !== tempComCode && tempComCode !== '01') {
+            this.open('error', '您不能对本公司外的，其他公司的记录进行操作')
+            return false
+          } else {
+            this.audit_dialog = true
+          }
+        })
+      } else {
+        this.open('error', '请先选择数据记录！')
+      }
+    },
+    auditClose () { // 关闭审核弹框时清空数据
+      this.auditResult = {
+        reviews: ''
+      }
+      this.audit_dialog = false
+      this.searchList() // 查询
+      this.orgList = []
+    },
+    delClose () {
+      this.isDelete = false
+      this.orgList = []
+      this.searchList() // 查询
+    },
+    auditPut () { // 确认审核
+      let str = []
+      this.orgList.forEach(e => { str.push(e.agreementno) })
+      str = str.join(',')
+      if (this.auditResult.verifyStatus !== undefined) {
+        api('/baseCooComAgreement/verifyAgreement', 'post', {
+          agreementnos: str,
+          verifystatus: this.auditResult.verifyStatus,
+          reviews: this.auditResult.reviews
+        }).then(res => {
+          if (res.data.code === '000000') {
+            this.audit_dialog = false
+            this.auditResult = {
+              reviews: '',
+              verifyStatus: ''
+            }
+            this.open('success', res.data.msg)
+            this.searchList() // 查询
+          } else {
+            this.audit_dialog = false
+            this.searchList() // 查询
+            this.open('error', res.data.msg)
+          }
+        })
+      } else {
+        this.open('error', '请先选择审核结果！')
+      }
+    },
+    addOrg () { // 新增
+      this.info.title = '合作经代公司寿险协议新增'
+      this.info.xytitle = '合作经代公司寿险协议新增'
+      this.baseCoolifeagreementhis = { // 清空数据
+        companyCode: '',
+        companyName: '',
+        sumtype: '2',
+        orgCode: '',
+        orgName: '',
+        comCode: '',
+        comCName: '',
+        sumtosum: '',
+        currentPage: 1,
+        pageSize: 5
+      }
+      this.add_dialog = true
+    },
+    assignmenAdd (j) { // 新增 入参转换为黄爽字段
+      j.comcode = j.comCode
+      j.comcname = j.comCName
+      j.insurercode = j.companyCode
+      j.insurername = j.companyName
+      j.organizationcode = j.orgCode
+      j.organizationname = j.orgName
+    },
+    modifyDetail () {
+      this.info.title = '合作经代公司寿险协议修改'
+      this.info.xytitle = '合作经代公司寿险协议修改'
+      this.add_dialog = true
+    },
+    modifyDetail2 () {
+      this.info.title = '合作经代公司寿险协议详情'
+      this.info.xytitle = '合作经代公司寿险协议详情'
+      this.add_dialog = true
+    },
+    assignmentObj (j) { // 赋值弹窗信息
+      this.baseCoolifeagreementhis = j
+      let obj = this.baseCoolifeagreementhis
+      obj.comCode = j.comcode
+      obj.comCName = j.comcname
+      obj.companyCode = j.insurercode
+      obj.companyName = j.insurername
+      obj.orgCode = j.organizationcode
+      obj.orgName = j.organizationname
+    },
+    loadingCLose () {
+      let loadingInstance = Loading.service()
+      loadingInstance.close()
+    },
+    beforshowDetail (row) {
+      this.beforDetail(row.agreementno)
+    },
+    beforDetail (data) { // 修改前
+      Loading.service({text: 'Loading', spinner: 'el-icon-loading', background: 'rgba(0, 0, 0, 0.6)'})
+      api('/baseCooComAgreement/findByAgreementno2', 'post', {
+        agreementno: data
+      }).then(res => {
+        this.loadingCLose()
+        if (res.data.code === '000000') {
+          this.assignmentObj(res.data.data.baseCoolifeagreementhis)
+          this.picData = res.data.data.pictureFiles ? res.data.data.pictureFiles : []
+          this.modifyDetail2()
+        } else {
+          this.open('error', res.data.msg)
+        }
+      })
+    },
+    modRecord (row) { // 修改轨迹
+      Loading.service({text: 'Loading', spinner: 'el-icon-loading', background: 'rgba(0, 0, 0, 0.6)'})
+      api('/baseCooComAgreement/agreementVerifyList', 'post', {
+        agreementno: row.agreementno
+      }).then(res => {
+        this.loadingCLose()
+        if (res.data.code === '000000') {
+          this.ismodRecord = true
+          this.numberforEach2(res.data.data)
+          this.modrecordModel = res.data.data
+        } else {
+          this.open('error', res.data.msg)
+        }
+      })
+    },
+    aftershowDetail (row) { // 修改后 查看
+      Loading.service({text: 'Loading', spinner: 'el-icon-loading', background: 'rgba(0, 0, 0, 0.6)'})
+      api('/baseCooComAgreement/findByAgreementno', 'post', {
+        agreementno: row.agreementno
+      }).then(res => {
+        this.loadingCLose()
+        if (res.data.code === '000000') {
+          this.assignmentObj(res.data.data.baseCoolifeagreementhis)
+          this.picData = res.data.data.pictureFiles ? res.data.data.pictureFiles : []
+          this.modifyDetail2()
+        } else {
+          this.open('error', res.data.msg)
+        }
+      })
+    },
+    modifyOrg () { // 修改
+      if (this.orgList.length > 0) {
+        let tempComCode = this.$store.state.login.showComName.split('(')[1].split(')')[0] // 拿到登录用户comcode
+        if (this.orgList.length > 1) {
+          this.open('error', '仅可选一条记录进行修改操作！')
+          return false
+        } else if (tempComCode !== this.orgList[0].remark2 && tempComCode !== '01') {
+          this.open('error', '您不能对本公司外的，其他公司的记录进行操作')
+          return false
+        } else {
+          if (this.orgList[0].verifystatus === '待审核') {
+            this.open('error', '仅可对审核通过、审核不通过的记录进行修改！')
+            return false
+          } else {
+            Loading.service({text: 'Loading', spinner: 'el-icon-loading', background: 'rgba(0, 0, 0, 0.6)'})
+            api('/baseCooComAgreement/findByAgreementno2', 'post', {
+              agreementno: this.orgList[0].agreementno
+            }).then(res => {
+              this.baseCoolifeagreementhis = {
+                currentPage: 1,
+                pageSize: 5
+              }
+              this.loadingCLose()
+              if (res.data.code === '000000') {
+                let data = res.data.data.baseCoolifeagreementhis
+                this.baseCoolifeagreementhis = { // 获得数据 禁止删，删除之后修改watch失效
+                  companyCode: data.insurercode,
+                  companyName: data.insurername,
+                  orgCode: data.organizationcode,
+                  orgName: data.organizationname,
+                  comCode: data.comcode,
+                  comCName: data.comcname,
+                  sumtype: data.sumtype,
+                  sumtosum: '',
+                  agreementname: data.agreementname,
+                  agreementtype: data.agreementtype,
+                  agreementno: data.agreementno,
+                  startdate: data.startdate,
+                  enddate: data.enddate,
+                  jgslyhfa: data.jgslyhfa,
+                  renewalflag: data.renewalflag,
+                  renewalno: data.renewalno,
+                  permitno: data.permitno,
+                  permitnosdate: data.permitnosdate,
+                  permitnoedate: data.permitnoedate,
+                  relation: data.relation,
+                  commissionpayment: data.commissionpayment,
+                  settlecycle: data.settlecycle,
+                  bank: data.bank,
+                  accountname: data.accountname,
+                  account: data.account,
+                  remark: data.remark,
+                  currentPage: 1,
+                  pageSize: 5
+                }
+                this.picData = res.data.data.pictureFiles ? res.data.data.pictureFiles : []
+                this.modifyDetail()
+              } else {
+                this.open('error', res.data.msg)
+              }
+            })
+          }
+        }
+      } else {
+        this.open('error', '请先选择数据记录！')
+      }
+    },
+    closeFun (formName) { // 清空校验提示信息
+      this.$nextTick(() => {
+        this.$refs[formName].clearValidate()
+      })
+    },
+    changeRadio () {
+      let baseModel = this.baseCoolifeagreementhis
+      if (baseModel.sumtype === '2') {
+        this.baseCoolifeagreementhis = { // 禁止删，删除之后修改watch失效
+          companyCode: '',
+          companyName: '',
+          orgCode: '',
+          orgName: '',
+          comCode: '',
+          comCName: '',
+          sumtosum: '',
+          sumtype: '2',
+          currentPage: 1,
+          pageSize: 5
+        }
+      }
+    },
+    getselectModel () {
+      this.saveselectModel.companyCode = this.baseCoolifeagreementhis.companyCode
+      this.saveselectModel.companyName = this.baseCoolifeagreementhis.companyName
+      api('/baseCooComAgreement/findSumByNo', 'post', {
+        agreementno: this.sumtosumOption[this.baseCoolifeagreementhis.sumtosum]
+      }).then(res => {
+        this.baseCoolifeagreementhis = { // 禁止删，删除之后修改watch失效
+          companyCode: this.saveselectModel.companyCode,
+          companyName: this.saveselectModel.companyName,
+          orgCode: '',
+          orgName: '',
+          comCode: '',
+          comCName: '',
+          sumtype: '2',
+          sumtosum: this.sumtosumOption[this.baseCoolifeagreementhis.sumtosum],
+          commissionpayment: res.data.data[0].commissionpayment,
+          account: res.data.data[0].account,
+          accountname: res.data.data[0].accountname,
+          agreementtype: res.data.data[0].agreementtype,
+          bank: res.data.data[0].bank,
+          enddate: res.data.data[0].enddate,
+          jgslyhfa: res.data.data[0].jgslyhfa,
+          settlecycle: res.data.data[0].settlecycle,
+          startdate: res.data.data[0].startdate
+        }
+      })
+    },
+    // 附件管理
+    showFj (tag) {
+      if (tag === 0) { // 详情
+        this.tag_1 = true // 下载
+        this.tag_2 = true // 预览
+        this.tag_3 = false // 删除
+        this.tag_4 = false // 上传
+      }
+      if (tag === 1) { // 添加
+        this.tag_1 = false
+        this.tag_2 = true
+        this.tag_3 = true
+        this.tag_4 = true
+      }
+      if (tag === 2) { // 修改
+        this.tag_1 = true
+        this.tag_2 = true
+        this.tag_3 = true
+        this.tag_4 = true
+      }
+      this.isFj = true
+      // console.log(this.picData)
+    },
+    uploadUrl () { // 上传地址
+      return '/tabycore/baseCooComAgreement/pictureUpLoad'
+    },
+    picSuccess (resp, file, fileList) {
+      console.log(resp)
+      if (resp.code === '000000') {
+        this.open('success', resp.msg)
+        this.picData.push(resp.data)
+        this.tempFjfileList.push(file.name)
+        this.FjfileList = []
+      } else {
+        this.open('warning', resp.msg)
+        this.FjfileList = []
+      }
+    },
+    checkPic (file) {
+      window.open('/tabycore/baseCooComAgreement/pictureYulan?fileName=' + file + '')
+    },
+    downPic (file) {
+      const $a = document.createElement('a')
+      $a.setAttribute('href', '/tabycore/baseCooComAgreement/pictureDownLoad?fileName=' + file + '')
+      $a.setAttribute('download', file)
+      $a.click()
+    },
+    delPic (file, index) {
+      this.picData.splice(index, 1)
+      for (let i = 0; i < this.tempFjfileList.length; i++) {
+        if (this.tempFjfileList[i] === file) {
+          api('/baseCooComAgreement/pictureDelete', 'post',
+            {
+              fileName: file
+            }).then(res => {
+              if (res.data.code === '000000') {
+                this.tempFjfileList.splice(i, 1)
+              }
+            })
+        }
+      }
+    },
+    closeupLoad () { // 关闭上传弹框
+      this.isFj = false
+      this.FjfileList = []
+    },
+    closeCoo () {
+      let self = this
+      this.picData = []
+      this.orgList = []
+      this.add_dialog = false
+      let delayDel = () => {
+        return new Promise((resolve, reject) => {
+          console.log(self.delFlag)
+          if (self.delFlag) {
+            (async function () {
+              for (let i = 0; i < self.tempFjfileList.length; i++) {
+                await api('/baseCooComAgreement/pictureDelete', 'post',
+                  {
+                    fileName: self.tempFjfileList[i]
+                  })
+              }
+            })()
+          }
+          resolve()
+        })
+      }
+      delayDel().then(
+        () => {
+          this.tempFjfileList = []
+          this.delFlag = true
+        })
+      this.searchList() // 查询
+    },
+    open (type, mesg) { // 提示
+      this.$message({
+        showClose: true,
+        message: mesg,
+        type: type
+      })
+    }
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LabelText.name]: LabelText,
+    [LineTittle.name]: LineTittle,
+    FirstAllocation,
+    RenewalAllocation
+  },
+  computed: {
+  },
+  mounted () {
+    api(`/auth/findButtonByUserCodeAndPage?userId=${this.$store.state.login.loginUserId}&page=合作经代公司寿险协议管理`, 'get').then(result => {
+      console.log(result)
+      if (result.data.code === '000000') {
+        for (let i = 0; i < result.data.data.length; i++) {
+          this.quanxian[result.data.data[i].code] = false
+        }
+      }
+    }).catch((e) => {
+      console.log(e)
+    })
+  },
+  watch: {
+    add_dialog: {
+      handler (newValue, oldValue) {
+        if (newValue === true) {
+          this.activeName = 'first'
+          this.activeName2 = 'one'
+        } else {
+          this.closeCoo()
+        }
+      },
+      deep: true
+    },
+    'baseCoolifeagreementhis.sumtype' () {
+      let baseModel = this.baseCoolifeagreementhis
+      if (baseModel.sumtype === '1') {
+        baseModel.comCode = '01'
+        baseModel.comCName = '总公司'
+        baseModel.sumtosum = ''
+        this.sumtosumOption = []
+      }
+    },
+    'baseCoolifeagreementhis.companyCode': {
+      handler (newValue, oldValue) {
+        let baseModel = this.baseCoolifeagreementhis
+        if (baseModel.sumtype === '1' && baseModel.orgCode !== undefined) {
+          baseModel.orgCode = JSON.parse(JSON.stringify(baseModel.companyCode))
+          baseModel.orgName = JSON.parse(JSON.stringify(baseModel.companyName))
+        }
+        if (newValue === '') {
+          baseModel.companyName = ''
+          baseModel.orgCode = ''
+          baseModel.orgName = ''
+          this.sumtosumOption = []
+        }
+        if (baseModel.sumtype === '2' && newValue !== '') {
+          let baseModel = this.baseCoolifeagreementhis
+          api('/baseCooComAgreement/findSumToSum', 'post', {
+            insurercode: baseModel.companyCode
+          }).then(res => {
+            if (res.data.code === '000000') {
+              this.sumtosumOption = []
+              if (res.data.data !== '') {
+                res.data.data.forEach(e => {
+                  this.sumtosumOption.push(e.agreementno)
+                  this.sumtosumOption = Array.from(new Set(this.sumtosumOption))
+                })
+              }
+            }
+          })
+        }
+      },
+      immediate: true,
+      deep: true
+    },
+    // 'auditResult.verifyStatus' () {
+    //   if (this.auditResult.verifyStatus === '1') {
+    //     this.auditResult.reviews = '审核通过'
+    //   } else {
+    //     this.auditResult.reviews = '审核不通过'
+    //   }
+    // },
+    'baseCoolifeagreementhis.agreementno': {
+      handler (newValue, oldValue) {
+        if (newValue === undefined) {
+          if (this.info.title === '合作经代公司寿险协议修改' && this.orgList.length === 1) {
+            this.baseCoolifeagreementhis.agreementno = this.orgList[0].agreementno
+          } else {
+            this.baseCoolifeagreementhis.agreementno = '系统自动编码'
+          }
+        }
+      },
+      deep: true
+    }
+  }
+}
+</script>
+<style lang="scss" scoped type="text/css">
+  #insComBusiness_mgr { padding: 0px 30px 30px 30px; }
+  .checkboxlistCenter { display: flex; justify-content: flex-start; align-items: center; margin: 10px 0;}
+  .checkboxlistCenter .el-input { width: 60px; }
+  .el-button--small {width: 50px;}
+  .addIcon{ display: flex; justify-content: flex-end; margin-right: 12px; }
+  .coopMargin { margin-top: 20px; }
+  .checkboxList { display: flex; justify-content: flex-start; }
+  .el-checkbox-group{ margin-right: 24px }
+  .agent_manage_form { padding-top: 20px; }
+  .ri-line { margin-bottom: 10px; }
+  .selectItem { margin-top: 20px; }
+  .checkBtn { margin: 20px 0; }
+  .dialog-footer{text-align: center}
+  a { text-decoration: none; color: #409EFF; }
+  .btn-container { text-align: center; margin: 30px 0; }
+  .tips { width: 60%; height: 30px; line-height: 30px; margin: 20px 0; padding-left: 10px; border: 1px solid #dcdfe6; }
+  .upload-demo { margin-bottom: 20px; text-align: center; }
+</style>
+<style>
+  .mesg_form .required:before{ font-size: 14px!important; top: 3px !important; }
+  .checkboxlistCenter .el-input__inner { height: 30px; padding: 0 6px; }
+  .el-date-editor .el-range__icon, .el-date-editor .el-range-separator { height: auto;}
+  .el-input__icon { line-height: inherit;}
+  .pagination {text-align: right; margin: 20px auto; }
+  .coopContent { border: 1px solid #dcdfe6; width: 60%; }
+  .coopContent .el-header { height: 30px!important; border-bottom: 1px solid #dcdfe6; line-height: 30px; background: #f5f7fa}
+  .incentiveRate{ display: flex; justify-content: flex-start; }
+  .incentiveRate .el-input { height: 30px; padding: 0 6px; width: 110px !important; }
+  .form_addmod .el-form-item__error { left: 162px;}
+</style>

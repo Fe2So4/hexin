@@ -1,0 +1,13 @@
+GET https://{{host}}/comments/{{version}} HTTP/1.1
+#接口描述
+###
+
+POST https://{{host}}/comments/{{version}} HTTP/1.1
+content-type: application/json
+
+{
+    "name": "sample",
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+}
+#接口描述
+###

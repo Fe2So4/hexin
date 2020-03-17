@@ -1,0 +1,116 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+const program = require('commander')
+const path = require('path')
+const inquirer = require('inquirer')
+const rm = require('rimraf').sync
+const exists = require('fs').existsSync
+const cp=require('fs').copyFileSync
+const read=require('fs').readFileSync
+const write=require('fs').writeFileSync
+program
+  .version('0.1.0')
+  .usage('[options] <name>')
+  .option('-t, --tvcomponent <name>', '创建TIT-VUE组件,自动生成文档')
+  .option('-c, --component <name>', '创建业务组件,自动生成文档')
+  .option('-a, --apidoc <name>', '创建api文档', apidoc)
+  .parse(process.argv);
+
+
+
+/**
+ * 收集参数
+ */
+
+const tFlag=program.tvcomponent;
+const cName=program.tvcomponent||program.component;
+const srcDir=path.resolve('src/');
+const docDir=path.resolve('docs/'+(tFlag?'titcomponent':'component'));
+const sidebarDir=path.resolve('docs/_sidebar.md');
+var to,toDoc;
+var sidebar=read(sidebarDir,'utf-8');
+if(cName)
+{
+  to=path.resolve('src/'+(tFlag?'titcomponents':'components')+'/'+cName+'.vue');
+  toDoc=path.resolve(docDir,cName+'.md')
+}
+
+if (to&&exists(to)) {
+  inquirer.prompt([{
+    type: 'confirm',
+    message:'项目中已存在组件，是否重新生成?',
+    name: 'ok'
+  }]).then(answers => {
+    if (answers.ok) {
+      rm(to)
+      if(exists(toDoc))
+      {
+        var partten='\r\n'+(tFlag?'titcomponent':'')+'.*'+cName+'\.md.*';
+        rm(toDoc);
+        sidebar=sidebar.replace(new RegExp(partten),'')
+        write(sidebarDir,sidebar,'utf-8');
+      }
+      run();
+    }
+  })
+} else {
+  run();
+}
+
+
+
+function run(){
+  if(!cName){
+    return ;
+  }
+  console.log("开始创建"+(tFlag?"TIT-VUE":"业务")+"组件："+cName);
+  // console.log(to)
+  // console.log(toDoc)
+  //生成新组件文件和文档
+  cp('bin/template.vue',to);
+  cp('bin/template.md',toDoc);
+  console.log('成功创建两个文件：')
+  console.log(path.relative(path.resolve(),to))
+  console.log(path.relative(path.resolve(),toDoc))
+  console.log('修改_sidebar.md')
+  inquirer.prompt([{
+    type: 'input',
+    message:'请输入组件中文名称',
+    name: 'desc'
+  }]).then(answers => {
+    if (answers.desc) {
+      var nn=(tFlag?'- [TIT组件](titcomponent/README)':'- [项目组件](component/README)')+'\r\n- - ['+answers.desc+']('+(tFlag?'titcomponent':'component')+'/'+cName+'.md)'
+      var ns=sidebar.replace(tFlag?'- [TIT组件](titcomponent/README)':'- [项目组件](component/README)',nn)
+      console.log('添加节点:'+nn)
+      write(path.resolve('docs/_sidebar.md'),ns,'utf-8');
+      console.log('执行成功！')
+    }
+  })
+
+}
+
+function apidoc(val){
+  var apitemplate=read('bin/apitemplate.md','utf-8');
+  apitemplate=apitemplate.replace('demo/api',val);
+  if(!exists(path.resolve('docs/api/'+(val.replace(/\//g,'_'))+'.md')))
+  inquirer.prompt([{
+    type: 'input',
+    message:'请输入api文档描述',
+    name: 'desc'
+  }]).then(answers => {
+    if (answers.desc) {
+      apitemplate=apitemplate.replace('这是一个示例接口',answers.desc);
+      write(path.resolve('docs/api/'+(val.replace(/\//g,'_'))+'.md'),apitemplate,'utf-8')
+      var ns=sidebar.replace('- [API文档](api/README)','- [API文档](api/README)\r\n'+'- - ['+answers.desc+'](api/'+(val.replace(/\//g,'_'))+'.md'+')');
+      write(sidebarDir,ns,'utf-8')
+      console.log('成功创建一个文件：')
+      console.log(path.relative(path.resolve(''),path.resolve('docs/api/'+(val.replace(/\//g,'_'))+'.md')))
+    }
+  })
+  else
+  console.log(val+'接口文档已存在！')
+}

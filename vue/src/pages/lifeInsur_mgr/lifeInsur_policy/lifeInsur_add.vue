@@ -1,0 +1,3573 @@
+<template>
+  <div id="insManage">
+    <ui-notice-bar slot="breadcast">
+      <el-breadcrumb slot="location" separator=">">
+        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+        <el-breadcrumb-item>寿险业务管理</el-breadcrumb-item>
+        <el-breadcrumb-item>寿险投保单管理</el-breadcrumb-item>
+        <el-breadcrumb-item>投保单管理</el-breadcrumb-item>
+        <el-breadcrumb-item>投保单新增</el-breadcrumb-item>
+      </el-breadcrumb>
+    </ui-notice-bar>
+      <el-form :rules="insertRules" ref="insertForm" :model="insertForm">
+
+        <!--基本信息开始 子组件 -->
+        <ui-line-tittle :collapsible="true" >
+          <span slot="title" >
+              <i class="font_family icon-jy-menu-4" ></i>基本信息
+          </span>
+          <div class="ri-content" slot="content">
+            <basic-info :isSuper="true" ref="basicInfo" @childByValue = "childByValue"></basic-info>
+          </div>
+        </ui-line-tittle>
+        <!--投保人信息  子组件 -->
+        <ui-line-tittle :collapsible="true" >
+          <span slot="title" >
+              <i class="font_family icon-jy-menu-4" ></i>投保人信息
+          </span>
+          <div class="ri-content" slot="content">
+            <insurer :isSuper="true" ref="insurer" ></insurer>
+            <div class="center" style="margin-bottom:30px">
+              <el-button type="primary" @click="dialogTableVisibleAdd = true">新增个人客户</el-button>
+            </div>
+          </div>
+        </ui-line-tittle>
+        <!--被保人信息  子组件  -->
+        <ui-line-tittle :collapsible="true" >
+          <span slot="title" >
+              <i class="font_family icon-jy-menu-4" ></i>被保险人信息
+          </span>
+          <div class="ri-content" slot="content">
+              <div v-for="(InsureantInfo,index) in InsureantInfos" :key="InsureantInfo">
+                <InsurantInfo :createID="index" ref="insurantInfo"></InsurantInfo>
+                <div  style="margin-bottom:20px;margin-top:10px;text-align:right">
+                  <el-button  type="danger" @click.native.prevent="delInfo(index)">删除</el-button>
+                </div>
+              </div>
+              <div style="text-align:center;margin-bottom:30px">
+                <el-button type="primary" :disabled="disableAdd" @click.native.prevent="addInsureantInfo()">添加</el-button>
+                <el-button type="primary" @click="dialogTableVisibleAdd = true">新增个人客户</el-button>
+              </div>
+          </div>
+        </ui-line-tittle>
+        <!--身故受益人信息 子组件 -->
+        <ui-line-tittle :collapsible="true" >
+          <span slot="title" >
+              <i class="font_family icon-jy-menu-4" ></i>身故受益人信息
+          </span>
+          <div class="ri-content" slot="content">
+            <el-row class="ri-line">
+              <el-col :span="24" >
+                <el-radio  v-model="addInfoflag.sgFlag" label='1' >法定受益人</el-radio>
+                <el-radio  v-model="addInfoflag.sgFlag" label='2' >指定受益人</el-radio>
+              </el-col>
+            </el-row>
+            <div v-if="addInfoflag.sgFlag =='1'"></div>
+            <div v-if="addInfoflag.sgFlag =='2'">
+              <div v-for="(deathBenefitInfo,index) in deathBenefitInfos" :key="deathBenefitInfo">
+                <death-Benefit-Info :createID="index" :ref="`deathInfo`"></death-Benefit-Info>
+                <div  style="margin-bottom:20px;margin-top:10px;text-align:right">
+                  <el-button  type="danger" size="mini" @click.native.prevent="deldeathInfo(index)">删除</el-button>
+                </div>
+              </div>
+              <div style="text-align:center;margin-bottom:30px">
+                <el-button type="primary" size="mini" @click.native.prevent="adddeathBenefitInfo()">添加</el-button>
+              </div>
+            </div>
+
+          </div>
+        </ui-line-tittle>
+        <!--生存受益人信息  子组件  -->
+        <ui-line-tittle :collapsible="true">
+          <span slot="title" >
+            <i class="font_family icon-jy-menu-4" ></i>生存受益人信息
+          </span>
+          <div class="ri-content" slot="content">
+            <el-row class="ri-line">
+              <el-col :span="24" >
+                <el-radio  v-model="addInfoflag.scFlag" label='1' >投保人</el-radio>
+                <el-radio  v-model="addInfoflag.scFlag" label='2' >被保险人</el-radio>
+                <el-radio  v-model="addInfoflag.scFlag" label='3' >其他</el-radio>
+              </el-col>
+            </el-row>
+            <div v-if="addInfoflag.scFlag =='1'"></div>
+            <div v-if="addInfoflag.scFlag =='2'"></div>
+            <div v-if="addInfoflag.scFlag =='3'">
+              <div v-for="(lifeBenefitInfo,index) in lifeBenefitInfos" :key="lifeBenefitInfo">
+                <live-Benefit-Info :createID="index" :ref="`lifeInfo`" ></live-Benefit-Info>
+                <div  style="margin-bottom:20px;margin-top:10px ;text-align:right">
+                  <el-button  type="danger" size="mini" @click.native.prevent="delliveInfo(index)">删除</el-button>
+                </div>
+              </div>
+              <div style="text-align:center;margin-bottom:30px">
+                <el-button type="primary" size="mini" @click.native.prevent="addliveBenefitInfo()">添加</el-button>
+              </div>
+            </div>
+          </div>
+        </ui-line-tittle>
+        <!--业务员信息  子组件  -->
+        <ui-line-tittle :collapsible="true" >
+          <span slot="title">
+              <i class="font_family icon-jy-menu-4" ></i>业务员信息
+          </span>
+          <div class="ri-content" slot="content">
+              <seller-info  ref="sellerInfo"></seller-info>
+          </div>
+        </ui-line-tittle>
+        <!-- 险种信息 -->
+        <el-form class="mesg_form" :model="info" ref="BillNoList" :rules="rule">
+          <ui-line-tittle :collapsible="true" >
+            <span slot="title" >
+              <i class="font_family icon-jy-menu-4" ></i>险种信息
+            </span>
+            <div class="ri-content riskTable" slot="content" >
+              <el-table border :data="info.lifeCItemKindConditionList" style="width: 100%">
+                <el-table-column prop="riskCode" label="险种代码" width="150">
+                  <template slot-scope="scope">
+                    <el-form-item  :prop="'lifeCItemKindConditionList.' + scope.$index +'.riskCode'" :rules="riskRules.riskCode">
+                      <ui-label-text :required="true" >
+                        <el-input slot="text" size='mini' placeholder="双击可选择" readonly clearable v-model="scope.row.riskCode" @dblclick.native="getRiskList(1, scope.$index, scope.row, 0)" ></el-input>
+                      </ui-label-text>
+                    </el-form-item>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="riskName" label="险种名称" width="200" >
+                  <template slot-scope="scope">
+                    <el-form-item :prop="'lifeCItemKindConditionList.' + scope.$index +'.riskName'" :rules="riskRules.riskName">
+                      <ui-label-text :required="true" >
+                        <!-- <el-tooltip placement="top" slot="text">
+                          <div slot="content">{{scope.row.riskName}}</div>
+                          <el-input size='mini' placeholder="双击可选择" readonly  clearable v-model="scope.row.riskName" @dblclick.native="getRiskList(1, scope.$index, scope.row, 0)"></el-input>
+                        </el-tooltip> -->
+                        <el-input size='mini' slot="text" placeholder="双击可选择" readonly  clearable v-model="scope.row.riskName" @dblclick.native="getRiskList(1, scope.$index, scope.row, 0)"></el-input>
+                      </ui-label-text>
+                    </el-form-item>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="mainFlag" label="主/附险标识" width="170">
+                  <template slot-scope="scope" >
+                    <el-form-item :prop="'lifeCItemKindConditionList.' + scope.$index +'.payrate'" :rules="riskRules.mainFlag">
+                      <ui-label-text :required="true" >
+                        <el-select  size='mini' disabled v-model="scope.row.mainFlag" slot="text" placeholder="请选择">
+                          <el-option label="主险" value="1"></el-option>
+                          <el-option label="附加险" value="0"></el-option>
+                          <el-option label="主/附险 " value="3"></el-option>
+                        </el-select>
+                      </ui-label-text>
+                    </el-form-item>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="paymentPeriod" label="缴费年期" width="150">
+                  <template slot-scope="scope">
+                    <el-form-item :prop="'lifeCItemKindConditionList.' + scope.$index +'.paymentPeriod'" :rules="riskRules.paymentPeriod">
+                      <ui-label-text :required="true" >
+                        <el-input :disabled='true' slot="text" size='mini'  v-model="scope.row.paymentPeriod" ></el-input>
+                      </ui-label-text>
+                    </el-form-item>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="payrate" label="缴费频率" width="150">
+                  <template slot-scope="scope">
+                    <el-form-item :prop="'lifeCItemKindConditionList.' + scope.$index +'.payrate'" :rules="riskRules.payrate">
+                      <ui-label-text :required="true" >
+                        <el-select  size='mini' v-model="scope.row.payrate" :disabled="scope.row.pinlv" slot="text" placeholder="请选择">
+                          <el-option label="天缴" value="0"></el-option>
+                          <el-option label="月缴" value="1"></el-option>
+                          <el-option label="季缴" value="2"></el-option>
+                          <el-option label="年缴" value="3"></el-option>
+                          <el-option label="趸缴" value="4"></el-option>
+                          <el-option label="半年缴" value="5"></el-option>
+                        </el-select>
+                      </ui-label-text>
+                    </el-form-item>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="premium" label="应缴保费" width="150">
+                  <template slot-scope="scope">
+                    <el-form-item  :prop="'lifeCItemKindConditionList.' + scope.$index +'.premium'" :rules="riskRules.premium">
+                      <ui-label-text :required="true" >
+                        <el-input size='mini'  slot="text" @blur='addpremium(scope.$index)' v-model="scope.row.premium" ></el-input>
+                      </ui-label-text>
+                    </el-form-item>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="riskPremium" label="保险金额" width="120">
+                  <template slot-scope="scope">
+                    <el-form-item  :prop="'lifeCItemKindConditionList.' + scope.$index +'.riskPremium'" >
+                      <ui-label-text :required="false" >
+                        <el-input size='mini'  slot="text" @blur="riskPremiumVail(scope.$index)" v-model="scope.row.riskPremium" ></el-input>
+                      </ui-label-text>
+                    </el-form-item>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="number" label="份数" width="120">
+                  <template slot-scope="scope">
+                    <el-form-item  :prop="'lifeCItemKindConditionList.' + scope.$index +'.number'" :rules="riskRules.number">
+                      <ui-label-text :required="false" >
+                        <el-input size='mini'  slot="text" v-model="scope.row.number" ></el-input>
+                      </ui-label-text>
+                    </el-form-item>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="addPremium" label="加费金额" width="140">
+                  <template slot-scope="scope">
+                    <el-form-item  :prop="'lifeCItemKindConditionList.' + scope.$index +'.addPremium'" :rules="riskRules.addPremium">
+                      <ui-label-text :required="false" >
+                        <el-input size='mini'  slot="text" @blur="riskaddPremiumVail(scope.$index)" v-model="scope.row.addPremium" ></el-input>
+                      </ui-label-text>
+                    </el-form-item>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="freeDate" label="豁免日期" width="200">
+                  <template slot-scope="scope">
+                    <el-date-picker value-format="yyyy-MM-dd" size="mini" style="width: 100%; "  v-model="scope.row.freeDate" :disabled="scope.row.feeFlagTag" slot="text" type="date" placeholder="选择日期"></el-date-picker>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="tbrFreeFlag1" label="豁免人" width="200">
+                  <template slot-scope="scope">
+                    <el-checkbox :disabled="scope.row.feeFlagTag" size="mini" v-model="scope.row.tbrFreeFlag1">投保人</el-checkbox>
+                    <el-checkbox :disabled="scope.row.feeFlagTag" size='mini' v-model="scope.row.bbrFreeFlag1" >被保人</el-checkbox>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="startDate" label="保险期间" width="550">
+                  <template slot-scope="scope">
+                    <el-date-picker value-format="yyyy-MM-dd" size="mini" style="width: 200px; margin-right: 2%; " v-model="scope.row.startDate" slot="text" type="date" placeholder="选择日期"></el-date-picker>至
+                    <el-date-picker value-format="yyyy-MM-dd" size="mini" style="width: 200px; margin-right: 2%; " v-if='scope.row.lifeFlag1 == false' v-model="scope.row.endDate" slot="text" type="date" placeholder="选择日期"></el-date-picker>
+                    <el-checkbox  size='mini' v-model="scope.row.lifeFlag1" >终身</el-checkbox>
+                  </template>
+                </el-table-column>
+                <el-table-column  fixed="right" label="操作">
+                  <template slot-scope="scope">
+                      <el-button type="danger" @click="deletRiskItem(scope.$index)">删除</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <div class='addBtn' style="margin-top: 20px;" >
+                <el-button type="primary" @click="addRiskItem">增加</el-button>
+              </div>
+            </div>
+          </ui-line-tittle>
+        </el-form>
+        <!--缴费信息  子组件 -->
+        <ui-line-tittle :collapsible="true" >
+          <span slot="title" >
+              <i class="font_family icon-jy-menu-4" ></i>缴费信息
+          </span>
+          <div class="ri-content" slot="content">
+              <pay-info  ref="payInfo"></pay-info>
+          </div>
+        </ui-line-tittle>
+
+      </el-form>
+
+
+       <!--页面最底部提交方法-->
+      <div class="center">
+        <!-- <el-button type="primary" @click.native.prevent="riskForm()">险种</el-button> -->
+        <el-button type="primary" @click.native.prevent="_insertForm('insertForm')">保存</el-button>
+        <el-button v-if="!isEdit" type="primary" @click.native.prevent="_submitForm('insertForm')">提交审核</el-button>
+      </div>
+
+      <!--保险公司代码 的弹框-->
+      <el-dialog :append-to-body="true" width="60%" center title="保险公司代码" :visible.sync="dialogTableVisibleCode">
+          <el-table ref="multipleTable" @row-click="handleRowChange" :data="getInsurers" tooltip-effect="dark" style="width: 100%">
+            <el-table-column prop="insurercode"  label="保险公司代码" show-overflow-tooltip>
+            </el-table-column>
+            <el-table-column prop="insurername" label="保险公司名称" show-overflow-tooltip>
+            </el-table-column>
+          </el-table>
+          <div class="block">
+            <el-pagination
+              @current-change="handleCurrentChangeCom"
+              @size-change="handleSizeChangeCom"
+              :current-page="info.currentPage"
+              :page-sizes="[10,20,50]"
+              :page-size="100"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="totalrecords == totalrecords ? totalrecords : 0">
+            </el-pagination>
+          </div>
+      </el-dialog>
+       <!--保险机构代码 的弹框-->
+      <el-dialog :append-to-body="true" width="60%" center title="保险机构代码" :visible.sync="dialogTableOrg">
+          <el-table ref="multipleTable" @row-click="handleRowChangeOrg" :data="getInsurersOrg" tooltip-effect="dark" style="width: 100%">
+            <el-table-column prop="orgcode"  label="保险机构代码" show-overflow-tooltip>
+            </el-table-column>
+            <el-table-column prop="orgname" label="保险机构名称" show-overflow-tooltip>
+            </el-table-column>
+          </el-table>
+          <div class="block">
+            <el-pagination
+              @current-change="handleCurrentChangeOrg"
+              @size-change="handleSizeChangeOrg"
+              :current-page="info.currentPage"
+              :page-sizes="[10,20,50]"
+              :page-size="100"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="orgRecords == orgRecords ? orgRecords : 0">
+            </el-pagination>
+          </div>
+      </el-dialog>
+       <!--客户所属机构 的弹框-->
+      <el-dialog :append-to-body="true" width="60%" center title="客户所属机构" :before-close="toubaorenClose" :visible.sync="dialogsustomerOrg">
+        <el-table ref="multipleTable" stripe @row-click="customerinOrg" :data="customOfOrg" tooltip-effect="dark" style="width: 100%">
+          <el-table-column prop="comCode"  label="保险公司代码" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="comCName" label="保险公司名称" show-overflow-tooltip>
+          </el-table-column>
+        </el-table>
+        <div class="block" style="padding-top:22px;padding-bottom:22px">
+          <el-pagination
+            @current-change="cusCurrentChangeOrg"
+            @size-change="cushandleSizeChangeOrg"
+            :current-page.sync="addCusInfo.currentPage"
+            :page-sizes="sizeList"
+            :page-size="100"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalsOrg == totalsOrg ? totalsOrg : 0">
+          </el-pagination>
+        </div>
+      </el-dialog>
+       <!--投保人代码 的弹框-->
+      <el-dialog :append-to-body="true" width="50%" center title="投保人代码" :visible.sync="dialogInsurer">
+          <el-row class="ri-line"  >
+            <el-col :span="24">
+              <ui-label-text  label="客户代码或名称:"  labelWidth="230">
+                <el-input v-model="searchcode.customerCodeOrName" slot="text" ></el-input>
+              </ui-label-text>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line" >
+            <el-col :span="24">
+              <ui-label-text  label="证件号码:"  labelWidth="230">
+                <el-input v-model="searchcode.idNumber" slot="text" ></el-input>
+              </ui-label-text>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line" >
+            <el-col :span="24">
+              <div class="center">
+                 <el-button  type="primary" @click.native.prevent="searchCode(searchcode)">查询</el-button>
+              </div>
+            </el-col>
+          </el-row>
+          <el-table ref="multipleTable" @row-click="customerinOrg1" :data="customerfind" tooltip-effect="dark" style="width: 100%">
+            <el-table-column prop="custId"  label="客户代码" show-overflow-tooltip>
+            </el-table-column>
+            <el-table-column prop="custName" label="客户姓名" show-overflow-tooltip>
+            </el-table-column>
+            <el-table-column prop="idNumber" label="客户身份证号" show-overflow-tooltip>
+            </el-table-column>
+          </el-table>
+          <div class="block">
+            <el-pagination
+              @current-change="currentChangeval"
+              :current-page="info.currentPage"
+              @size-change="handleSizeChange"
+              :page-sizes="[10,20,50]"
+              :page-size="100"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="customerFindTotals === customerFindTotals ? customerFindTotals : 0">
+            </el-pagination>
+          </div>
+      </el-dialog>
+      <!--新增个人客户 的弹框-->
+      <el-dialog :append-to-body="true" width="70%" center :before-close="clientClose" title="新增个人客户" :visible.sync="dialogTableVisibleAdd">
+        <el-form :rules="addRules" ref="addCustom" :model="addCustom">
+          <el-row class="ri-line">
+            <el-col :span="12">
+                <ui-label-text  label="客户编码:"  labelWidth="230"></ui-label-text>
+                <ui-label-text style="margin-top:-32px;margin-left:160px"  label="系统自动生成"  labelWidth="230"></ui-label-text>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item  prop="custName"  >
+                <ui-label-text  label="客户名称:" :required="true" labelWidth="230">
+                  <el-input v-model="addCustom.custName" @change="checkSame" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item  prop="comCode">
+                <ui-label-text  label="归属机构代码:" :required="true" labelWidth="230">
+                  <el-input v-model="addCustom.comCode" placeholder="双击查询" @dblclick.native="searchOfOrg(1)" @blur="searchOfOrgblur(1)" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item  prop="comCName">
+                <ui-label-text  label="归属机构名称:" :required="true" labelWidth="230">
+                  <el-input v-model="addCustom.comCName" placeholder="双击查询" @dblclick.native="searchOfOrg1(1)"  @blur="searchOfOrgblur1(1)" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item  prop="paperworkType"  >
+                <ui-label-text  label="证件类型:" :required="true" labelWidth="230">
+                  <el-select v-model="addCustom.paperworkType" @change="cIdentifyNumber" slot="text" placeholder="请选择">
+                    <el-option label="身份证" value="1"></el-option>
+                    <el-option label="户口本" value="2"></el-option>
+                    <el-option label="军官证" value="3"></el-option>
+                    <el-option label="驾驶证" value="4"></el-option>
+                    <el-option label="护照" value="5"></el-option>
+                    <el-option label="港澳居民来往大陆通行证" value="6"></el-option>
+                    <el-option label="台湾居民来往大陆通行证" value="7"></el-option>
+                    <el-option label="其他" value="8"></el-option>
+                    <el-option label="出生医学证明" value="9"></el-option>
+                  </el-select>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <div v-if="addCustom.paperworkType === '1'">
+                <el-form-item  prop="idNumber">
+                  <ui-label-text  label="证件号码:" :required="true" labelWidth="230">
+                    <el-input v-model="addCustom.idNumber" @blur="idtypeNumber()" slot="text" ></el-input>
+                  </ui-label-text>
+                </el-form-item>
+              </div>
+              <div v-else-if="addCustom.paperworkType === '2'">
+                <el-form-item  prop="idNumber">
+                  <ui-label-text  label="证件号码:" :required="true" labelWidth="230">
+                    <el-input v-model="addCustom.idNumber" @blur="idtypeNumber1()" slot="text" ></el-input>
+                  </ui-label-text>
+                </el-form-item>
+              </div>
+              <div v-else>
+                <el-form-item  prop="idNumber">
+                  <ui-label-text  label="证件号码:" :required="true" labelWidth="230">
+                    <el-input v-model="addCustom.idNumber" @blur="idtypeNumber2()"  slot="text" ></el-input>
+                  </ui-label-text>
+                </el-form-item>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="birthDate"  >
+                <ui-label-text :required="true"  label="出生年月:" labelWidth="230" >
+                  <el-date-picker
+                    value-format="yyyy-MM-dd"
+                    slot="text"
+                    v-model="addCustom.birthDate"
+                    type="date"
+                    @change="checkSame"
+                    :disabled="idnumberDisable"
+                    placeholder="选择日期"> </el-date-picker>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item prop="identifyValiddate"  >
+                <ui-label-text :required="true"  label="证件有效期:" labelWidth="230" >
+                  <el-date-picker
+                    value-format="yyyy-MM-dd"
+                    slot="text"
+                    v-model="addCustom.identifyValiddate"
+                    type="date"
+                    :disabled="disabledEdit"
+                    style="position:absolute;width:170px"
+                    placeholder="选择日期"> </el-date-picker>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="4">
+              <el-checkbox
+                ref="timer"
+                @change.native="handleValid()"
+                v-model="longFlag2"
+                label='false'
+                style="line-height:30px;margin-left:24%">永久有效</el-checkbox>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item  prop="sex">
+                <ui-label-text  label="性别:" :required="false" labelWidth="230">
+                  <el-select v-model="addCustom.sex" :disabled="dissex" @change="checkSame" slot="text" placeholder="请选择">
+                    <el-option label="男" value="0"></el-option>
+                    <el-option label="女" value="1"></el-option>
+                  </el-select>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="familyName" >
+                <ui-label-text :required="false"  label="民族:" labelWidth="230" >
+                  <el-input v-model="addCustom.familyName" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="familyMembers" >
+                <ui-label-text :required="false"  label="家庭成员:" labelWidth="230" >
+                  <el-input v-model="addCustom.familyMembers" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="familyRelation"  >
+                <ui-label-text :required="false"  label="所属关系:" labelWidth="230" >
+                  <el-input v-model="addCustom.familyRelation" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="maritalStatus"  >
+                <ui-label-text  label="婚否:" :required="false" labelWidth="230">
+                  <el-select v-model="addCustom.maritalStatus" slot="text" placeholder="请选择">
+                    <el-option label="已婚" value="1"></el-option>
+                    <el-option label="未婚" value="2"></el-option>
+                    <el-option label="不明" value="3"></el-option>
+                    <el-option label="离异" value="4"></el-option>
+                  </el-select>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="address" :required="false" >
+                <ui-label-text :required="false"  label="地址:" labelWidth="230" >
+                  <el-input v-model="addCustom.address" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="zipCode" >
+                <ui-label-text :required="false"  label="邮政编码:" labelWidth="230" >
+                  <el-input v-model="addCustom.zipCode" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="education"  >
+                <ui-label-text  label="学历:" :required="false" labelWidth="230">
+                  <el-select v-model="addCustom.education" slot="text" placeholder="请选择">
+                    <el-option label="小学" value="1"></el-option>
+                    <el-option label="初中" value="2"></el-option>
+                    <el-option label="高中" value="3"></el-option>
+                    <el-option label="大专" value="4"></el-option>
+                    <el-option label="本科" value="5"></el-option>
+                    <el-option label="硕士" value="6"></el-option>
+                    <el-option label="博士" value="7"></el-option>
+                    <el-option label="其他" value="8"></el-option>
+                  </el-select>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="job"  >
+                <ui-label-text :required="false"  label="职业:" labelWidth="230" >
+                  <el-input v-model="addCustom.job" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="modelsCode"  >
+               <ui-label-text :required="false"  label="车型代码:" labelWidth="230" >
+                  <el-input v-model="addCustom.modelsCode" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="carNumber"  >
+                <ui-label-text :required="false"  label="车牌号:" labelWidth="230" >
+                  <el-input v-model="addCustom.carNumber" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="mobile" >
+               <ui-label-text :required="false"  label="手机:" labelWidth="230" >
+                  <el-input v-model="addCustom.mobile" placeholder="固定电话和手机请至少填写一个" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="phone">
+                <ui-label-text :required="false"  label="固定电话:" labelWidth="230" >
+                  <el-input v-model="addCustom.phone" placeholder="固定电话和手机请至少填写一个" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="fax"  >
+               <ui-label-text :required="false"  label="传真:" labelWidth="230" >
+                  <el-input v-model="addCustom.fax" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="email" :required="false"  >
+                <ui-label-text :required="false"  label="E-mail:" labelWidth="230" >
+                  <el-input v-model="addCustom.email" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="status"  >
+                <ui-label-text  label="效力状态:" :required="false" labelWidth="230">
+                  <el-select v-model="insertForm.status" slot="text" placeholder="请选择">
+                    <el-option label="无效" value="0"></el-option>
+                    <el-option label="有效" value="1"></el-option>
+                  </el-select>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="country"  >
+               <ui-label-text :required="false"  label="国籍:" labelWidth="230" >
+                  <el-input v-model="addCustom.country" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="birthplace"  >
+               <ui-label-text :required="false"  label="籍贯:" labelWidth="230" >
+                  <el-input v-model="addCustom.birthplace" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="weChat"  >
+               <ui-label-text :required="false"  label="微信号:" labelWidth="230" >
+                  <el-input v-model="addCustom.weChat" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop="workingUnit" >
+               <ui-label-text :required="false"  label="工作单位:" labelWidth="230" >
+                  <el-input v-model="addCustom.workingUnit" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop="habitualResidence"  >
+               <ui-label-text :required="false"  label="经常居住地:" labelWidth="230" >
+                  <el-input v-model="addCustom.habitualResidence" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="18">
+              <el-form-item prop="remark" >
+               <ui-label-text :required="false"  label="备注:" labelWidth="230" >
+                  <el-input type="textarea" v-model="addCustom.remark" slot="text" ></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+        <div class="center">
+          <el-button type="primary" @click.native.prevent="_addCustom('addCustom')">提交</el-button>
+        </div>
+      </el-dialog>
+      <!--险种代码 的弹框-->
+      <el-dialog :append-to-body="true" width="60%" center :before-close="riskClose" title="险种信息" :visible.sync="insurTypeDialog">
+        <el-row class="ri-line" >
+          <el-col :span="24">
+            <ui-label-text  label="险种代码/名称:"  labelWidth="230">
+              <el-input v-model="insurerCode.riskCode" slot="text" ></el-input>
+            </ui-label-text>
+          </el-col>
+        </el-row>
+        <el-row class="ri-line" style="margin-top:20px;">
+          <el-col :span="24">
+            <div class="center">
+                <el-button  type="primary" @click.native.prevent="searchCodeRisk()">查询</el-button>
+            </div>
+          </el-col>
+        </el-row>
+        <el-table  ref="multipleTable" stripe  @row-click="riskRowhandle" :data="riskCode" tooltip-effect="dark" style="width: 100%;margin-top:20px;">
+          <el-table-column prop="riskcode"  label="险种代码" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="riskname" label="险种名称" show-overflow-tooltip>
+          </el-table-column>
+        </el-table>
+        <div class="block" style="margin-top:22px;padding-bottom:22px">
+          <el-pagination
+            @current-change="currentChangevalrisk"
+            @size-change="handleSizeChangerisk"
+            :current-page.sync="riskList.currentPage"
+            :page-sizes="sizeList"
+            :page-size="100"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="riskcodeTotals === riskcodeTotals ? riskcodeTotals : 0">
+          </el-pagination>
+        </div>
+      </el-dialog>
+  </div>
+</template>
+
+<script>
+import NoticeBar from '@/components/notice-bar'
+import LabelText from '@/components/label-text'
+import LineTittle from '@/components/line-tittle'
+import basicInfo from '@/components/lifeInsure/basicInfo' // 基本信息
+import Insurer from '@/components/lifeInsure/Insurer' // 投保人信息
+import InsurantInfo from '@/components/lifeInsure/InsurantInfo' // 被保险人信息
+import deathBenefitInfo from '@/components/lifeInsure/deathBenefitInfo' // 身故受益人信息
+import liveBenefitInfo from '@/components/lifeInsure/liveBenefitInfo' // 生存受益人信息
+import InsurType from '@/components/lifeInsure/InsurType' // 险种信息
+import payInfo from '@/components/lifeInsure/payInfo' // 缴费信息
+import sellerInfo from '@/components/lifeInsure/sellerInfo' // 业务员信息
+import { mapActions } from 'vuex'
+// import $ from 'jquery'
+export default {
+  name: '',
+  props: ['isEdit'],
+  data () {
+    const {
+            noEmptyValidator,
+            PostValidator,
+            phoneNumberValidator,
+            phoneValidator,
+            emailValidator,
+            IdValidator,
+            insurtypeaddPremiumValidator1,
+            insurtypeaddPremiumValidator2 } = this.$store.getters.validators
+    return {
+      // isSuper: true,
+      IdValidator: IdValidator,
+      noEmptyValidator: noEmptyValidator,
+      InsureantInfos: ['1'], // 被保险人信息
+      deathBenefitInfos: ['1'], // 身故受益人信息
+      lifeBenefitInfos: ['1'], // 生存受益人信息
+      insurTypeInfos: ['1'], // 险种信息
+      info: {
+        // current: 1
+        lifeCItemKindConditionList: []
+      },
+      updateTime: '',
+      // 新增的表单验证
+      insertForm: {
+        proposalNo: '',
+        proposalNo2: '',
+        insureNo: '',
+        insureName: '',
+        insureAddress: '',
+        postNo: '',
+        sexType: '',
+        country: '',
+        birthDate: '',
+        remark: '',
+        educationCode: '',
+        insureTel: '',
+        weixin: '',
+        e_mail: '',
+        job: '',
+        workingUnit: '',
+        insuredrName: '',
+        habitualResidence: '',
+        marriage: '',
+        identifyType: '',
+        identifyValiddate: '',
+        identifyNumber: '',
+        insuranceMark: '新保',
+        businessNature: '佰盈销售',
+        busiType: '直接业务',
+        updateTime: '' // 有问题  需要改为当前时间
+      },
+      insertRules: {
+        proposalNo: noEmptyValidator,
+        proposalNo2: noEmptyValidator,
+        insureNo: noEmptyValidator,
+        insureName: noEmptyValidator,
+        insureAddress: noEmptyValidator,
+        postNo: noEmptyValidator,
+        sexType: noEmptyValidator,
+        country: noEmptyValidator,
+        birthDate: noEmptyValidator,
+        // remark: noEmptyValidator,
+        educationCode: noEmptyValidator,
+        insureTel: noEmptyValidator,
+        weixin: noEmptyValidator,
+        e_mail: noEmptyValidator,
+        job: noEmptyValidator,
+        workingUnit: noEmptyValidator,
+        insuredrName: noEmptyValidator,
+        habitualResidence: noEmptyValidator,
+        marriage: noEmptyValidator,
+        identifyType: noEmptyValidator,
+        identifyValiddate: noEmptyValidator,
+
+        proposalDate: noEmptyValidator,
+        companyCode: noEmptyValidator,
+        companyName: noEmptyValidator,
+        companyComCode: noEmptyValidator,
+        companyComName: noEmptyValidator,
+        insuranceMark: noEmptyValidator,
+        businessNature: noEmptyValidator,
+        busiType: noEmptyValidator,
+        byMyself: noEmptyValidator,
+        singleMode: noEmptyValidator,
+        identifyNumber: noEmptyValidator,
+        insuredrType: noEmptyValidator,
+        insureNameD: noEmptyValidator,
+        identifyTypeD: noEmptyValidator,
+        identifyNumberD: noEmptyValidator,
+        partyName: noEmptyValidator
+      },
+      addCusInfo: {}, // 新增个人客户的查询
+      // 新增个人客户
+      addCustom: {
+        custName: '',
+        comCode: '',
+        comCName: '',
+        paperworkType: '',
+        idNumber: '',
+        birthDate: '',
+        isLongFlag: '0',
+        identifyValiddate: '',
+        zipCode: '',
+        phone: '',
+        mobile: '',
+        email: '',
+        sex: '',
+        familyName: '',
+        familyMembers: '',
+        familyRelation: '',
+        maritalStatus: '',
+        address: '',
+        education: '',
+        job: '',
+        modelsCode: '',
+        carNumber: '',
+        fax: '',
+        status: '',
+        country: '',
+        birthplace: '',
+        weChat: '',
+        workingUnit: '',
+        habitualResidence: '',
+        remark: ''
+      },
+      addRules: {
+        custName: noEmptyValidator,
+        comCode: noEmptyValidator,
+        comCName: noEmptyValidator,
+        paperworkType: noEmptyValidator, // 证件类型
+        idNumber: IdValidator,
+        birthDate: noEmptyValidator,
+        zipCode: PostValidator,
+        phone: phoneValidator,  // 固话校验
+        mobile: phoneNumberValidator, // 手机校验
+        email: emailValidator
+      },
+      addInfoflag: {
+        sgFlag: '1', // 身故受益人
+        scFlag: '2' // 生存受益人
+      },
+      riskRules: {   // 险种信息校验
+        riskCode: noEmptyValidator,
+        riskName: noEmptyValidator,
+        // paymentPeriod: noEmptyValidator,
+        // payrate: noEmptyValidator,
+        premium: insurtypeaddPremiumValidator2,
+        paidPremium: noEmptyValidator,
+        // number: insurtypenumberValidator,
+        addPremium: insurtypeaddPremiumValidator1
+      },
+      disabledEdit: false,
+      disabledEdit1: false,
+      isdisabled: false,
+      longFlag1: false,
+      longFlag2: false,
+      dialogTableVisibleInsert: false,
+      dialogTableVisibleQuery: false,
+      dialogTableVisibleCode: false,
+      dialogTableOrg: false,
+      identifyValiddate: false,
+      dialogInsurer: false, // 投保人代码
+      dialogTableVisibleAdd: false, // 新增个人客户弹框
+      dialogsustomerOrg: false, // 客户所属机构
+      insurTypeDialog: false, // 险种代码的弹框
+      searchcode: {
+        customerCodeOrName: '',
+        idNumber: '',
+        pageSize: '10'
+      },
+      rule: {
+        'lifePCMainCondition.policyNo': noEmptyValidator,
+        'lifePCMainCondition.proposalDate': noEmptyValidator,
+        'lifePCMainCondition.acceptDate': noEmptyValidator,
+        'lifePCMainCondition.generateDate': noEmptyValidator,
+        'lifePCMainCondition.companyCode': noEmptyValidator,
+        'lifePCMainCondition.companyName': noEmptyValidator,
+        'lifePCMainCondition.companyComCode': noEmptyValidator,
+        'lifePCMainCondition.companyComName': noEmptyValidator,
+        'lifePCMainCondition.byMyself': noEmptyValidator,
+        'lifePCMainCondition.singleMode': noEmptyValidator,
+        'lifePartyCondition.insureName': noEmptyValidator,
+        'lifePartyCondition.identifyType': noEmptyValidator,
+        'lifePartyCondition.identifyNumber': noEmptyValidator,
+        'lifePartyCondition.insuredrType': noEmptyValidator,
+        'lifePCMainCondition.handlerCode': noEmptyValidator
+      },
+      insurerCode: {
+        pageSize: '10'
+      },
+      idnumberDisable: false,
+      searchcOrg: {}, // 客户所属机构的查询对象
+      companyCode: '',
+      insurantInfosValid: '', // 被保险人信息校验
+      deathInfosValid: '', // 身故受益人信息校验
+      liveInfosValid: '', // 生存受益人信息校验
+      insuTypeInfosValid: '', // 险种信息校验
+
+      _basicInfo: '0',
+      _insurer: '0',
+      _insurered: '0',
+      _death: '0',
+      _live: '0',
+      _seller: '0',
+      _type: '0',
+      _pay: '0',
+
+      infoCom: {}, // 保险公司代码查询
+      judgeage: '',
+      addcheck: {}, // 新增客户的时候查询是否已经存在
+      addCheckSame: {}, // 相似客户查询
+      riskList: {},
+      riskListData: [], // 险种数据
+      riskIndex: '',
+      riskmainFlag: '', // 判断主险个数
+      disableDel: false,  // 自保件时  被保险人的增删按钮置灰
+      disableAdd: false,
+      Birhdate: false,
+      dissex: false,
+      loading: '',
+      sizeList: [5, 10, 20, 50],
+      riskCode: [],  // 险种信息查询出来的数据
+      riskcodeTotals: 0,  // 险种查询出来的总条数
+      // customOfOrg: [],
+      // totalsOrg: ''
+      addInfo: { // 提交
+        lifePCMainCondition: {},  // 基本信息    和     业务员信息
+        lifePartyCondition: {}, // 投保人信息
+        lifePartyConditionDList: [], // 被保人信息
+        lifePartyTConditionList: [], // 身故受益人
+        lifePartyAConditionList: [], // 生存受益人
+        lifeCItemKindConditionListTwo: [], // 险种信息
+        lifeFeeCondition: {} // 缴费信息
+      },
+      bfhj: 0
+    }
+  },
+  // 里面放自执行函数
+  mounted () {
+    this.clacMargin()
+    window.onresize = this.clacMargin()
+  },
+  watch: {
+    zhihuiFlag (val) {  // 被保险人增加删除按钮置灰
+      if (val === '1') {
+        this.disableDel = true
+        this.disableAdd = true
+      } else if (val === '0') {
+        this.disableDel = false
+        this.disableAdd = false
+      }
+    },
+    byMyself (val) {
+      if (val === '1') {
+        this.InsureantInfos.splice(1, this.InsureantInfos.length - 1)
+      }
+    }
+  },
+  methods: {
+    ...mapActions([
+      'queryproposalForm_1',
+      'queryPolicyById_1',
+      'getInsurers_1',
+      'getInsurersOrg_1',
+      'customerFind_1',
+      'customerOfOrg_1',
+      'customerAdd_1',
+      'insurPolicyAdd_1',
+      'checkCustomerIsExist_1',
+      'riskcode_1',
+      'checkCustomerSimilar_1',
+      'blackExist_1' // 判断客户是否为黑灰名单
+    ]),
+    clacMargin () {
+      setTimeout(() => {
+        var width = document.getElementById('sideBar') ? document.getElementById('sideBar').clientWidth : 0
+
+        this.$store.dispatch('changeView', width ? width + 20 : width)
+      }, 0)
+    },
+    childByValue (companyCode) {
+      this.companyCode = companyCode
+      // alert('传到父组件的companyCode：' + JSON.stringify(this.companyCode))
+    },
+    // 判断身份证年龄并带入到出生年月里
+    idtypeNumber () {
+      // 判断客户是否存在
+      this.addcheck.paperworkType = this.addCustom.paperworkType
+      this.addcheck.idNumber = this.addCustom.idNumber
+      if (this.addcheck.idNumber !== '') {
+        this.checkCustomerIsExist_1(this.addcheck).then(result => {
+          if (result.flag === '0') {
+            this.open('error', '该客户已存在，请重新录入！')
+            this.addCustom.idNumber = ''
+          } else {
+          // 把证件号带过来的性别和出生年月放入input框里
+            let _idTypehao = this.addCustom.idNumber.substr(6, 8)
+            let idTypehao = _idTypehao.substring(0, 4) + '-' + _idTypehao.substring(4, 6) + '-' + _idTypehao.substr(6)
+            this.addCustom.birthDate = idTypehao
+            this.idnumberDisable = true
+
+            let _sex = this.addCustom.idNumber.substr(16, 1)
+
+            if (_sex === '1' || _sex === '3' || _sex === '5' || _sex === '7' || _sex === '9') {
+              this.addCustom.sex = '0'
+              this.Birhdate = true
+              this.dissex = true
+            } else if (_sex === '2' || _sex === '4' || _sex === '6' || _sex === '8' || _sex === '0') {
+              this.addCustom.sex = '1'
+              this.dissex = true
+              this.Birhdate = true
+            }
+            if (this.addCustom.custName !== '' && this.addCustom.sex !== '' && this.addCustom.birthDate !== '') {
+              // 判断相似客户
+              this.addCheckSame.custName = this.addCustom.custName
+              this.addCheckSame.sex = this.addCustom.sex
+              this.addCheckSame.birthDate = this.addCustom.birthDate
+              this.checkCustomerSimilar_1(this.addCheckSame).then(result => {
+                if (result.flag === '0') {
+                  this.$confirm('该客户与系统中的某位客户相似, 是否继续录入?', '温馨提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                  }).then(() => {
+                    this.$message({
+                      type: 'success',
+                      message: '继续录入!'
+                    })
+                  }).catch(() => {
+                    this.addCustom.custName = ''
+                    this.addCustom.sex = ''
+                    this.addCustom.birthDate = ''
+                  })
+                }
+              })
+            }
+          }
+        })
+      }
+    },
+    cIdentifyNumber (val) {
+      this.addCustom.idNumber = ''
+      this.addCustom.birthDate = ''
+      this.addCustom.sex = ''
+      this.idnumberDisable = false
+      this.dissex = false
+      if (val === '1' || val === '2') {
+        this.idnumberDisable = true
+        this.dissex = true
+        this.addRules['idNumber'] = this.IdValidator
+      } else {
+        this.addRules['idNumber'] = this.noEmptyValidator
+      }
+    },
+    clientClose () {
+      this.dialogTableVisibleAdd = false
+      this.$refs['addCustom'].resetFields() // 清空校验
+      this.addCustom.custName = ''
+      this.addCustom.comCode = ''
+      this.addCustom.comCName = ''
+      this.addCustom.paperworkType = ''
+      this.addCustom.idNumber = ''
+      this.addCustom.birthDate = ''
+      this.addCustom.identifyValiddate = ''
+      this.addCustom.longFlag2 = false
+      this.addCustom.sex = ''
+      this.addCustom.familyName = ''
+      this.addCustom.familyMembers = ''
+      this.addCustom.familyRelation = ''
+      this.addCustom.maritalStatus = ''
+      this.addCustom.address = ''
+      this.addCustom.zipCode = ''
+      this.addCustom.education = ''
+      this.addCustom.job = ''
+      this.addCustom.modelsCode = ''
+      this.addCustom.carNumber = ''
+      this.addCustom.mobile = ''
+      this.addCustom.phone = ''
+      this.addCustom.fax = ''
+      this.addCustom.email = ''
+      this.addCustom.status = ''
+      this.addCustom.country = ''
+      this.addCustom.birthplace = ''
+      this.addCustom.weChat = ''
+      this.addCustom.workingUnit = ''
+      this.addCustom.habitualResidence = ''
+      this.addCustom.remark = ''
+    },
+    addRiskItem () { // 添加险种信息
+      let addPost = {
+        'riskCode': '',
+        'riskName': '',
+        'mainFlag': '',
+        'paymentPeriod': '',
+        'payrate': '',
+        'premium': '',
+        'riskPremium': '',
+        'number': '0',
+        'addPremium': '',
+        'freeDate': '',
+        'tbrFreeFlag1': '',
+        'bbrFreeFlag1': '',
+        'tbrFreeFlag': '',
+        'bbrFreeFlag': '',
+        'startDate': '',
+        'endDate': '',
+        'lifeFlag': '',
+        'lifeFlag1': '',
+        'payCycle': ''
+      }
+
+      this.info.lifeCItemKindConditionList.push(addPost)
+    },
+    deletRiskItem (index) { // 删除险种信息
+      this.info.lifeCItemKindConditionList.splice(index, 1)
+      this.addpremium(index)
+    },
+    checkcusExist () { // 判断客户是否存在
+      this.addcheck.paperworkType = this.addCustom.paperworkType
+      this.addcheck.idNumber = this.addCustom.idNumber
+      this.checkCustomerIsExist_1(this.addcheck).then(result => {
+        if (result.flag === '0') {
+          this.open('error', '该客户已存在，请重新录入！')
+        }
+      })
+    },
+    checkSame () {  // 判断相似客户
+      if (this.addCustom.custName !== '' && this.addCustom.sex !== '' && this.addCustom.birthDate !== '') {
+        this.addCheckSame.custName = this.addCustom.custName
+        this.addCheckSame.sex = this.addCustom.sex
+        this.addCheckSame.birthDate = this.addCustom.birthDate
+        this.checkCustomerSimilar_1(this.addCheckSame).then(result => {
+          if (result.flag === '0') {
+            this.$confirm('该客户与系统中的某位客户相似, 是否继续录入?', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+              this.$message({
+                type: 'success',
+                message: '继续录入!'
+              })
+            }).catch(() => {
+              this.addCustom.custName = ''
+              this.addCustom.sex = ''
+              this.addCustom.birthDate = ''
+            })
+          }
+        })
+      }
+    },
+    // 判断户口本
+    idtypeNumber1 () {
+      if (this.addCustom.idNumber === '') {
+
+      } else {
+        //
+        if (this.addCustom.idNumber.length === 18) {
+          let _idTypehao = this.addCustom.idNumber.substr(6, 8)
+          let idTypehao = _idTypehao.substring(0, 4) + '-' + _idTypehao.substring(4, 6) + '-' + _idTypehao.substr(6)
+          this.jsGetAge(idTypehao)
+          if (this.judgeage > 18) {
+            this.open('error', '大于18岁不能选择户口本，请重新选择!')
+            this.addCustom.idNumber = ''
+          }
+        }
+      }
+      // 判断客户是否存在
+      this.addcheck.paperworkType = this.addCustom.paperworkType
+      this.addcheck.idNumber = this.addCustom.idNumber
+      if (this.addcheck.idNumber !== '') {
+        this.checkCustomerIsExist_1(this.addcheck).then(result => {
+          if (result.flag === '0') {
+            this.open('error', '该客户已存在，请重新录入！')
+            this.addCustom.idNumber = ''
+          } else {
+          // 把证件号带过来的性别和出生年月放入input框里
+            let _idTypehao = this.addCustom.idNumber.substr(6, 8)
+            let idTypehao = _idTypehao.substring(0, 4) + '-' + _idTypehao.substring(4, 6) + '-' + _idTypehao.substr(6)
+            this.addCustom.birthDate = idTypehao
+            this.idnumberDisable = true
+
+            let _sex = this.addCustom.idNumber.substr(16, 1)
+
+            if (_sex === '1' || _sex === '3' || _sex === '5' || _sex === '7' || _sex === '9') {
+              this.addCustom.sex = '0'
+              this.Birhdate = true
+              this.dissex = true
+            } else if (_sex === '2' || _sex === '4' || _sex === '6' || _sex === '8' || _sex === '0') {
+              this.addCustom.sex = '1'
+              this.dissex = true
+              this.Birhdate = true
+            }
+          }
+        })
+      }
+    },
+    query (page) {
+      // this.info.current = page
+      // alert(this.info.currentPage)
+      this.queryproposalForm_1(this.info)
+    },
+    riskRowhandle (row, event, column) {   // 险种信息数据放入
+      this.closeDailog().then(() => {
+        this.info.lifeCItemKindConditionList[this.riskIndex].riskCode = row.riskcode
+        this.info.lifeCItemKindConditionList[this.riskIndex].riskName = row.riskname
+        this.info.lifeCItemKindConditionList[this.riskIndex].mainFlag = row.mainorextrflag
+        this.info.lifeCItemKindConditionList[this.riskIndex].paymentPeriod = row.paymentperiod
+        if (row.paycycle === '1' && (row.payway === '' || row.payway === null)) { // alert('趸缴')
+          this.info.lifeCItemKindConditionList[this.riskIndex].paymentPeriod = ''
+          this.info.lifeCItemKindConditionList[this.riskIndex].payrate = '4'
+          this.info.lifeCItemKindConditionList[this.riskIndex].payCycle = '1'
+        } else if (row.paycycle === '3' && (row.payway === '' || row.payway === null)) {  // 不定期
+          this.info.lifeCItemKindConditionList[this.riskIndex].paymentPeriod = ''
+          this.info.lifeCItemKindConditionList[this.riskIndex].payrate = ''
+          this.info.lifeCItemKindConditionList[this.riskIndex].payCycle = '3'
+          this.info.lifeCItemKindConditionList[this.riskIndex].pinlv = true
+        } else if (row.paycycle === '4') {  // 缴至年龄险
+          this.info.lifeCItemKindConditionList[this.riskIndex].paymentPeriod = ''
+          this.info.lifeCItemKindConditionList[this.riskIndex].payCycle = '4'
+          this.info.lifeCItemKindConditionList[this.riskIndex].payrate = row.payway
+        } else {
+          this.info.lifeCItemKindConditionList[this.riskIndex].payrate = row.payway
+        }
+
+        if (row.freeflag === '1') {
+          this.info.lifeCItemKindConditionList[this.riskIndex].feeFlagTag = false
+        } else if (row.freeflag === '0') {
+          this.info.lifeCItemKindConditionList[this.riskIndex].feeFlagTag = true
+        }
+
+      // this.disab = row.freeflag
+      // if (row.freeflag === '1') {
+      //   this.disabledEdit1 = true
+      // } else {
+      //   this.disabledEdit1 = false
+      // }
+        this.insurTypeDialog = false
+        this.riskClose()
+      })
+    },
+    addpremium (index) { // 应缴保费总计
+      let countAll = 0
+      this.riskIndex = index
+      let premium = parseFloat(this.info.lifeCItemKindConditionList[this.riskIndex].premium)
+      let fanhui = this.toDecimal2(premium)
+      this.info.lifeCItemKindConditionList[this.riskIndex].premium = fanhui
+      this.info.lifeCItemKindConditionList.forEach((item, index) => {
+        countAll = countAll + Number(item.premium)
+      })
+
+      if (!isNaN(countAll)) {
+        // this.info.lifeFeeCondition.sumPremium = countAll
+        this.$store.state.proposalForm.baofeiheji = countAll
+        //
+      } else {
+        this.$store.state.proposalForm.baofeiheji = ''
+      }
+    },
+
+    toDecimal2 (x) {
+      let f = parseFloat(x)
+      if (isNaN(f)) {
+        return false
+      }
+      f = Math.round(x * 100) / 100
+      let s = f.toString()
+      let rs = s.indexOf('.')
+      if (rs < 0) {
+        rs = s.length
+        s += '.'
+      }
+      while (s.length <= rs + 2) {
+        s += '0'
+      }
+      return s
+    },
+    riskPremiumVail (index) {  // 保险金额的校验
+      this.riskIndex = index
+      if (this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium !== '') {
+        if (this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium === '0' || this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium === 0) {
+          this.$confirm('此金额值不大于0，确定继续！', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            let riskPremium = parseFloat(this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium)
+            let fanhui = this.toDecimal2(riskPremium)
+
+            this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium = fanhui
+          }).catch(() => {
+            this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium = ''
+          })
+        } else if (this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium < 0) {
+          this.open('error', '此金额值不能小于0，请仔细检查！')
+          this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium = ''
+        } else {
+          let riskPremium = parseFloat(this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium)
+          let fanhui = this.toDecimal2(riskPremium)
+
+          this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium = fanhui
+        }
+      } else {
+        this.info.lifeCItemKindConditionList[this.riskIndex].riskPremium = ''
+      }
+    },
+    riskaddPremiumVail (index) {  // 加费金额
+      this.riskIndex = index
+      if (this.info.lifeCItemKindConditionList[this.riskIndex].addPremium !== '') {
+        let addPremium = parseFloat(this.info.lifeCItemKindConditionList[this.riskIndex].addPremium)
+        let fanhui = this.toDecimal2(addPremium)
+
+        this.info.lifeCItemKindConditionList[this.riskIndex].addPremium = fanhui
+      } else {
+        this.info.lifeCItemKindConditionList[this.riskIndex].addPremium = ''
+      }
+    },
+    /** ******************开始********************** */
+    handleSizeChange (val) {
+      this.searchcode.pageSize = val
+      this.searchcode.currentPage = 1
+      alert(JSON.stringify(this.searchcode))
+      this.customerFind_1(this.searchcode)
+    },
+    // 客户信息查询的分页 跳转至第几页
+    currentChangeval (val) {
+      // alert('va:' + va)
+      this.searchcode.currentPage = val
+      alert(JSON.stringify(this.searchcode))
+      this.customerFind_1(this.searchcode)
+    },
+    /** ******************结束********************** */
+    riskForm () {
+      this.info.lifeCItemKindConditionList.forEach((item, index) => { // 险种
+        if (item.tbrFreeFlag1) {
+          item.tbrFreeFlag = true
+        } else {
+          item.tbrFreeFlag = false
+        }
+        if (item.bbrFreeFlag1) {
+          item.bbrFreeFlag = true
+        } else {
+          item.bbrFreeFlag = false
+        }
+
+        if (item.lifeFlag1) {
+          item.lifeFlag = true
+        } else {
+          item.lifeFlag = false
+        }
+        if (item.feeFlagTag) {
+          item.freeFlag = '1'
+        } else {
+          item.freeFlag = '0'
+        }
+      })
+      let risktypeinfo = []
+      this.info.lifeCItemKindConditionList.forEach((item, index) => {
+        risktypeinfo.push(item.mainFlag)  // 主险标记
+      })
+    },
+
+    /** *******************************************增加的提交表单 ***********************************/
+
+    _insertForm (formName) { // 保存
+      // 子组件代码都通过refs获取
+      if (this.addInfoflag.sgFlag === '2') { // 身故受益人为指定受益人
+        // 验证受益份额必须为100
+        let tempIndex = []
+        let verifyTemp = [0, 0, 0, 0, 0]
+        for (let i = 0; i < this.deathBenefitInfos.length; i++) { // 每次都会对所有的受益人进行加和，保证不会缓存
+          tempIndex.push(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.beneficialOrder) - 1)
+          switch (this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.beneficialOrder) {
+            case '1':
+              verifyTemp[0] += isNaN(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)
+              break
+            case '2':
+              verifyTemp[1] += isNaN(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)
+              break
+            case '3':
+              verifyTemp[2] += isNaN(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)
+              break
+            case '4':
+              verifyTemp[3] += isNaN(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)
+              break
+            case '5':
+              verifyTemp[4] += isNaN(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)
+              break
+            default:
+              break
+          }
+        }
+        this._death = '1'
+        for (let i = 0; i < verifyTemp.length; i++) {
+          if (verifyTemp[i] !== 100 && tempIndex.indexOf(i) !== -1) {
+            this.open('error', '请检查身故受益人相同受益顺序的受益份额总和是否为100%!')
+            this._death = '0'
+            return
+          }
+        }
+      }
+      if (this.addInfoflag.scFlag === '3') { // 生存受益人为其他
+        let tempIndex = []
+        let verifyTemp = [0, 0, 0, 0, 0]
+        for (let i = 0; i < this.lifeBenefitInfos.length; i++) { // 每次都会对所有的受益人进行加和，保证不会缓存
+          tempIndex.push(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.beneficialOrder) - 1)
+          switch (this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.beneficialOrder) {
+            case '1':
+              verifyTemp[0] += isNaN(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)
+              break
+            case '2':
+              verifyTemp[1] += isNaN(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)
+              break
+            case '3':
+              verifyTemp[2] += isNaN(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)
+              break
+            case '4':
+              verifyTemp[3] += isNaN(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)
+              break
+            case '5':
+              verifyTemp[4] += isNaN(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)
+              break
+            default:
+              break
+          }
+        }
+        this._live = '1'
+        for (let i = 0; i < verifyTemp.length; i++) {
+          if (verifyTemp[i] !== 100 && tempIndex.indexOf(i) !== -1) {
+            this.open('error', '请检查生存受益人相同受益顺序的受益份额总和是否为100%!')
+            this._live = '0'
+            return
+          }
+        }
+      }
+      // 基本信息传到父组件
+      let basicInfos = this.$refs.basicInfo
+      if(new Date(basicInfos.lifePCMainConditionForm.proposalDate).getTime() >= new Date(this.$refs.basicInfo.stopDate) ) {
+        this.$alert('投保日期存在异常，请联系总公司','提示', {
+          confirmButtonText: '确定',
+          center:'center'
+        });
+        return false
+      }
+      if (basicInfos.validateForm()) {
+        this.addInfo.lifePCMainCondition = basicInfos.lifePCMainConditionForm
+        this._basicInfo = '1'
+      } else {
+        this._basicInfo = '0'
+        this.open('error', '请检查基本信息是否填写完整且正确!')
+        return false
+      }
+
+      // 投保人信息传到父组件
+      let insurers = this.$refs.insurer
+      this.addInfo.lifePartyCondition = insurers.lifePartyConditionForm
+      // if (insurers.validateForm()) {
+      //
+      //   this.addInfo.lifePartyCondition = insurers.lifePartyConditionForm
+      //   if (this.addInfo.lifePartyCondition.insureTel === '' && this.addInfo.lifePartyCondition.mobilePhone === '') {
+      //     this.open('error', '投保人联系方式至少填写一个!')
+      //     return false
+      //   } else {
+      //     // if ((this.addInfo.lifePartyCondition.identifyValiddate === '' && (this.addInfo.lifePartyCondition.longFlag === '' || this.addInfo.lifePartyCondition.longFlag === null)) ||
+      //     //     (this.addInfo.lifePartyCondition.identifyValiddate === '' && this.addInfo.lifePartyCondition.longFlag === '0')) {
+      //     //   this.open('error', '请选择投保人的证件有效期!')
+      //     //   return false
+      //     // } else {
+      //     //   this._insurer = '1'
+      //     // }
+      //     this._insurer = '1'
+      //   }
+      // } else {
+      //
+      //   this._insurer = '0'
+      //   this.open('error', '请检查投保人信息是否填写完整且正确!')
+      //   return false
+      // }
+      this._insurer = '1'
+
+      // 被保险人信息传递给父组件
+
+      let insurantInfos = this.$refs.insurantInfo
+      let len = insurantInfos ? (insurantInfos.length ? insurantInfos.length : 0) : 0
+
+      let temp = []
+      let insuredvalidTemp = [] // 校验是否通过的数组
+      for (let i = 0; i < len; i++) {
+        this.insurantInfosValid = insurantInfos[i].validateForm()
+
+        temp.push(insurantInfos[i].insertForm1)
+        insuredvalidTemp.push(this.insurantInfosValid)
+      }
+
+      // if (insuredvalidTemp.indexOf(false) > -1) {
+      //
+      //   this._insurered = '0'
+      //   this.open('error', '请检查被保险人信息是否填写完整且正确!')
+      //   return false
+      // } else {
+      //
+      //   this.addInfo.lifePartyConditionDList = temp
+      //   try {
+      //     // if ((this.addInfo.lifePartyConditionDList[0].identifyNumberD !== this.addInfo.lifePartyCondition.identifyNumber && this.addInfo.lifePartyConditionDList[0].identifyTypeD !== this.addInfo.lifePartyCondition.identifyType) && this.addInfo.lifePartyCondition.insuredrType === '1') {
+      //     //   this.open('error', '“与被保险人关系”请选择”本人“!')
+      //     //   return false
+      //     // }
+      //     // if (this.addInfo.lifePartyConditionDList.length === 1 && this.addInfo.lifePartyCondition.insuredrType !== '1' && (this.addInfo.lifePartyConditionDList[0].identifyTypeD === this.addInfo.lifePartyCondition.identifyTypeD || this.addInfo.lifePartyConditionDList[0].identifyNumberD === this.addInfo.lifePartyCondition.identifyNumber)) {
+      //     //   this.open('error', '“与被保人关系”请选择“本人”!')
+      //     //   return false
+      //     // }
+
+      //     // （投保人于被保人证件号不同 &&  证件类型不同 ） &&  关系又为本人  一
+      //     // alert('被保人证件号:' + JSON.stringify(this.addInfo.lifePartyConditionDList[0].identifyNumberD))
+      //     // alert('投保人证件号:' + JSON.stringify(this.addInfo.lifePartyCondition.identifyNumber))
+      //     // alert('被保人证件类型:' + JSON.stringify(this.addInfo.lifePartyConditionDList[0].identifyTypeD))
+      //     // alert('投保人证件类型:' + JSON.stringify(this.addInfo.lifePartyCondition.identifyType))
+      //     // alert('投保人与被保人关系:' + JSON.stringify(this.addInfo.lifePartyCondition.insuredrType))
+      //     if ((this.addInfo.lifePartyConditionDList[0].identifyNumberD !== this.addInfo.lifePartyCondition.identifyNumber || this.addInfo.lifePartyConditionDList[0].identifyTypeD !== this.addInfo.lifePartyCondition.identifyType) && this.addInfo.lifePartyCondition.insuredrType === '1') {
+      //       this.open('error', '投保人与被保人关系选择不正确!')
+      //       return false
+      //     }
+      //     // 只有一个被保人 && 关系不为本人 && 证件号证件类型都相同 (根据选择来看应该是本人才对)
+      //     // if (this.addInfo.lifePartyConditionDList.length === 1 && this.addInfo.lifePartyCondition.insuredrType === '1' && (this.addInfo.lifePartyConditionDList[0].identifyTypeD === this.addInfo.lifePartyCondition.identifyTypeD || this.addInfo.lifePartyConditionDList[0].identifyNumberD === this.addInfo.lifePartyCondition.identifyNumber)) {
+      //     if (this.addInfo.lifePartyConditionDList.length === 1 && this.addInfo.lifePartyCondition.insuredrType !== '1' && (this.addInfo.lifePartyConditionDList[0].identifyTypeD === this.addInfo.lifePartyCondition.identifyType && this.addInfo.lifePartyConditionDList[0].identifyNumberD === this.addInfo.lifePartyCondition.identifyNumber)) {
+      //       this.open('error', '投保人与被保人关系选择不正确!')
+      //       return false
+      //     }
+      //   } catch (e) {
+      //     this.open('error', '信息校验不通过，请检查是否正确填写！')
+      //     return false
+      //   }
+      //   let benefit = this.addInfo.lifePartyConditionDList
+      //   let _insuredDate = []
+      //   let _insuredLong = []
+      //   for (let i = 0; i < benefit.length; i++) {
+      //     _insuredDate.push(benefit[i].identifyValiddateD)
+      //     if (benefit[i].longFlagD === '' || benefit[i].longFlagD === null || (this.isEmpty(benefit[i].identifyValiddateD) && (benefit[i].longFlagD === 'undefined' || benefit[i].longFlagD === undefined))) {
+      //       if (this.isEmpty(document.querySelector(`#InsurantInfo${i} .is-checked`))) {
+      //         benefit[i].longFlagD = '0'
+      //       } else {
+      //         benefit[i].longFlagD = '1'
+      //       }
+      //     }
+      //     _insuredLong.push(benefit[i].longFlagD)
+      //     // if ((benefit[i].identifyValiddateD === '' && benefit[i].longFlagD === '') ||
+      //     //     (benefit[i].identifyValiddateD === '' && benefit[i].longFlagD === '0')) {
+      //     //   // alert('有被保险人的证件有效期未填写完整')
+      //     //   this.open('error', '被保险人的证件有效期未填写完整!')
+      //     //   return false
+      //     // }
+      //     if (this.isEmpty(benefit[i].identifyValiddateD) && (benefit[i].longFlagD === '0' || this.isEmpty(benefit[i].longFlagD))) {
+      //       this.open('error', '被保险人的证件有效期未填写完整!')
+      //       return false
+      //     }
+      //     if (benefit[i].insureTelD === '' && benefit[i].mobilePhoneD === '') {
+      //       this.open('error', '被保险人的联系方式请至少填写一个!')
+      //       return false
+      //     }
+
+      //     // 判断重复
+      //     let flag = true
+      //     benefit.forEach((item, index) => {
+      //       if (i !== index && benefit[i].identifyNumberD === item.identifyNumberD && benefit[i].identifyTypeD === item.identifyTypeD) {
+      //         this.open('error', '被保险人信息选择重复!')
+      //         flag = false
+      //         return flag
+      //       }
+      //     })
+      //     if (!flag) {
+      //       return false
+      //     }
+      //   }
+      //   this.addInfo.lifePartyConditionDList = benefit
+      //
+      //   this._insurered = '1'
+      // }
+      this.addInfo.lifePartyConditionDList = temp
+      // try {
+      //   // （投保人于被保人证件号不同 &&  证件类型不同 ） &&  关系又为本人  一
+      //   if ((this.addInfo.lifePartyConditionDList[0].identifyNumberD !== this.addInfo.lifePartyCondition.identifyNumber || this.addInfo.lifePartyConditionDList[0].identifyTypeD !== this.addInfo.lifePartyCondition.identifyType) && this.addInfo.lifePartyCondition.insuredrType === '1') {
+      //     this.open('error', '投保人与被保人关系选择不正确!')
+      //     return false
+      //   }
+      //   // 只有一个被保人 && 关系不为本人 && 证件号证件类型都相同 (根据选择来看应该是本人才对)
+      //   // if (this.addInfo.lifePartyConditionDList.length === 1 && this.addInfo.lifePartyCondition.insuredrType === '1' && (this.addInfo.lifePartyConditionDList[0].identifyTypeD === this.addInfo.lifePartyCondition.identifyTypeD || this.addInfo.lifePartyConditionDList[0].identifyNumberD === this.addInfo.lifePartyCondition.identifyNumber)) {
+      //   if (this.addInfo.lifePartyConditionDList.length === 1 && this.addInfo.lifePartyCondition.insuredrType !== '1' && (this.addInfo.lifePartyConditionDList[0].identifyTypeD === this.addInfo.lifePartyCondition.identifyType && this.addInfo.lifePartyConditionDList[0].identifyNumberD === this.addInfo.lifePartyCondition.identifyNumber)) {
+      //     this.open('error', '投保人与被保人关系选择不正确!')
+      //     return false
+      //   }
+      // } catch (e) {
+      //   this.open('error', '信息校验不通过，请检查是否正确填写！')
+      //   return false
+      // }
+      let benefit = this.addInfo.lifePartyConditionDList
+      let _insuredDate = []
+      let _insuredLong = []
+      for (let i = 0; i < benefit.length; i++) {
+        _insuredDate.push(benefit[i].identifyValiddateD)
+        if (benefit[i].longFlagD === '' || benefit[i].longFlagD === null || (this.isEmpty(benefit[i].identifyValiddateD) && (benefit[i].longFlagD === 'undefined' || benefit[i].longFlagD === undefined))) {
+          if (this.isEmpty(document.querySelector(`#InsurantInfo${i} .is-checked`))) { // 判断证件有效期是否永久有效
+            benefit[i].longFlagD = '0'
+          } else {
+            benefit[i].longFlagD = '1'
+          }
+        }
+        _insuredLong.push(benefit[i].longFlagD)
+        // 判断重复
+        let flag = true
+        benefit.forEach((item, index) => {
+          if (i !== index && benefit[i].identifyNumberD === item.identifyNumberD && benefit[i].identifyTypeD === item.identifyTypeD) {
+            this.open('error', '被保险人信息选择重复!')
+            flag = false
+            return flag
+          }
+        })
+        if (!flag) {
+          return false
+        }
+      }
+      this.addInfo.lifePartyConditionDList = benefit
+
+      this._insurered = '1'
+
+      // 身故受益人信息传递给父组件
+      if (this.addInfoflag.sgFlag === '2') { // 身故受益人为指定受益人
+        let deathInfos = this.$refs.deathInfo
+        let deathLen = deathInfos ? (deathInfos.length ? deathInfos.length : 0) : 0
+        let deathInfosTemp = []
+        let deathvaildTemp = [] // 校验是否通过的数组
+        for (let i = 0; i < deathLen; i++) {
+          this.deathInfosValid = deathInfos[i].validateForm()
+
+          deathInfosTemp.push(deathInfos[i].lifePartyTConditionListForm)
+          deathvaildTemp.push(this.deathInfosValid)
+        }
+
+        // if (deathvaildTemp.indexOf(false) > -1) {
+        //
+        //   this._death = '0'
+        //   this.open('error', '请检查身故受益人信息是否填写完整且正确!')
+        //   return false
+        // } else {
+        //
+        //   this.addInfo.lifePartyTConditionList = deathInfosTemp
+        //   // alert(JSON.stringify(this.addInfo.lifePartyTConditionList))
+        //   let benefit = this.addInfo.lifePartyTConditionList
+        //   let deatharrbenefit = []
+        //   let _date = []
+        //   let _long = []
+        //   for (let i = 0; i < benefit.length; i++) {
+        //     deatharrbenefit.push(benefit[i].benefitShare)
+        //     _date.push(benefit[i].identifyValiddate)
+        //     _long.push(benefit[i].longFlag)
+        //     // if (benefit[i].identifyValiddate === '' && benefit[i].longFlag === '0') {
+        //     //   this.open('error', '身故受益人的证件有效期未填写完整!')
+        //     //   return false
+        //     // }
+        //     if (this.isEmpty(benefit[i].identifyValiddate) && (benefit[i].longFlag === '0' || this.isEmpty(benefit[i].longFlag)) && this.isEmpty(document.querySelector(`#deathBenefitInfo${i} .is-checked`))) {
+        //       this.open('error', '身故受益人的证件有效期未填写完整!')
+        //       return false
+        //     }
+        //     // 判断重复
+        //     let flag = true
+        //     benefit.forEach((item, index) => {
+        //       if (i !== index && benefit[i].identifyNumber === item.identifyNumber && benefit[i].identifyType === item.identifyType) {
+        //         this.open('error', '身故受益人信息选择重复!')
+        //         flag = false
+        //         return flag
+        //       }
+        //     })
+        //     if (!flag) {
+        //       return false
+        //     }
+        //   }
+
+        //   // let adddeathbenefit = 0
+        //   // for (let i = 0; i < deatharrbenefit.length; i++) {
+        //   //   adddeathbenefit += parseInt(deatharrbenefit[i])
+        //   // }
+        //   // //
+        //   // //
+        //   // if (adddeathbenefit === 100) {
+        //   //   this._death = '1'
+        //   // } else {
+        //   //   this.open('error', '请检查身故受益人受益份额总和是否为100%!')
+        //   //   return false
+        //   // }
+        // }
+        this.addInfo.lifePartyTConditionList = deathInfosTemp
+        // alert(JSON.stringify(this.addInfo.lifePartyTConditionList))
+        let benefit = this.addInfo.lifePartyTConditionList
+        let deatharrbenefit = []
+        let _date = []
+        let _long = []
+        for (let i = 0; i < benefit.length; i++) {
+          deatharrbenefit.push(benefit[i].benefitShare)
+          _date.push(benefit[i].identifyValiddate)
+          _long.push(benefit[i].longFlag)
+          // if (benefit[i].identifyValiddate === '' && benefit[i].longFlag === '0') {
+          //   this.open('error', '身故受益人的证件有效期未填写完整!')
+          //   return false
+          // }
+          // if (this.isEmpty(benefit[i].identifyValiddate) && (benefit[i].longFlag === '0' || this.isEmpty(benefit[i].longFlag)) && this.isEmpty(document.querySelector(`#deathBenefitInfo${i} .is-checked`))) {
+          //   this.open('error', '身故受益人的证件有效期未填写完整!')
+          //   return false
+          // }
+          // 判断重复
+          let flag = true
+          benefit.forEach((item, index) => {
+            if (i !== index && benefit[i].identifyNumber === item.identifyNumber && benefit[i].identifyType === item.identifyType) {
+              this.open('error', '身故受益人信息选择重复!')
+              flag = false
+              return flag
+            }
+          })
+          if (!flag) {
+            return false
+          }
+        }
+      } else {
+        this._death = '1'
+        this.addInfo.lifePartyTConditionList = []
+      }
+
+      // 生存受益人信息传递给父组件
+      if (this.addInfoflag.scFlag === '3') { // 生存受益人为其他
+        let lifeInfos = this.$refs.lifeInfo
+        let livehLen = lifeInfos ? (lifeInfos.length ? lifeInfos.length : 0) : 0
+        let liveInfosTemp = []
+        let livevaildTemp = [] // 校验是否通过的数组
+        for (let i = 0; i < livehLen; i++) {
+          this.liveInfosValid = lifeInfos[i].validateForm()
+
+          liveInfosTemp.push(lifeInfos[i].lifePartyAConditionListForm)
+          livevaildTemp.push(this.liveInfosValid)
+        }
+
+        // if (livevaildTemp.indexOf(false) > -1) {
+        //
+        //   this._live = '0'
+        //   this.open('error', '请检查生存受益人信息是否填写完整且正确!')
+        //   return false
+        // } else {
+        //
+        //   this.addInfo.lifePartyAConditionList = liveInfosTemp
+        //   let benefit = this.addInfo.lifePartyAConditionList
+        //   let deatharrbenefit = []  // 受益份额
+        //   let _date = []
+        //   let _long = []
+        //   for (let i = 0; i < benefit.length; i++) {
+        //     deatharrbenefit.push(benefit[i].benefitShare)
+        //     _date.push(benefit[i].identifyValiddate)
+        //     _long.push(benefit[i].longFlag)
+        //     // if (benefit[i].identifyValiddate === '' && benefit[i].longFlag === '0') {
+        //     //   this.open('error', '有生存受益人的证件有效期未填写完整!')
+        //     //   return false
+        //     // }
+
+        //     if (this.isEmpty(benefit[i].identifyValiddate) && (benefit[i].longFlag === '0' || this.isEmpty(benefit[i].longFlag)) && this.isEmpty(document.querySelector(`#liveBenefitInfo${i} .is-checked`))) {
+        //       this.open('error', '生存受益人的证件有效期未填写完整!')
+        //       return false
+        //     }
+        //     let flag = true
+        //     benefit.forEach((item, index) => {
+        //       if (i !== index && benefit[i].identifyNumber === item.identifyNumber && benefit[i].identifyType === item.identifyType) {
+        //         this.open('error', '生存受益人信息选择重复!')
+        //         flag = false
+        //         return flag
+        //       }
+        //     })
+        //     if (!flag) {
+        //       return false
+        //     }
+        //   }
+        //   // let adddeathbenefit = 0
+        //   // for (let i = 0; i < deatharrbenefit.length; i++) {
+        //   //   adddeathbenefit += parseInt(deatharrbenefit[i])
+        //   // }
+        //   // if (adddeathbenefit === 100) {
+        //   //   this._live = '1'
+        //   // } else {
+        //   //   this.open('error', '请检查生存受益人受益份额总和是否为100%!')
+        //   //   return false
+        //   // }
+        // }
+        this.addInfo.lifePartyAConditionList = liveInfosTemp
+        let benefit = this.addInfo.lifePartyAConditionList
+        let deatharrbenefit = []  // 受益份额
+        let _date = []
+        let _long = []
+        for (let i = 0; i < benefit.length; i++) {
+          deatharrbenefit.push(benefit[i].benefitShare)
+          _date.push(benefit[i].identifyValiddate)
+          _long.push(benefit[i].longFlag)
+          // if (benefit[i].identifyValiddate === '' && benefit[i].longFlag === '0') {
+          //   this.open('error', '有生存受益人的证件有效期未填写完整!')
+          //   return false
+          // }
+
+          // if (this.isEmpty(benefit[i].identifyValiddate) && (benefit[i].longFlag === '0' || this.isEmpty(benefit[i].longFlag)) && this.isEmpty(document.querySelector(`#liveBenefitInfo${i} .is-checked`))) {
+          //   this.open('error', '生存受益人的证件有效期未填写完整!')
+          //   return false
+          // }
+          let flag = true
+          benefit.forEach((item, index) => {
+            if (i !== index && benefit[i].identifyNumber === item.identifyNumber && benefit[i].identifyType === item.identifyType) {
+              this.open('error', '生存受益人信息选择重复!')
+              flag = false
+              return flag
+            }
+          })
+          if (!flag) {
+            return false
+          }
+        }
+      } else {
+        this._live = '1'
+        this.addInfo.lifePartyAConditionList = []
+      }
+
+       // 业务员信息传到父组件
+      let sellerInfo = this.$refs.sellerInfo
+
+      if (sellerInfo.validateForm()) {
+        this.addInfo.lifePCMainCondition.handlerName = sellerInfo.sellerForm.handlerName
+        this.addInfo.lifePCMainCondition.comCode = sellerInfo.sellerForm.comCode
+        this.addInfo.lifePCMainCondition.comName = sellerInfo.sellerForm.comName
+        this.addInfo.lifePCMainCondition.introduceType = sellerInfo.sellerForm.introduceType
+        this.addInfo.lifePCMainCondition.introduceCode = sellerInfo.sellerForm.introduceCode
+        this.addInfo.lifePCMainCondition.handlerCode = sellerInfo.sellerForm.handlerCode
+        this._seller = '1'
+      } else {
+        this._seller = '0'
+        this.open('error', '请检查业务员信息是否填写完整且正确!')
+        return false
+      }
+
+      // --------------------------- 险种信息 ------------------------------
+      this.info.lifeCItemKindConditionList.forEach((item, index) => { // 险种
+        // alert('投保人:' + item.tbrFreeFlag)
+        // alert('投保人类型:' + typeof (item.tbrFreeFlag))
+        if (item.tbrFreeFlag1 === true) {
+          item.tbrFreeFlag = true
+        } else {
+          item.tbrFreeFlag = false
+        }
+        // alert('被保人:' + item.bbrFreeFlag)
+        if (item.bbrFreeFlag1 === true) {
+          item.bbrFreeFlag = true
+        } else {
+          item.bbrFreeFlag = false
+        }
+        // alert('是否终身:' + item.lifeFlag)
+        if (item.lifeFlag1 === true) {
+          item.lifeFlag = true
+          item.endDate = ''
+        } else {
+          item.lifeFlag = false
+        }
+        if (item.feeFlagTag === true) {
+          item.freeFlag = '0'
+        } else {
+          item.freeFlag = '1'
+        }
+      })
+      let risktypeinfo = []
+      this.info.lifeCItemKindConditionList.forEach((item, index) => {
+        risktypeinfo.push(item.mainFlag)
+      })
+
+      if (risktypeinfo.length >= 1) { // 判断险种信息是否填写
+        if (risktypeinfo.indexOf('1') > -1) {
+          //  判断豁免险的投保人和被保人
+          var _tbrbbr = []    // 投保人  被保人是否填写
+          var _startDate = []  // 开始日期
+          var _endDate = []   // 结束日期
+          var _premium = []   // 应缴保费
+          var _zhuxian = []  // 主险
+          var _hmnq = []  // 豁免险
+          var _code = []  // 险种code
+          var _fujia = []  // 附加险
+          var _startEnd = []  // 日期比较
+          // var _yjbaofei = []  // 应缴保费
+
+          this.info.lifeCItemKindConditionList.forEach((item, index) => { // 险种
+            if (item.freeFlag === '1') {  // 豁免险
+              if (item.tbrFreeFlag === false && item.bbrFreeFlag === false) {
+                _tbrbbr.push(1)
+              }
+                // alert(item.paymentPeriod)
+              _hmnq.push(item.paymentPeriod)
+            }
+            if (item.mainFlag === '0') { // 附加险的年期
+              _fujia.push(item.paymentPeriod)
+            }
+            // if (item.premium === '0.00' || item.premium === 0.00) { // 应缴保费
+            //   _yjbaofei.push(1)
+            // }
+            if (item.riskCode === '') { // 主险是否填写
+              _code.push(1)
+            }
+            if (item.mainFlag === '1') { // 主险
+              _zhuxian.push(item.paymentPeriod)
+            }
+            if (item.startDate === '') {
+              _startDate.push(1)
+            }
+            if (item.endDate === '' && item.lifeFlag === false) {
+              _endDate.push(1)
+            }
+            if (item.premium === '') {
+              _premium.push(1)
+            }
+            if (item.startDate !== '' && item.endDate !== '') {
+              var oDate1 = new Date(item.startDate)
+              var oDate2 = new Date(item.endDate)
+              if (oDate1.getTime() > oDate2.getTime()) {
+                _startEnd.push(1)
+              }
+            }
+          })
+
+          if (_startEnd.indexOf(1) > -1) {
+            this.open('error', '结束日期不能小于开始日期！')
+            this._type = '0'
+            return false
+          }
+          // if (_yjbaofei.indexOf(1) > -1) {    // 应缴保费信息
+          //   this.open('error', '应缴保费填写有误，请检查！')
+          //   this._type = '0'
+          //   return false
+          // }
+          if (_code.indexOf(1) > -1) {
+            this.open('error', '请选择险种信息！')
+            this._type = '0'
+            return false
+          }
+
+            // alert('年期:' + JSON.stringify(_hmnq))
+            // alert('主险:' + JSON.stringify(_zhuxian))
+            // alert('附加险的年期' + JSON.stringify(_fujia))
+
+          if (_premium.indexOf(1) > -1) {
+            this.open('error', '应缴保费未填写！')
+            return false
+          } else {
+            if (_tbrbbr.indexOf(1) > -1) {
+              this.open('error', '险种信息中豁免险未选择豁免人！')
+              return false
+            }
+
+            // if (_startDate.indexOf(1) > -1) {
+            //   this.open('error', '投保开始日期未填写！')
+            //   return false
+            // } else {
+            //   if (_endDate.indexOf(1) > -1) {
+            //     this.open('error', '结束日期未选择！')
+            //     return false
+            //   } else {
+            //     if (_tbrbbr.indexOf(1) > -1) {
+            //       this.open('error', '豁免险的投保人和被保人请至少填写一个！')
+            //       return false
+            //     }
+            //   }
+            // }
+          }
+          // let fjContinue = true
+          // _fujia.forEach((item, index) => {
+          //   _zhuxian.forEach((list, i) => {
+          //     if (item.paymentPeriod > _zhuxian[0].paymentPeriod) { // 附加险大于主险期限
+          //       fjContinue = false
+          //     }
+          //   })
+          // })
+
+          // if (!fjContinue) {
+          //   this.$confirm('附加险缴费年期不能超过主险缴费年期, 是否继续?', '提示', {
+          //     confirmButtonText: '确定',
+          //     cancelButtonText: '取消',
+          //     type: 'warning'
+          //   }).then(() => {
+          //     this._type = '1'
+          //   }).catch(() => {
+          //     this._type = '0'
+          //     return false
+          //   })
+          // }
+          let fjContinue = true
+          _fujia.forEach((item, index) => {
+            _zhuxian.forEach((list, i) => {
+              if (parseInt(_fujia[index]) > parseInt(list)) { // 附加险大于主险期限
+                fjContinue = false
+              }
+            })
+          })
+          if (!fjContinue) {
+            if (confirm('附加险缴费年期不能超过主险缴费年期, 是否继续?')) {
+              this._type = '1'
+            } else {
+              this._type = '0'
+              return false
+            }
+          }
+          this._type = '1'
+          this.addInfo.lifeCItemKindConditionListTwo = this.info.lifeCItemKindConditionList
+        } else {
+          this.open('error', '至少需要有一个主险！')
+          return false
+        }
+      } else {
+        this.open('error', '请检查险种信息是否填写完整且正确!')
+        return false
+      }
+
+       // 缴费信息传到父组件
+      let payInfo = this.$refs.payInfo
+
+      if (payInfo.validateForm()) {
+        this.addInfo.lifeFeeCondition = payInfo.payInfoForm
+        this._pay = '1'
+      } else {
+
+      }
+
+      if ((this._basicInfo === '1' || this._basicInfo !== '0') && (this._insurer === '1' || this._insurer !== '0') && (this._insurered === '1' || this._insurered !== '0') && (this._death === '1' || this._death !== '0') &&
+        (this._live === '1' || this._live !== '0') && (this._seller === '1' || this._seller !== '0') && (this._pay === '1' || this._pay !== '0')) {
+        // alert('info:' + JSON.stringify(this.addInfo))
+
+        this.addInfo.lifePCMainCondition.verifyStatus = 1
+
+        if (this.addInfo.lifePartyCondition.insuredrType === '1') {
+          if (this.addInfo.lifePartyCondition.identifyNumber !== this.addInfo.lifePartyConditionDList[0].identifyNumberD) {
+            this.open('error', '投保人与被保人信息不一致,请检查“与被保险人关系”框!')
+            return false
+          }
+        }
+
+        this.addInfo.lifePCMainCondition.sgFlag = this.addInfoflag.sgFlag
+        this.addInfo.lifePCMainCondition.scFlag = this.addInfoflag.scFlag
+
+        //  先判断是否为黑灰名单
+        this.blackExist_1(this.addInfo).then(result => {
+          if (result.code === '000000') {
+            // this.open('success', '投保单录入成功，待审核')
+
+            if (result.data.status === '3') {  // 可以正常录入
+              this.Loading()
+              this.insurPolicyAdd_1(this.addInfo).then(result => {
+                this.closeLoading()
+                if (result.code === '000000') {
+                  this.open('success', '投保单保存成功!')
+                  this.$store.state.proposalForm.qinglihuancun = true
+                  this.$store.state.proposalForm.zhihuiFlag = '0' // 重置被保险人删除按钮置灰变量
+                  this.$router.push('/lifeInsur_policy/lifeInsurMgr')
+                } else {
+                  this.open('error', result.msg)
+                }
+              }).catch(() => {
+                this.open('error', '系统错误，请刷新重试！')
+                this.closeLoading()
+              })
+            } else if (result.data.status === '1') { // 黑名单
+              this.open('error', '系统黑名单用户不得投保！')
+              return false
+            } else if (result.data.status === '2') { // 灰名单
+              this.$confirm('该用户已存在系统灰名单中，确定继续！', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                // this.open('success', '继续')
+                this.addInfo.inAshListGoFLag = '1'
+                this.Loading()
+                this.insurPolicyAdd_1(this.addInfo).then(result => {
+                  this.closeLoading()
+                  if (result.code === '000000') {
+                    this.open('success', '投保单录入成功，待审核！')
+                    this.$store.state.proposalForm.qinglihuancun = true
+                    this.$store.state.proposalForm.zhihuiFlag = '0'
+                    this.$router.push('/lifeInsur_policy/lifeInsurMgr')
+                  } else {
+                    this.open('error', result.msg)
+                  }
+                }).catch(() => {
+                  this.open('error', '系统错误，请刷新重试！')
+                  this.closeLoading()
+                })
+              }).catch(() => {
+                this.addInfo.inAshListGoFLag = '0'
+                this.$confirm('相关投保资料是否已经提交了保险公司？', '提示', {
+                  confirmButtonText: '是',
+                  cancelButtonText: '否',
+                  type: 'warning'
+                }).then(() => {
+                  this.addInfo.notGoFlag = '1'
+                  this.Loading()
+                  this.insurPolicyAdd_1(this.addInfo).then(result => {
+                    this.closeLoading()
+                    if (result.code === '000000') {
+                      this.$store.state.proposalForm.qinglihuancun = true
+                      this.$store.state.proposalForm.zhihuiFlag = '0'
+                      this.$router.push('/lifeInsur_policy/lifeInsurMgr')
+                    } else {
+                      this.open('error', result.msg)
+                    }
+                  }).catch(() => {
+                    this.open('error', '系统错误，请刷新重试！')
+                    this.closeLoading()
+                  })
+                }).catch(() => {
+                  this.addInfo.notGoFlag = '0'
+                  this.Loading()
+                  this.insurPolicyAdd_1(this.addInfo).then(result => {
+                    this.closeLoading()
+                    if (result.code === '000000') {
+                      this.$store.state.proposalForm.qinglihuancun = true
+                      this.$store.state.proposalForm.zhihuiFlag = '0'
+                      this.$router.push('/lifeInsur_policy/lifeInsurMgr')
+                    } else {
+                      this.open('error', result.msg)
+                    }
+                  }).catch(() => {
+                    this.open('error', '系统错误，请刷新重试！')
+                    this.closeLoading()
+                  })
+                })
+              })
+            }
+          } else {
+            this.open('error', result.msg)
+          }
+        })
+      } else {
+        this.open('error', '请检查信息是否填写完整且正确!')
+      }
+    },
+
+    // 提交审核的按钮---------------------------------------------------------
+    _submitForm (formName) {
+      // 子组件代码都通过refs获取
+      if (this.addInfoflag.sgFlag === '2') { // 身故受益人为指定受益人
+        // 验证受益份额必须为100
+        let tempIndex = []
+        let verifyTemp = [0, 0, 0, 0, 0]
+        for (let i = 0; i < this.deathBenefitInfos.length; i++) { // 每次都会对所有的受益人进行加和，保证不会缓存
+          tempIndex.push(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.beneficialOrder) - 1)
+          switch (this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.beneficialOrder) {
+            case '1':
+              verifyTemp[0] += isNaN(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)
+              break
+            case '2':
+              verifyTemp[1] += isNaN(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)
+              break
+            case '3':
+              verifyTemp[2] += isNaN(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)
+              break
+            case '4':
+              verifyTemp[3] += isNaN(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)
+              break
+            case '5':
+              verifyTemp[4] += isNaN(parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`deathInfo`][`${i}`].lifePartyTConditionListForm.benefitShare)
+              break
+            default:
+              break
+          }
+        }
+        this._death = '1'
+        for (let i = 0; i < verifyTemp.length; i++) {
+          if (verifyTemp[i] !== 100 && tempIndex.indexOf(i) !== -1) {
+            this.open('error', '请检查身故受益人相同受益顺序的受益份额总和是否为100%!')
+            this._death = '0'
+            return
+          }
+        }
+      }
+      if (this.addInfoflag.scFlag === '3') { // 生存受益人为其他
+        let tempIndex = []
+        let verifyTemp = [0, 0, 0, 0, 0]
+        for (let i = 0; i < this.lifeBenefitInfos.length; i++) { // 每次都会对所有的受益人进行加和，保证不会缓存
+          tempIndex.push(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.beneficialOrder) - 1)
+          switch (this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.beneficialOrder) {
+            case '1':
+              verifyTemp[0] += isNaN(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)
+              break
+            case '2':
+              verifyTemp[1] += isNaN(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)
+              break
+            case '3':
+              verifyTemp[2] += isNaN(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)
+              break
+            case '4':
+              verifyTemp[3] += isNaN(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)
+              break
+            case '5':
+              verifyTemp[4] += isNaN(parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)) ? 0 : parseFloat(this.$refs[`lifeInfo`][`${i}`].lifePartyAConditionListForm.benefitShare)
+              break
+            default:
+              break
+          }
+        }
+        this._live = '1'
+        for (let i = 0; i < verifyTemp.length; i++) {
+          if (verifyTemp[i] !== 100 && tempIndex.indexOf(i) !== -1) {
+            this.open('error', '请检查生存受益人相同受益顺序的受益份额总和是否为100%!')
+            this._live = '0'
+            return
+          }
+        }
+      }
+      // 基本信息传到父组件
+      let basicInfos = this.$refs.basicInfo
+      if(new Date(basicInfos.lifePCMainConditionForm.proposalDate).getTime() >= new Date(this.$refs.basicInfo.stopDate) ) {
+        this.$alert('投保日期存在异常，请联系总公司','提示', {
+          confirmButtonText: '确定',
+          center:'center'
+        });
+        return false
+      }
+      if (basicInfos.validateForm()) {
+        this.addInfo.lifePCMainCondition = basicInfos.lifePCMainConditionForm
+        this._basicInfo = '1'
+      } else {
+        this._basicInfo = '0'
+        this.open('error', '请检查基本信息是否填写完整且正确!')
+        return false
+      }
+
+      // 投保人信息传到父组件
+      let insurers = this.$refs.insurer
+      this.addInfo.lifePartyCondition = insurers.lifePartyConditionForm
+      // if (insurers.validateForm()) {
+      //
+      //   this.addInfo.lifePartyCondition = insurers.lifePartyConditionForm
+      //   if (this.addInfo.lifePartyCondition.insureTel === '' && this.addInfo.lifePartyCondition.mobilePhone === '') {
+      //     this.open('error', '投保人联系方式至少填写一个!')
+      //     return false
+      //   } else {
+      //     if ((this.addInfo.lifePartyCondition.identifyValiddate === '' && (this.addInfo.lifePartyCondition.longFlag === '' || this.addInfo.lifePartyCondition.longFlag === null)) ||
+      //         (this.addInfo.lifePartyCondition.identifyValiddate === '' && this.addInfo.lifePartyCondition.longFlag === '0')) {
+      //       this.open('error', '请选择投保人的证件有效期!')
+      //       return false
+      //     } else {
+      //       this._insurer = '1'
+      //     }
+      //   }
+      // } else {
+      //
+      //   this._insurer = '0'
+      //   this.open('error', '请检查投保人信息是否填写完整且正确!')
+      //   return false
+      // }
+      this._insurer = '1'
+
+      // 被保险人信息传递给父组件
+
+      let insurantInfos = this.$refs.insurantInfo
+      let len = insurantInfos ? (insurantInfos.length ? insurantInfos.length : 0) : 0
+
+      let temp = []
+      let insuredvalidTemp = [] // 校验是否通过的数组
+      for (let i = 0; i < len; i++) {
+        this.insurantInfosValid = insurantInfos[i].validateForm()
+
+        temp.push(insurantInfos[i].insertForm1)
+        insuredvalidTemp.push(this.insurantInfosValid)
+      }
+
+      // if (insuredvalidTemp.indexOf(false) > -1) {
+      //
+      //   this._insurered = '0'
+      //   this.open('error', '请检查被保险人信息是否填写完整且正确!')
+      //   return false
+      // } else {
+      //
+      //   this.addInfo.lifePartyConditionDList = temp
+      //   try {
+      //     // （投保人于被保人证件号不同 &&  证件类型不同 ） &&  关系又为本人  二
+      //     // alert('被保人证件号:' + JSON.stringify(this.addInfo.lifePartyConditionDList[0].identifyNumberD))
+      //     // alert('投保人证件号:' + JSON.stringify(this.addInfo.lifePartyCondition.identifyNumber))
+      //     // alert('被保人证件类型:' + JSON.stringify(this.addInfo.lifePartyConditionDList[0].identifyTypeD))
+      //     // alert('投保人证件类型:' + JSON.stringify(this.addInfo.lifePartyCondition.identifyType))
+      //     // alert('投保人与被保人关系:' + JSON.stringify(this.addInfo.lifePartyCondition.insuredrType))
+      //     if ((this.addInfo.lifePartyConditionDList[0].identifyNumberD !== this.addInfo.lifePartyCondition.identifyNumber || this.addInfo.lifePartyConditionDList[0].identifyTypeD !== this.addInfo.lifePartyCondition.identifyType) && this.addInfo.lifePartyCondition.insuredrType === '1') {
+      //       this.open('error', '投保人与被保人关系选择不正确!')
+      //       return false
+      //     }
+      //     // 只有一个被保人 && 关系不为本人 && 证件号证件类型都相同 (根据选择来看应该是本人才对)
+      //     // if (this.addInfo.lifePartyConditionDList.length === 1 && this.addInfo.lifePartyCondition.insuredrType === '1' && (this.addInfo.lifePartyConditionDList[0].identifyTypeD === this.addInfo.lifePartyCondition.identifyTypeD || this.addInfo.lifePartyConditionDList[0].identifyNumberD === this.addInfo.lifePartyCondition.identifyNumber)) {
+      //     if (this.addInfo.lifePartyConditionDList.length === 1 && this.addInfo.lifePartyCondition.insuredrType !== '1' && (this.addInfo.lifePartyConditionDList[0].identifyTypeD === this.addInfo.lifePartyCondition.identifyType && this.addInfo.lifePartyConditionDList[0].identifyNumberD === this.addInfo.lifePartyCondition.identifyNumber)) {
+      //       this.open('error', '投保人与被保人关系选择不正确!')
+      //       return false
+      //     }
+      //   } catch (e) {
+      //     this.open('error', '信息校验不通过，请检查是否正确填写！')
+      //     return false
+      //   }
+      //   let benefit = this.addInfo.lifePartyConditionDList
+      //   let _insuredDate = []
+      //   let _insuredLong = []
+      //   for (let i = 0; i < benefit.length; i++) {
+      //     _insuredDate.push(benefit[i].identifyValiddateD)
+      //     if (benefit[i].longFlagD === '' || benefit[i].longFlagD === null || (this.isEmpty(benefit[i].identifyValiddateD) && (benefit[i].longFlagD === 'undefined' || benefit[i].longFlagD === undefined))) {
+      //       if (this.isEmpty(document.querySelector(`#InsurantInfo${i} .is-checked`))) {
+      //         benefit[i].longFlagD = '0'
+      //       } else {
+      //         benefit[i].longFlagD = '1'
+      //       }
+      //     }
+      //     _insuredLong.push(benefit[i].longFlagD)
+      //     if (this.isEmpty(benefit[i].identifyValiddateD) && (benefit[i].longFlagD === '0' || this.isEmpty(benefit[i].longFlagD))) {
+      //       this.open('error', '被保险人的证件有效期未填写完整!')
+      //       return false
+      //     }
+      //     if (benefit[i].insureTelD === '' && benefit[i].mobilePhoneD === '') {
+      //       this.open('error', '被保险人的联系方式请至少填写一个!')
+      //       return false
+      //     }
+
+      //     // 判断重复
+      //     let flag = true
+      //     benefit.forEach((item, index) => {
+      //       if (i !== index && benefit[i].identifyNumberD === item.identifyNumberD && benefit[i].identifyTypeD === item.identifyTypeD) {
+      //         this.open('error', '被保险人信息选择重复!')
+      //         flag = false
+      //         return flag
+      //       }
+      //     })
+      //     if (!flag) {
+      //       return false
+      //     }
+      //   }
+      //   this.addInfo.lifePartyConditionDList = benefit
+      //
+      //   this._insurered = '1'
+      // }
+      this.addInfo.lifePartyConditionDList = temp
+      // try {
+      //   if ((this.addInfo.lifePartyConditionDList[0].identifyNumberD !== this.addInfo.lifePartyCondition.identifyNumber || this.addInfo.lifePartyConditionDList[0].identifyTypeD !== this.addInfo.lifePartyCondition.identifyType) && this.addInfo.lifePartyCondition.insuredrType === '1') {
+      //     this.open('error', '投保人与被保人关系选择不正确!')
+      //     return false
+      //   }
+      //   // 只有一个被保人 && 关系不为本人 && 证件号证件类型都相同 (根据选择来看应该是本人才对)
+      //   // if (this.addInfo.lifePartyConditionDList.length === 1 && this.addInfo.lifePartyCondition.insuredrType === '1' && (this.addInfo.lifePartyConditionDList[0].identifyTypeD === this.addInfo.lifePartyCondition.identifyTypeD || this.addInfo.lifePartyConditionDList[0].identifyNumberD === this.addInfo.lifePartyCondition.identifyNumber)) {
+      //   if (this.addInfo.lifePartyConditionDList.length === 1 && this.addInfo.lifePartyCondition.insuredrType !== '1' && (this.addInfo.lifePartyConditionDList[0].identifyTypeD === this.addInfo.lifePartyCondition.identifyType && this.addInfo.lifePartyConditionDList[0].identifyNumberD === this.addInfo.lifePartyCondition.identifyNumber)) {
+      //     this.open('error', '投保人与被保人关系选择不正确!')
+      //     return false
+      //   }
+      // } catch (e) {
+      //   this.open('error', '信息校验不通过，请检查是否正确填写！')
+      //   return false
+      // }
+      let benefit = this.addInfo.lifePartyConditionDList
+      let _insuredDate = []
+      let _insuredLong = []
+      for (let i = 0; i < benefit.length; i++) {
+        _insuredDate.push(benefit[i].identifyValiddateD)
+        if (benefit[i].longFlagD === '' || benefit[i].longFlagD === null || (this.isEmpty(benefit[i].identifyValiddateD) && (benefit[i].longFlagD === 'undefined' || benefit[i].longFlagD === undefined))) {
+          if (this.isEmpty(document.querySelector(`#InsurantInfo${i} .is-checked`))) { // 判断证件有效期是否永久有效
+            benefit[i].longFlagD = '0'
+          } else {
+            benefit[i].longFlagD = '1'
+          }
+        }
+        _insuredLong.push(benefit[i].longFlagD)
+        // if (this.isEmpty(benefit[i].identifyValiddateD) && (benefit[i].longFlagD === '0' || this.isEmpty(benefit[i].longFlagD))) {
+        //   this.open('error', '被保险人的证件有效期未填写完整!')
+        //   return false
+        // }
+        // if (benefit[i].insureTelD === '' && benefit[i].mobilePhoneD === '') {
+        //   this.open('error', '被保险人的联系方式请至少填写一个!')
+        //   return false
+        // }
+
+        // 判断重复
+        let flag = true
+        benefit.forEach((item, index) => {
+          if (i !== index && benefit[i].identifyNumberD === item.identifyNumberD && benefit[i].identifyTypeD === item.identifyTypeD) {
+            this.open('error', '被保险人信息选择重复!')
+            flag = false
+            return flag
+          }
+        })
+        if (!flag) {
+          return false
+        }
+      }
+      this.addInfo.lifePartyConditionDList = benefit
+
+      this._insurered = '1'
+
+      // 身故受益人信息传递给父组件
+      if (this.addInfoflag.sgFlag === '2') { // 身故受益人为指定受益人
+        let deathInfos = this.$refs.deathInfo
+        let deathLen = deathInfos ? (deathInfos.length ? deathInfos.length : 0) : 0
+        let deathInfosTemp = []
+        let deathvaildTemp = [] // 校验是否通过的数组
+        for (let i = 0; i < deathLen; i++) {
+          this.deathInfosValid = deathInfos[i].validateForm()
+
+          deathInfosTemp.push(deathInfos[i].lifePartyTConditionListForm)
+          deathvaildTemp.push(this.deathInfosValid)
+        }
+
+        // if (deathvaildTemp.indexOf(false) > -1) {
+        //
+        //   this.open('error', '请检查身故受益人信息是否填写完整且正确!')
+        //   return false
+        // } else {
+        //
+        //   this.addInfo.lifePartyTConditionList = deathInfosTemp
+        //   // alert(JSON.stringify(this.addInfo.lifePartyTConditionList))
+        //   let benefit = this.addInfo.lifePartyTConditionList
+        //   let deatharrbenefit = []
+        //   let _date = []
+        //   let _long = []
+        //   for (let i = 0; i < benefit.length; i++) {
+        //     deatharrbenefit.push(benefit[i].benefitShare)
+        //     _date.push(benefit[i].identifyValiddate)
+        //     _long.push(benefit[i].longFlag)
+        //     if (this.isEmpty(benefit[i].identifyValiddate) && (benefit[i].longFlag === '0' || this.isEmpty(benefit[i].longFlag))) {
+        //       this.open('error', '身故受益人的证件有效期未选择!')
+        //       return false
+        //     }
+
+        //     let flag = true
+        //     benefit.forEach((item, index) => {
+        //       if (i !== index && benefit[i].identifyNumber === item.identifyNumber && benefit[i].identifyType === item.identifyType) {
+        //         this.open('error', '身故受益人信息选择重复!')
+        //         flag = false
+        //         return flag
+        //       }
+        //     })
+        //     if (!flag) {
+        //       return false
+        //     }
+        //   }
+
+        //   // let adddeathbenefit = 0
+        //   // for (let i = 0; i < deatharrbenefit.length; i++) {
+        //   //   adddeathbenefit += parseInt(deatharrbenefit[i])
+        //   // }
+        //   // //
+        //   // //
+        //   // if (adddeathbenefit === 100) {
+        //   //   this._death = '1'
+        //   // } else {
+        //   //   this.open('error', '请检查身故受益人受益份额总和是否为100%!')
+        //   //   return false
+        //   // }
+        // }
+        this.addInfo.lifePartyTConditionList = deathInfosTemp
+        // alert(JSON.stringify(this.addInfo.lifePartyTConditionList))
+        let benefit = this.addInfo.lifePartyTConditionList
+        let deatharrbenefit = []
+        let _date = []
+        let _long = []
+        for (let i = 0; i < benefit.length; i++) {
+          deatharrbenefit.push(benefit[i].benefitShare)
+          _date.push(benefit[i].identifyValiddate)
+          _long.push(benefit[i].longFlag)
+          // if (this.isEmpty(benefit[i].identifyValiddate) && (benefit[i].longFlag === '0' || this.isEmpty(benefit[i].longFlag))) {
+          //   this.open('error', '身故受益人的证件有效期未选择!')
+          //   return false
+          // }
+
+          let flag = true
+          benefit.forEach((item, index) => {
+            if (i !== index && benefit[i].identifyNumber === item.identifyNumber && benefit[i].identifyType === item.identifyType) {
+              this.open('error', '身故受益人信息选择重复!')
+              flag = false
+              return flag
+            }
+          })
+          if (!flag) {
+            return false
+          }
+        }
+      } else {
+        this._death = '1'
+        this.addInfo.lifePartyTConditionList = []
+      }
+
+      // 生存受益人信息传递给父组件
+      if (this.addInfoflag.scFlag === '3') { // 生存受益人为其他
+        let lifeInfos = this.$refs.lifeInfo
+        let livehLen = lifeInfos ? (lifeInfos.length ? lifeInfos.length : 0) : 0
+        let liveInfosTemp = []
+        let livevaildTemp = [] // 校验是否通过的数组
+        for (let i = 0; i < livehLen; i++) {
+          this.liveInfosValid = lifeInfos[i].validateForm()
+
+          liveInfosTemp.push(lifeInfos[i].lifePartyAConditionListForm)
+          livevaildTemp.push(this.liveInfosValid)
+        }
+
+        // if (livevaildTemp.indexOf(false) > -1) {
+        //
+        //   this.open('error', '请检查生存受益人信息是否填写完整且正确!')
+        //   return false
+        // } else {
+        //
+        //   this.addInfo.lifePartyAConditionList = liveInfosTemp
+        //   let benefit = this.addInfo.lifePartyAConditionList
+        //   let deatharrbenefit = []  // 受益份额
+        //   let _date = []
+        //   let _long = []
+        //   for (let i = 0; i < benefit.length; i++) {
+        //     deatharrbenefit.push(benefit[i].benefitShare)
+        //     _date.push(benefit[i].identifyValiddate)
+        //     _long.push(benefit[i].longFlag)
+        //     if (this.isEmpty(benefit[i].identifyValiddate) && (benefit[i].longFlag === '0' || this.isEmpty(benefit[i].longFlag))) {
+        //       this.open('error', '生存受益人的证件有效期未选择!')
+        //       return false
+        //     }
+
+        //     let flag = true
+        //     benefit.forEach((item, index) => {
+        //       if (i !== index && benefit[i].identifyNumber === item.identifyNumber && benefit[i].identifyType === item.identifyType) {
+        //         this.open('error', '身故受益人信息选择重复!')
+        //         flag = false
+        //         return flag
+        //       }
+        //     })
+        //     if (!flag) {
+        //       return false
+        //     }
+        //   }
+        //   // let adddeathbenefit = 0
+        //   // for (let i = 0; i < deatharrbenefit.length; i++) {
+        //   //   adddeathbenefit += parseInt(deatharrbenefit[i])
+        //   // }
+        //   // if (adddeathbenefit === 100) {
+        //   //   this._live = '1'
+        //   // } else {
+        //   //   this.open('error', '生存受益人受益份额总和必须为100%!')
+        //   //   return false
+        //   // }
+        // }
+        this.addInfo.lifePartyAConditionList = liveInfosTemp
+        let benefit = this.addInfo.lifePartyAConditionList
+        let deatharrbenefit = []  // 受益份额
+        let _date = []
+        let _long = []
+        for (let i = 0; i < benefit.length; i++) {
+          deatharrbenefit.push(benefit[i].benefitShare)
+          _date.push(benefit[i].identifyValiddate)
+          _long.push(benefit[i].longFlag)
+          // if (this.isEmpty(benefit[i].identifyValiddate) && (benefit[i].longFlag === '0' || this.isEmpty(benefit[i].longFlag))) {
+          //   this.open('error', '生存受益人的证件有效期未选择!')
+          //   return false
+          // }
+
+          let flag = true
+          benefit.forEach((item, index) => {
+            if (i !== index && benefit[i].identifyNumber === item.identifyNumber && benefit[i].identifyType === item.identifyType) {
+              this.open('error', '身故受益人信息选择重复!')
+              flag = false
+              return flag
+            }
+          })
+          if (!flag) {
+            return false
+          }
+        }
+      } else {
+        this._live = '1'
+        this.addInfo.lifePartyAConditionList = []
+      }
+
+       // 业务员信息传到父组件
+      let sellerInfo = this.$refs.sellerInfo
+
+      if (sellerInfo.validateForm()) {
+        this.addInfo.lifePCMainCondition.handlerName = sellerInfo.sellerForm.handlerName
+        this.addInfo.lifePCMainCondition.comCode = sellerInfo.sellerForm.comCode
+        this.addInfo.lifePCMainCondition.comName = sellerInfo.sellerForm.comName
+        this.addInfo.lifePCMainCondition.introduceType = sellerInfo.sellerForm.introduceType
+        this.addInfo.lifePCMainCondition.introduceCode = sellerInfo.sellerForm.introduceCode
+        this.addInfo.lifePCMainCondition.handlerCode = sellerInfo.sellerForm.handlerCode
+        this._seller = '1'
+      } else {
+        this._seller = '0'
+        this.open('error', '请检查业务员信息是否填写完整且正确!')
+        return false
+      }
+
+      // --------------------------- 险种信息 ------------------------------
+      this.info.lifeCItemKindConditionList.forEach((item, index) => { // 险种
+        // alert('投保人:' + item.tbrFreeFlag)
+        // alert('投保人类型:' + typeof (item.tbrFreeFlag))
+        if (item.tbrFreeFlag1 === true) {
+          item.tbrFreeFlag = true
+        } else {
+          item.tbrFreeFlag = false
+        }
+        // alert('被保人:' + item.bbrFreeFlag)
+        if (item.bbrFreeFlag1 === true) {
+          item.bbrFreeFlag = true
+        } else {
+          item.bbrFreeFlag = false
+        }
+        // alert('是否终身:' + item.lifeFlag)
+        if (item.lifeFlag1 === true) {
+          item.lifeFlag = true
+          item.endDate = ''
+        } else {
+          item.lifeFlag = false
+        }
+        if (item.feeFlagTag === true) {
+          item.freeFlag = '0'
+        } else {
+          item.freeFlag = '1'
+        }
+      })
+      let risktypeinfo = []
+      this.info.lifeCItemKindConditionList.forEach((item, index) => {
+        risktypeinfo.push(item.mainFlag)
+      })
+
+      if (risktypeinfo.length >= 1) { // 判断险种信息是否填写
+        if (risktypeinfo.indexOf('1') > -1) {
+          //  判断豁免险的投保人和被保人
+          var _tbrbbr = []    // 投保人  被保人是否填写
+          var _startDate = []  // 开始日期
+          var _endDate = []   // 结束日期
+          var _premium = []   // 应缴保费
+          var _zhuxian = []  // 主险
+          var _hmnq = []  // 豁免险
+          var _code = []  // 险种code
+          var _fujia = []  // 附加险
+          var _startEnd = []  // 日期比较
+          // var _yjbaofei = []  // 应缴保费
+
+          this.info.lifeCItemKindConditionList.forEach((item, index) => { // 险种
+            if (item.freeFlag === '1') {  // 豁免险
+              if (item.tbrFreeFlag === false && item.bbrFreeFlag === false) {
+                _tbrbbr.push(1)
+              }
+                // alert(item.paymentPeriod)
+              _hmnq.push(item.paymentPeriod)
+            }
+            if (item.mainFlag === '0') { // 附加险的年期
+              _fujia.push(item.paymentPeriod)
+            }
+            // if (item.premium === '0.00' || item.premium === 0.00) { // 应缴保费
+            //   _yjbaofei.push(1)
+            // }
+            if (item.riskCode === '') { // 主险是否填写
+              _code.push(1)
+            }
+            if (item.mainFlag === '1') { // 主险
+              _zhuxian.push(item.paymentPeriod)
+            }
+            if (item.startDate === '') {
+              _startDate.push(1)
+            }
+            if (item.endDate === '' && item.lifeFlag === false) {
+              _endDate.push(1)
+            }
+            if (item.premium === '') {
+              _premium.push(1)
+            }
+            if (item.startDate !== '' && item.endDate !== '') {
+              var oDate1 = new Date(item.startDate)
+              var oDate2 = new Date(item.endDate)
+              if (oDate1.getTime() > oDate2.getTime()) {
+                _startEnd.push(1)
+              }
+            }
+          })
+
+          if (_startEnd.indexOf(1) > -1) {
+            this.open('error', '结束日期不能小于开始日期！')
+            this._type = '0'
+            return false
+          }
+
+          // if (_yjbaofei.indexOf(1) > -1) {    // 应缴保费信息
+          //   this.open('error', '应缴保费填写有误，请检查！')
+          //   this._type = '0'
+          //   return false
+          // }
+          if (_code.indexOf(1) > -1) {
+            this.open('error', '请选择险种信息！')
+            this._type = '0'
+            return false
+          }
+
+            // alert('年期:' + JSON.stringify(_hmnq))
+            // alert('主险:' + JSON.stringify(_zhuxian))
+            // alert('附加险的年期' + JSON.stringify(_fujia))
+
+          if (_premium.indexOf(1) > -1) {
+            this.open('error', '应缴保费未填写！')
+            return false
+          } else {
+            if (_tbrbbr.indexOf(1) > -1) {
+              this.open('error', '险种信息中豁免险未选择豁免人！')
+              return false
+            }
+          }
+          let fjContinue = true
+          _fujia.forEach((item, index) => {
+            _zhuxian.forEach((list, i) => {
+              if (parseInt(_fujia[index]) > parseInt(list)) { // 附加险大于主险期限
+                fjContinue = false
+              }
+            })
+          })
+          if (!fjContinue) {
+            if (confirm('附加险缴费年期不能超过主险缴费年期, 是否继续?')) {
+              this._type = '1'
+            } else {
+              this._type = '0'
+              return false
+            }
+          }
+          this._type = '1'
+          this.addInfo.lifeCItemKindConditionListTwo = this.info.lifeCItemKindConditionList
+        } else {
+          this.open('error', '至少需要有一个主险！')
+          return false
+        }
+      } else {
+        this._type = '0'
+        this.open('error', '请检查险种信息是否填写完整且正确！')
+        return false
+      }
+
+       // 缴费信息传到父组件
+      let payInfo = this.$refs.payInfo
+
+      if (payInfo.validateForm()) {
+        this.addInfo.lifeFeeCondition = payInfo.payInfoForm
+        this._pay = '1'
+      } else {
+
+      }
+
+      if ((this._basicInfo === '1' || this._basicInfo !== '0') && (this._insurer === '1' || this._insurer !== '0') && (this._insurered === '1' || this._insurered !== '0') && (this._death === '1' || this._death !== '0') &&
+        (this._live === '1' || this._live !== '0') && (this._seller === '1' || this._seller !== '0') && (this._pay === '1' || this._pay !== '0')) {
+        // alert('info:' + JSON.stringify(this.addInfo))
+
+        this.addInfo.lifePCMainCondition.verifyStatus = 2
+        if (this.addInfo.lifePartyCondition.insuredrType === '1') {
+          if (this.addInfo.lifePartyCondition.identifyNumber !== this.addInfo.lifePartyConditionDList[0].identifyNumberD) {
+            this.open('error', '投保人与被保人信息不一致,请检查“与被保险人关系”框!')
+            return false
+          }
+        }
+
+        this.addInfo.lifePCMainCondition.sgFlag = this.addInfoflag.sgFlag
+        this.addInfo.lifePCMainCondition.scFlag = this.addInfoflag.scFlag
+
+        //  先判断是否为黑灰名单
+        this.blackExist_1(this.addInfo).then(result => {
+          if (result.code === '000000') {
+            // this.open('success', '投保单录入成功，待审核')
+
+            if (result.data.status === '3') {  // 可以正常录入
+              this.Loading()
+              this.$confirm('请确认是否提交审核?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                this.insurPolicyAdd_1(this.addInfo).then(result => {
+                  this.closeLoading()
+                  if (result.code === '000000') {
+                    this.open('success', '投保单提交审核成功')
+                    this.$store.state.proposalForm.qinglihuancun = true
+                    this.$store.state.proposalForm.zhihuiFlag = '0'
+                    this.$router.push('/lifeInsur_policy/lifeInsurMgr')
+                  } else {
+                    this.open('error', result.msg)
+                  }
+                  this.closeLoading()
+                }).catch(() => {
+                  this.open('error', '系统错误，请刷新重试！')
+                  this.closeLoading()
+                })
+              }).catch(() => {
+                this.closeLoading()
+              })
+            } else if (result.data.status === '1') { // 黑名单
+              this.open('error', '系统黑名单用户不得投保！')
+              return false
+            } else if (result.data.status === '2') { // ---------------灰名单-----------------
+              this.$confirm('该用户已存在系统灰名单中，确定继续！', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+              }).then(() => {
+                // this.open('success', '继续')
+                this.addInfo.inAshListGoFLag = '1'
+                this.Loading()
+                this.$confirm('请确认是否提交审核?', '提示', {
+                  confirmButtonText: '确定',
+                  cancelButtonText: '取消',
+                  type: 'warning'
+                }).then(() => {
+                  this.insurPolicyAdd_1(this.addInfo).then(result => {
+                    this.closeLoading()
+                    if (result.code === '000000') {
+                      this.open('success', '投保单提交审核成功！')
+                      this.$store.state.proposalForm.qinglihuancun = true
+                      this.$store.state.proposalForm.zhihuiFlag = '0'
+                      this.$router.push('/lifeInsur_policy/lifeInsurMgr')
+                    } else {
+                      this.open('error', result.msg)
+                    }
+                  }).catch(() => {
+                    this.open('error', '系统错误，请刷新重试！')
+                    this.closeLoading()
+                  })
+                }).catch(() => {
+                  this.closeLoading()
+                })
+              }).catch(() => {
+                this.addInfo.inAshListGoFLag = '0'
+                this.$confirm('相关投保资料是否已经提交了保险公司？', '提示', {
+                  confirmButtonText: '是',
+                  cancelButtonText: '否',
+                  type: 'warning'
+                }).then(() => {
+                  this.addInfo.notGoFlag = '1'
+                  this.Loading()
+                  this.insurPolicyAdd_1(this.addInfo).then(result => {
+                    this.closeLoading()
+                    if (result.code === '000000') {
+                      this.$store.state.proposalForm.qinglihuancun = true
+                      this.$store.state.proposalForm.zhihuiFlag = '0'
+                      this.$router.push('/lifeInsur_policy/lifeInsurMgr')
+                    } else {
+                      this.open('error', result.msg)
+                    }
+                  }).catch(() => {
+                    this.open('error', '系统错误，请刷新重试！')
+                    this.closeLoading()
+                  })
+                }).catch(() => {
+                  this.addInfo.notGoFlag = '0'
+                  this.Loading()
+                  this.insurPolicyAdd_1(this.addInfo).then(result => {
+                    this.closeLoading()
+                    if (result.code === '000000') {
+                      this.$store.state.proposalForm.qinglihuancun = true
+                      this.$store.state.proposalForm.zhihuiFlag = '0'
+                      this.$router.push('/lifeInsur_policy/lifeInsurMgr')
+                    } else {
+                      this.open('error', result.msg)
+                    }
+                  }).catch(() => {
+                    this.open('error', '系统错误，请刷新重试！')
+                    this.closeLoading()
+                  })
+                })
+              })
+            }
+            try {
+              this.$refs['addCustom'].clearValidate()
+            } catch (error) {
+
+            }
+          } else {
+            this.open('error', result.msg)
+          }
+        })
+      } else {
+        this.open('error', '请检查信息是否填写完整!')
+      }
+    },
+    handleValid () {
+      if (this.longFlag1 === false) {
+        // false 时间不能填 longFlag == 1 永久有效
+        this.addCustom.isLongFlag = '1'
+
+        this.addCustom.identifyValiddate = ''
+
+        this.longFlag1 = true
+        this.disabledEdit = true
+      } else {
+        // true的话  时间可以填 longFlag == 0 有效期
+        this.addCustom.isLongFlag = '0'
+        this.disabledEdit = false
+        this.longFlag1 = false
+      }
+    },
+    jsGetAge (strBirthday) {  // 根据出生日期判断年龄
+      var returnAge
+      var strBirthdayArr = strBirthday.split('-')
+      var birthYear = strBirthdayArr[0]
+      var birthMonth = strBirthdayArr[1]
+      var birthDay = strBirthdayArr[2]
+
+      var d = new Date()
+      var nowYear = d.getFullYear()
+      var nowMonth = d.getMonth() + 1
+      var nowDay = d.getDate()
+
+      if (nowYear === birthYear) {
+        returnAge = 0// 同年 则为0岁
+      } else {
+        var ageDiff = nowYear - birthYear  // 年之差
+        if (ageDiff > 0) {
+          if (nowMonth === birthMonth) {
+            var dayDiff = nowDay - birthDay// 日之差
+            if (dayDiff < 0) {
+              returnAge = ageDiff - 1
+            } else {
+              returnAge = ageDiff
+            }
+          } else {
+            var monthDiff = nowMonth - birthMonth// 月之差
+            if (monthDiff < 0) {
+              returnAge = ageDiff - 1
+            } else {
+              returnAge = ageDiff
+            }
+          }
+        } else {
+          returnAge = -1// 返回-1 表示出生日期输入错误 晚于今天
+        }
+      }
+      this.judgeage = returnAge
+      return returnAge// 返回周岁年龄
+    },
+    // 保险公司代码
+    alertDialogcomCode (page) {
+      this.dialogTableVisibleCode = true
+      this.info.currentPage = page
+
+      this.getInsurers_1(this.info)
+    },
+     // 保险机构代码
+    alertDialogcomOrg (page) {
+      this.info.currentPage = page
+
+      if (this.insertForm.companyCode === '' || this.insertForm.companyCode === undefined) {
+        this.open('error', '请先选择保险公司代码！')
+        return false
+      } else {
+        this.dialogTableOrg = true
+        this.info.insurerCode = this.insertForm.companyCode
+        this.info.insurerName = this.insertForm.companyName
+        this.getInsurersOrg_1(this.info)
+      }
+    },
+    // 投保人代码
+    alertDialoginsuCode (page) {
+      // this.info.currentPage = page
+      this.info.currentPage = page
+      this.dialogInsurer = true
+    },
+    handleRowChange (row, event, column) {
+      this.insertForm.companyCode = row.insurercode
+      this.insertForm.companyName = row.insurername
+      this.dialogTableVisibleCode = false
+      this.dialogTableVisibleName = false
+    },
+    handleRowChangeOrg (row, event, column) {
+      this.insertForm.companyCode = row.insurercode
+      this.insertForm.companyName = row.insurername
+      this.dialogTableVisibleCode = false
+      this.dialogTableVisibleName = false
+    },
+    // 客户所属机构点击
+    customerinOrg (row, event, column) {
+      this.addCustom.comCode = row.comCode
+      this.addCustom.comCName = row.comCName
+      this.addCustom.comName = row.address
+      this.dialogsustomerOrg = false
+    },
+    // 客户所属机构点击
+    customerinOrg1 (row, event, column) {
+      // alert(JSON.stringify(row))
+      this.insertForm.insureName = row.custName
+      this.insertForm.insureNameD = row.custName
+      this.insertForm.identifyNumber = row.idNumber
+      this.insertForm.insureAddress = row.address
+      this.insertForm.postNo = row.zipCode
+      this.insertForm.sexType = row.sex
+      this.insertForm.country = row.country
+      this.insertForm.birthDate = row.birthDate
+
+      this.insertForm.educationCode = row.education
+      // this.insertForm.idNumber = row.education
+      this.insertForm.insureTel = row.phone
+      this.insertForm.weixin = row.weChat
+      this.insertForm.e_mail = row.email
+      this.insertForm.job = row.job
+      this.insertForm.workingUnit = row.workingUnit
+      this.insertForm.identifyValiddate = row.identifyValiddate
+      this.insertForm.habitualResidence = row.habitualResidence
+      this.insertForm.insureNo = row.custId
+      this.insertForm.marriage = row.maritalStatus
+      this.insertForm.isLongFlag = row.isLongFlag
+
+      this.insertForm.identifyType = row.paperworkType
+      this.dialogInsurer = false
+
+      // alert('identifyValiddate:' + JSON.stringify(this.insertForm.identifyValiddate))
+      // alert('isLongFlag:' + JSON.stringify(this.insertForm.isLongFlag))
+      if ((this.insertForm.identifyValiddate === '' ||
+          this.insertForm.identifyValiddate === null ||
+          this.insertForm.identifyValiddate === undefined) &&
+          this.insertForm.isLongFlag === 1) {
+        this.disabledEdit1 = true
+        this.isdisabled = true
+        this.longFlag2 = true
+      } else {
+        this.disabledEdit1 = false
+      }
+    },
+    handleCurrentChangeCode (val) {
+      this.info.currentPage = val
+
+      this.getInsurers_1(this.info)
+    },
+    // 查询保险公司代码的当前页------------------
+    handleCurrentChangeCom (val) {
+      this.info.currentPage = val
+
+      this.getInsurers_1(this.info)
+    },
+     // 查询保险公司代码的分页条数
+    handleSizeChangeCom (val) {
+      this.infoPage.pageSize = val
+      this.infoPage.currentPage = 1
+      this.getInsurers_1(this.infoPage)
+    },
+    // 查询保险机构代码的当前页------------------
+    handleCurrentChangeOrg (val) {
+      this.info.currentPage = val
+
+      this.getInsurersOrg_1(this.info)
+    },
+     // 查询保险机构代码的分页条数
+    handleSizeChangeOrg (val) {
+      this.infoPage.pageSize = val
+      this.infoPage.currentPage = 1
+      this.getInsurersOrg_1(this.info)
+    },
+    getRiskList (page, index, row, tag) { // 获取险种信息
+      // this.info.lifeCItemKindConditionList[this.riskIndex].freeDate = ''
+      // alert(JSON.stringify(row))
+      row.freeDate = ''
+      row.tbrFreeFlag1 = ''
+      row.bbrFreeFlag1 = ''
+      this.riskList.currentPage = page
+      this.riskList.pageSize = 5
+      this.riskIndex = index
+      this.riskList.clickType = '2'
+      this.sizeList = [5, 10, 20, 50]
+      this.riskTag = tag
+      if (this.$store.state.proposalForm.companyCode === '') {
+        this.open('error', '请先输入保险公司代码！')
+        return false
+      } else {
+        this.riskList.insurerCode = this.$store.state.proposalForm.companyCode
+        this.riskcode_1(this.riskList).then(result => {
+          if (result.code === '000000') {
+            // alert(JSON.stringify(result.data))
+            this.riskCode = result.data.data
+            this.riskcodeTotals = result.data.totalRecords
+            // alert(JSON.stringify(this.riskCode))
+            this.insurTypeDialog = true
+          } else {
+            this.open('error', result.msg)
+          }
+        })
+      }
+    },
+    riskClose () {
+      // alert(index)
+      this.sizeList = []
+      this.insurTypeDialog = false
+      this.insurerCode.riskCode = ''
+      this.riskList.riskCode = ''
+    },
+    searchCodeRisk () {  // 险种信息
+      this.riskList.currentPage = 1
+      this.riskList.pageSize = 5
+      this.riskList.riskCode = this.insurerCode.riskCode
+      this.riskList.insurerCode = this.$store.state.proposalForm.companyCode
+      this.riskcode_1(this.riskList).then(result => {
+        if (result.code === '000000') {
+          this.riskCode = result.data.data
+          this.riskcodeTotals = result.data.totalRecords
+          this.insurTypeDialog = true
+        } else if (result.code === '000003') {
+          this.riskCode = []
+          this.riskcodeTotals = 0
+          this.insurTypeDialog = true
+        } else {
+          this.open('error', result.msg)
+        }
+      })
+    },
+    currentChangevalrisk (val) { // 险种的当前页查询
+      this.riskList.currentPage = val
+      this.riskList.insurerCode = this.$store.state.proposalForm.companyCode
+
+      this.riskcode_1(this.riskList).then(result => {
+        if (result.code === '000000') {
+          this.riskCode = result.data.data
+          this.riskcodeTotals = result.data.totalRecords
+          this.insurTypeDialog = true
+        } else {
+          this.open('error', result.msg)
+        }
+      })
+    },
+    handleSizeChangerisk (val) {  //  险种的每页条数改变
+      this.riskList.pageSize = val
+      this.riskList.currentPage = 1
+      this.riskList.insurerCode = this.$store.state.proposalForm.companyCode
+      this.riskcode_1(this.riskList).then(result => {
+        if (result.code === '000000') {
+          this.riskCode = result.data.data
+          this.riskcodeTotals = result.data.totalRecords
+          this.insurTypeDialog = true
+        } else {
+          this.open('error', result.msg)
+        }
+      })
+    },
+
+    idtypeNumber2 () {
+      if (this.addCustom.paperworkType === '') {
+        this.open('error', '请先选择证件类型！')
+        this.addCustom.idNumber = ''
+        return false
+      } else {
+        // 判断客户是否存在
+        this.addcheck.paperworkType = this.addCustom.paperworkType
+        this.addcheck.idNumber = this.addCustom.idNumber
+        if (this.addcheck.idNumber !== '') {
+          this.checkCustomerIsExist_1(this.addcheck).then(result => {
+            if (result.flag === '0') {
+              this.open('error', '该客户已存在，请重新录入！')
+              this.addCustom.idNumber = ''
+            }
+          })
+        }
+      }
+    },
+
+    /** *****客户信息查询********* */
+    searchCode () {
+      // alert(JSON.stringify(this.info.currentPage))
+      this.searchcode.currentPage = this.info.currentPage
+      // alert(JSON.stringify(this.searchcode))
+      this.customerFind_1(this.searchcode)
+    },
+    isEmpty (val) {
+      if (typeof (val) === 'string') {
+        if (val !== undefined) {
+          val = val.replace(/(^\s*)|(\s*$)/g, '')
+        } else {
+          val = ''
+        }
+        if (val === '' || val == null || val === 'null' || val === undefined || val === 'undefined' || val === []) {
+          return true
+        } else {
+          return false
+        }
+      } else if (typeof (val) === 'undefined') {
+        return true
+      } else {
+        if (typeof (val) === 'object') {
+          for (let i in val) {
+            return false
+          }
+          return true
+        }
+      }
+    },
+    searchOfOrg (page) {    // 客户所属机构code 双击
+      this.addCusInfo.currentPage = page
+      this.addCusInfo.pageSize = '5'
+      this.addCusInfo.clickType = '2'
+      this.sizeList = [5, 10, 20, 50]
+      this.addCusInfo.comCodeOrName = this.addCustom.comCode
+      this.customerOfOrg_1(this.addCusInfo).then(result => {
+        if (result.code === '000000') {
+          this.dialogsustomerOrg = true
+          // this.customOfOrg = result.data.data
+          // this.totalsOrg = result.data.totalRecords
+        } else if (result.code === '000002') {
+          this.dialogsustomerOrg = true
+        } else {
+          this.open('error', result.msg)
+        }
+      })
+    },
+    searchOfOrg1 (page) {    // 客户所属机构name 双击
+      this.addCusInfo.currentPage = page
+      this.addCusInfo.pageSize = '5'
+      this.addCusInfo.clickType = '2'
+      this.sizeList = [5, 10, 20, 50]
+      this.addCusInfo.comCodeOrName = this.addCustom.comCName
+      this.customerOfOrg_1(this.addCusInfo).then(result => {
+        if (result.code === '000000') {
+          this.dialogsustomerOrg = true
+        } else if (result.code === '000002') {
+          this.dialogsustomerOrg = true
+        } else {
+          this.open('error', result.msg)
+        }
+      })
+    },
+    toubaorenClose () {
+      this.closeDailog().then(() => {
+        this.sizeList = []
+        this.addCusInfo.currentPage = 1
+        this.addCusInfo.pageSize = 5
+        this.dialogsustomerOrg = false
+        this.addCustom.comCode = ''
+        this.addCustom.comCName = ''
+        this.addCusInfo.comCodeOrName = ''
+      })
+    },
+    // 当前页码
+    cusCurrentChangeOrg (val) {
+      this.addCusInfo.currentPage = val
+      this.addCusInfo.clickType = '2'
+      this.addCusInfo.comCodeOrName = this.addCustom.comCode
+
+      this.customerOfOrg_1(this.addCusInfo)
+    },
+     // 客户所属机构每页条数
+    cushandleSizeChangeOrg (val) {
+      this.addCusInfo.pageSize = val
+      this.addCusInfo.currentPage = 1
+      this.addCusInfo.clickType = '2'
+      this.addCusInfo.comCodeOrName = this.addCustom.comCode
+      this.customerOfOrg_1(this.addCusInfo)
+    },
+
+    searchOfOrgblur (page) {  // 客户所属机构的查询 失焦
+      if (this.addCustom.comCode === '') {
+        return false
+      }
+      if (this.dialogsustomerOrg === true) {
+        return false
+      }
+      this.addCusInfo.currentPage = page
+      this.addCusInfo.pageSize = 5
+      this.addCusInfo.clickType = '1'
+
+      this.addCusInfo.comCodeOrName = this.addCustom.comCode
+      // alert(JSON.stringify(this.addCusInfo))
+
+      this.customerOfOrg_1(this.addCusInfo).then(result => {
+        if (result.code === '000000') {
+          this.addCustom.comCode = result.data.data[0].comCode
+          this.addCustom.comCName = result.data.data[0].comCName
+        } else {
+          this.open('error', result.msg)
+        }
+      })
+      this.addCustom.comCode = ''
+      this.addCustom.comCName = ''
+    },
+    searchOfOrgblur1 (page) {  // 客户所属机构的查询 失焦
+      if (this.addCustom.comCName === '') {
+        return false
+      }
+      if (this.dialogsustomerOrg === true) {
+        return false
+      }
+      this.addCusInfo.currentPage = page
+      this.addCusInfo.pageSize = 5
+      this.addCusInfo.clickType = '1'
+
+      this.addCusInfo.comCodeOrName = this.addCustom.comCName
+      // alert(JSON.stringify(this.addCusInfo))
+
+      this.customerOfOrg_1(this.addCusInfo).then(result => {
+        if (result.code === '000000') {
+          this.addCustom.comCode = result.data.data[0].comCode
+          this.addCustom.comCName = result.data.data[0].comCName
+        } else {
+          this.open('error', result.msg)
+        }
+      })
+      this.addCustom.comCode = ''
+      this.addCustom.comCName = ''
+    },
+    // ---------------------------------------------------------------------------------------------------
+     // 新增客户的提交表单
+    _addCustom (formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          // alert('add成功!')
+          if (this.addCustom.phone === '' && this.addCustom.mobile === '') {
+            this.open('warning', '联系方式请至少填写一个!')
+          } else {
+            // alert(this.addCustom.isLongFlag)
+            if (this.addCustom.identifyValiddate === '' &&
+              this.addCustom.isLongFlag === '0') {
+              this.open('warning', '请先选择证件有效日期')
+            } else {
+            // alert(JSON.stringify(this.addCustom))
+              this.$refs.multipleTable.clearSelection()
+              this.dialogTableVisibleAdd = false
+
+              this.customerAdd_1(this.addCustom).then(result => {
+                if (result.code === '000000') {
+                  this.open('success', '新增成功')
+                  this.$refs['addCustom'].resetFields() // 清空校验
+                  // this.addCustom.isLongFlag = '0'
+                  this.addCustom.identifyValiddate = ''
+                  this.longFlag1 = false
+                  this.longFlag2 = false
+                  this.disabledEdit = false
+                  this.idnumberDisable = false
+                  this.dissex = false
+                  // this.addCustom = {}
+                } else {
+                  this.open('error', result.msg)
+                  this.$refs['addCustom'].resetFields() // 清空校验
+                  // this.addCustom.isLongFlag = '0'
+                  this.addCustom.identifyValiddate = ''
+                  this.longFlag1 = false
+                  this.longFlag2 = false
+                  this.disabledEdit = false
+                  this.idnumberDisable = false
+                  this.dissex = false
+                }
+              })
+            }
+          }
+        } else {
+          return false
+        }
+      })
+    },
+     /** ****************************子组件的增删操作******************************* */
+    // 被保险人信息
+    addInsureantInfo () {
+      var newIndex = this.InsureantInfos.length ? parseInt(this.InsureantInfos[this.InsureantInfos.length - 1]) + 1 : 0
+      this.InsureantInfos.push(newIndex)
+    },
+     // 删除被保险人信息
+    delInfo (index) {
+      if (this.InsureantInfos.length > 1) {
+        this.InsureantInfos.splice(index, 1)
+      }
+      let tempinsurantNumber = {}
+      for (const key in this.$store.state.proposalForm.insurantNumber) {
+        if (this.$store.state.proposalForm.insurantNumber.hasOwnProperty(key)) {
+          if (Number(key) !== index) {
+            tempinsurantNumber[key] = this.$store.state.proposalForm.insurantNumber[key]
+          }
+        }
+      }
+      this.$store.state.proposalForm.insurantNumber = tempinsurantNumber
+        // 自保件判断逻辑，被保险人证件号或投保人证件号与获取到的当前分公司所有业务员证件号码比较，若有任意一个相同的则为自保件
+      this.$store.state.proposalForm.insurantIdRes = false
+      for (let i = 0; i < this.$store.state.login.allAgentData.length; i++) {
+        for (const key in this.$store.state.proposalForm.insurantNumber) {
+          if (this.$store.state.proposalForm.insurantNumber.hasOwnProperty(key)) {
+            if (this.$store.state.login.allAgentData[i] === this.$store.state.proposalForm.insurantNumber[key]) {
+              this.$store.state.proposalForm.insurantIdRes = true
+            }
+          }
+        }
+      }
+      if (this.$store.state.proposalForm.insurantIdRes || this.$store.state.proposalForm.insureIdRes) {
+        this.$store.state.proposalForm.selfFlag = '1'
+      } else {
+        this.$store.state.proposalForm.selfFlag = '0'
+      }
+    },
+    // 身故受益人
+    adddeathBenefitInfo () {
+      var newIndex = this.deathBenefitInfos.length ? parseInt(this.deathBenefitInfos[this.deathBenefitInfos.length - 1]) + 1 : 0
+      this.deathBenefitInfos.push(newIndex)
+    },
+     // 删除身故受益人人信息
+    deldeathInfo (index) {
+      if (this.deathBenefitInfos.length > 1) {
+        this.deathBenefitInfos.splice(index, 1)
+      }
+    },
+    // 生存受益人
+    addliveBenefitInfo () {
+      var newIndex = this.lifeBenefitInfos.length ? parseInt(this.lifeBenefitInfos[this.lifeBenefitInfos.length - 1]) + 1 : 0
+      this.lifeBenefitInfos.push(newIndex)
+    },
+    // 删除生存受益人
+    delliveInfo (index) {
+      if (this.lifeBenefitInfos.length > 1) {
+        this.lifeBenefitInfos.splice(index, 1)
+      }
+    },
+    /** ****************************子组件的增删操作结束******************************* */
+
+    count1 (arr, num) {  // 计算数组中某个值的长度
+      var countArr = arr.filter(function isBigEnough (value) {
+        return value === num
+      })
+      this.riskmainFlag = countArr.length
+    },
+    // toast提示
+    open (type, mesg) {
+      this.$message({
+        showClose: true,
+        message: mesg,
+        type: type
+      })
+    },
+    // 加载中开始
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    // 加载中结束
+    closeLoading () {
+      this.loading.close()
+    },
+    closeDailog () {
+      return new Promise((resolve, reject) => {
+        this.show_dialog = false
+        resolve()
+      })
+    }
+
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LabelText.name]: LabelText,
+    [LineTittle.name]: LineTittle,
+    basicInfo,
+    Insurer,
+    InsurantInfo,
+    deathBenefitInfo,
+    liveBenefitInfo,
+    InsurType,
+    payInfo,
+    sellerInfo
+  },
+  computed: {
+    getInsurers () {
+      return this.$store.state.InsuranceCo.getInsurers
+    },
+    totalrecords () {
+      return parseInt(this.$store.state.InsuranceCo.totalRecords)
+    },
+    getInsurersOrg () {
+      return this.$store.state.InsuranceCo.getInsurersOrg
+    },
+    orgRecords () {
+      return parseInt(this.$store.state.InsuranceCo.orgRecords)
+    },
+    // 客户所属机构
+    customOfOrg () {
+      return this.$store.state.proposalForm.customOfOrg
+    },
+    // 客户所属机构查询出来的总条数
+    totalsOrg () {
+      return parseInt(this.$store.state.proposalForm.totalredords)
+    },
+    // 客户查询
+    customerfind () {
+      return this.$store.state.proposalForm.customerFind
+    },
+    // 客户所属机构查询出来的总条数
+    customerFindTotals () {
+      return parseInt(this.$store.state.proposalForm.customerFindTotals)
+    },
+    // riskCode () {
+    //   return this.$store.state.proposalForm.riskcode
+    // },
+    // riskcodeTotals () {
+    //   return parseInt(this.$store.state.proposalForm.riskcodeTotals)
+    // },
+    zhihuiFlag () {
+      return this.$store.state.proposalForm.zhihuiFlag
+    },
+    byMyself () {
+      return this.$store.state.proposalForm.insurSame
+    }
+  },
+  created () {
+  }
+}
+</script>
+
+<style lang="scss" scoped type="text/css">
+  #insManage{ padding: 0px 30px 30px 30px;}
+  .ri-line { margin-bottom: 10px; }
+  .btn-container { margin-top: 30px; text-align: center}
+  .el-form {margin: 20px 0 ;}
+  .pagination {text-align: right;margin: 20px auto;}
+  a { cursor: pointer;}
+  .datestyle{ color: #717171;font-size: 0.875rem; display: inline-block;width: 120px;}
+  .datestyle1{ color: #717171;font-size: 0.875rem;display: inline-block;text-align: center;width: 60px;}
+  .el-pagination{float: right;}
+  .center{text-align: center}
+</style>
+<style>
+  .ri-line{margin-bottom:0 !important}
+  .riskTable .el-select { width: 90%; }
+    .riskTable .label-text .el-input { width: 90%;  }
+    .batch .el-button { width: inherit; height: inherit; line-height: inherit; font-size: inherit; padding: 10px; }
+    .el-input__icon { line-height: inherit;}
+    .mesg_form .required:before{
+      font-size: 14px!important;
+      top: 3px !important;
+    }
+    .el-table__body .el-button{
+      line-height: 30px;
+      height: 30px;
+      width: 50px;
+      font-size: 13px;
+      padding: 0;
+    }
+    .mesg_form .el-form-item__error { left: 170px;}
+    .riskTable .el-form-item__error { left: 0; padding: 0 !important}
+    .cus_form .el-form-item__error { left: 130px;}
+</style>
+

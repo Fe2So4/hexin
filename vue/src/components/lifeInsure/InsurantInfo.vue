@@ -1,0 +1,1345 @@
+<template>
+  <div class="marginTB">
+    <el-form :rules="insertRules1" ref="insertForm1" :model="insertForm1">
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="insureNoD"  >
+            <ui-label-text  label="被保险人代码:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.insureNoD" readonly :disabled="insureNoD1 || thisDisabled" placeholder="双击选择" @dblclick.native="alertDialoginsuCode(1)" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="insureNameD" >
+            <ui-label-text  label="被保险人名称:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.insureNameD" :disabled="insureNameD1" @change="changeName" placeholder="双击选择" @dblclick.native="alertDialoginsuCode1(1)" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="insureAddressD" :required="false" >
+            <ui-label-text  label="被保险人地址:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.insureAddressD"  :disabled="insureAddressD1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="postNoD" :required="false" >
+            <ui-label-text  label="邮政编码:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.postNoD"  :disabled="postNoD1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="identifyTypeD"  >
+            <ui-label-text  label="证件类型:" :required="false" labelWidth="230">
+              <el-select v-model="insertForm1.identifyTypeD" :disabled="identifyTypeD1 || thisDisabled" @change="cIdentifyNumber" slot="text" placeholder="请选择">
+                <el-option label="身份证" value="1"></el-option>
+                <el-option label="户口本" value="2"></el-option>
+                <el-option label="军官证" value="3"></el-option>
+                <el-option label="驾驶证" value="4"></el-option>
+                <el-option label="护照" value="5"></el-option>
+                <el-option label="港澳居民来往大陆通行证" value="6"></el-option>
+                <el-option label="台湾居民来往大陆通行证" value="7"></el-option>
+                <el-option label="其他" value="8"></el-option>
+                <el-option label="出生医学证明" value="9"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <div v-if="insertForm1.identifyTypeD === '1'">
+            <el-form-item  prop="identifyNumberD" >
+              <ui-label-text  label="证件号码:" :required="false" labelWidth="230">
+                <el-input v-model="insertForm1.identifyNumberD" @change="idtypeNumber" :disabled="identifyNumberD1 || thisDisabled" slot="text" ></el-input>
+              </ui-label-text>
+            </el-form-item>
+          </div>
+          <div v-else-if="insertForm1.identifyTypeD === '2'">
+            <el-form-item  prop="identifyNumberD" >
+              <ui-label-text  label="证件号码:" :required="false" labelWidth="230">
+                <el-input v-model="insertForm1.identifyNumberD" @change="idtypeNumber1" :disabled="identifyNumberD1 || thisDisabled" slot="text" ></el-input>
+              </ui-label-text>
+            </el-form-item>
+          </div>
+          <div v-else>
+            <el-form-item  prop="identifyNumberD" >
+              <ui-label-text  label="证件号码:" :required="false" labelWidth="230">
+                <el-input v-model="insertForm1.identifyNumberD" @change="idtypeNumber2"  :disabled="identifyNumberD1 || thisDisabled" slot="text" ></el-input>
+              </ui-label-text>
+            </el-form-item>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="birthDateD" >
+            <ui-label-text  label="出生日期:" :required="false" labelWidth="230">
+              <el-date-picker value-format="timestamp" slot="text" @change="checkSame" v-model="insertForm1.birthDateD" :disabled="birthDateD1 || thisDisabled" ref="timepiker3"   type="date" placeholder="选择日期"></el-date-picker>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="sexTypeD"  >
+            <ui-label-text  label="性别:" :required="false" labelWidth="230">
+              <el-select v-model="insertForm1.sexTypeD" @change="checkSame" :disabled="sexTypeD1 || thisDisabled" slot="text" placeholder="请选择">
+                <el-option label="男" value="0"></el-option>
+                <el-option label="女" value="1"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="educationCodeD"  >
+            <ui-label-text  label="学历:" :required="false" labelWidth="230">
+              <el-select v-model="insertForm1.educationCodeD" :disabled="educationCodeD1 || thisDisabled" slot="text" placeholder="请选择">
+                <el-option label="小学" value="1"></el-option>
+                <el-option label="初中" value="2"></el-option>
+                <el-option label="高中" value="3"></el-option>
+                <el-option label="大专" value="4"></el-option>
+                <el-option label="本科" value="5"></el-option>
+                <el-option label="硕士" value="6"></el-option>
+                <el-option label="博士" value="7"></el-option>
+                <el-option label="其他" value="8"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="marriageD" >
+            <ui-label-text  label="婚姻状况:" :required="false" labelWidth="230">
+              <el-select v-model="insertForm1.marriageD" :disabled="marriageD1 || thisDisabled" slot="text" placeholder="请选择">
+                <el-option label="已婚" value="1"></el-option>
+                <el-option label="未婚" value="2"></el-option>
+                <el-option label="不明" value="3"></el-option>
+                <el-option label="离异" value="4"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="countryD"  >
+            <ui-label-text  label="国籍:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.countryD"  :disabled="countryD1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="remark"  >
+            <ui-label-text  label="备注:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.remark"  :disabled="remark1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="identifyValiddateD" >
+            <ui-label-text :required="false"  label="证件有效期：" labelWidth="230" >
+            	<el-date-picker
+                value-format="yyyy-MM-dd"
+            		slot="text"
+            		ref="timepiker"
+            		v-model="insertForm1.identifyValiddateD"
+            		:disabled="disabledEdit || thisDisabled"
+            		type="date"
+            		style="width: 24%; margin-right:5%"
+            		placeholder="选择日期"> </el-date-picker>
+
+                <el-checkbox
+                  class="datestyle"
+                  ref="timer"
+                  slot="text"
+                  :disabled="disabledEdit2 || thisDisabled"
+                  @change.native="handleValid()"
+                  v-model="longFlag2"
+                  :id='`InsurantInfo${createID}`'
+                  style="display: inline-block;"
+                  label='false' >永久有效</el-checkbox>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <!-- <el-col :span="4">
+          <el-checkbox
+            class="datestyle"
+            ref="timer"
+            :disabled="disabledEdit2 || thisDisabled"
+            @change.native="handleValid()"
+            v-model="longFlag2"
+            style="line-height:30px;margin-left:-20%"
+            label='false' >永久有效</el-checkbox>
+        </el-col>  -->
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="insureTelD"  >
+            <ui-label-text  label="固定电话:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.insureTelD"  placeholder="固定电话和手机号至少填写一个" :disabled="insureTelD1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="mobilePhoneD"  >
+            <ui-label-text  label="移动电话:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.mobilePhoneD"  placeholder="固定电话和手机号至少填写一个" :disabled="mobilePhoneD1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="workingUnitD"  >
+            <ui-label-text  label="工作单位:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.workingUnitD"  :disabled="workingUnitD1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="jobD"  >
+            <ui-label-text  label="职业:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.jobD"  :disabled="jobD1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="e_mailD"  >
+            <ui-label-text  label="E-mail:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.e_mailD"  :disabled="e_mailD1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="weixinD"  >
+            <ui-label-text  label="微信号:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.weixinD"  :disabled="weixinD1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="habitualResidenceD"  >
+            <ui-label-text  label="经常居住地:" :required="false" labelWidth="230">
+              <el-input v-model="insertForm1.habitualResidenceD"  :disabled="habitualResidenceD1 || thisDisabled" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+    </el-form>
+      <!--客户所属机构 的弹框-->
+    <el-dialog :append-to-body="true" width="50%" center title="客户所属机构" :visible.sync="dialogsustomerOrg">
+        <el-table ref="multipleTable" @row-click="customerinOrg" :data="customOfOrg" tooltip-effect="dark" style="width: 100%">
+          <el-table-column prop="comCode"  label="保险公司代码" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="comCName" label="保险公司名称" show-overflow-tooltip>
+          </el-table-column>
+        </el-table>
+        <div class="block">
+          <el-pagination
+            @current-change="handleCurrentChangeCode"
+            :current-page="info.currentPage"
+            :page-sizes="[5]"
+            :page-size="100"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalsOrg == totalsOrg ? totalsOrg : 0">
+          </el-pagination>
+        </div>
+
+    </el-dialog>
+    <!--被保人代码   客户信息 的弹框-->
+    <el-dialog :append-to-body="true" width="70%" :before-close="toubaorenClose" center title="客户信息" :visible.sync="dialogInsurer">
+        <el-row class="ri-line" style="margin-bottom:22px !important">
+          <el-col :span="12" >
+            <ui-label-text  label="客户代码或名称:"  labelWidth="100">
+              <el-input v-model="searchcode.customerCodeOrName" slot="text" ></el-input>
+            </ui-label-text>
+          </el-col>
+          <el-col :span="12">
+            <ui-label-text  label="证件号码:" style="text-align:right;" labelWidth="120">
+              <el-input v-model="searchcode.idNumber" slot="text" ></el-input>
+            </ui-label-text>
+          </el-col>
+        </el-row>
+        <el-row class="ri-line" style="margin-bottom:22px !important">
+          <el-col :span="24">
+            <div class="center">
+                <el-button  type="primary" @click.native.prevent="searchCode(searchcode)">查询</el-button>
+            </div>
+          </el-col>
+        </el-row>
+        <el-table ref="multipleTable" @row-click="customerinOrg1" :data="tableData" tooltip-effect="dark" style="width: 100%">
+          <el-table-column prop="custId"  label="客户代码" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="custName" label="客户姓名" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="idNumber" label="客户身份证号" show-overflow-tooltip>
+          </el-table-column>
+        </el-table>
+        <div class="block">
+          <el-pagination
+            @current-change="currentChangeval"
+            :current-page.sync="info.currentPage"
+            @size-change="handleSizeChange"
+            :page-sizes="sizeList"
+            :page-size="pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="customerFindTotals === customerFindTotals ? customerFindTotals : 0">
+          </el-pagination>
+        </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import NoticeBar from '@/components/notice-bar'
+import LabelText from '@/components/label-text'
+import LineTittle from '@/components/line-tittle'
+import { mapActions } from 'vuex'
+import moment from 'moment'
+import IsEmpty from '@/utils/IsEmpty'
+export default {
+  name: '',
+  props: ['insurant', 'isEdit', 'isSuper', 'createID'], // insurant为父组件传入的数据，isEdit在投保单修改时为true，isSuper在投保单超级权限修改时为true，createID为动态创建出来的被保人数组中此组件的排名,用于证件有效期checkbox赋值
+  data () {
+    // const { noEmptyValidator, PostValidator,
+    //       emailValidator,
+    //       IdValidator,
+    //       phoneNumberValidator,
+    //       PhoneValidator } = this.$store.getters.validators
+    const { IdValidator } = this.$store.getters.validators
+    return {
+      oldNo: '',
+      thisDisabled: false,
+      IdValidator: IdValidator,
+      // noEmptyValidator: noEmptyValidator,
+      totalRecords: 0,
+      pageSize: 5,
+      sizeList: [5, 10, 20, 50],
+      tableData: [],
+      customerFindTotals: 0,
+      info: {
+        // current: 1
+      },
+      updateTime: '',
+      // 新增的表单验证
+      insertForm1: {
+        insureNoD: '',
+        insureNameD: '',
+        insureAddressD: '',
+        postNoD: '',
+        sexTypeD: '', // 性别 0-男 1-女
+        countryD: '',
+        educationCodeD: '', // 学历 1-小学 2-初中 3-高中 4-大专 5-本科 6-硕士 7-博士 8-其他
+        marriageD: '', // 婚姻状况 1-已婚 2-未婚 3-不明 4-离异
+        birthDateD: '',
+        remark: '',
+        identifyTypeD: '', // 证件类型 1-身份证 2-户口本 3-军官证 4-驾驶证 5-护照 6-港澳居民来往大陆通行证 7-台湾居民来往大陆通行证 8-其他 9-出生医学证明
+        identifyNumberD: '',
+        identifyValiddateD: '',
+        insureTelD: '',
+        mobilePhoneD: '',
+        workingUnitD: '',
+        jobD: '',
+        e_mailD: '',
+        weixinD: '',
+        longFlagD: '',
+        habitualResidenceD: ''
+      },
+      insertRules1: {
+        // insureNoD: noEmptyValidator,
+        // insureNameD: noEmptyValidator,
+        // identifyTypeD: noEmptyValidator,
+        // postNoD: PostValidator,
+        // insureTelD: PhoneValidator,
+        // mobilePhoneD: phoneNumberValidator,
+        // e_mailD: emailValidator,
+        // identifyNumberD: IdValidator
+      },
+      // 新增个人客户
+      addCustom: {
+        custName: '',
+        comCode: '',
+        comCName: '',
+        paperworkType: '',
+        idNumber: '',
+        birthDate: '',
+        longFlag: '0',
+        isLongFlag: '0',
+        identifyValiddate: ''
+      },
+      addRules: {
+        // custName: noEmptyValidator,
+        // comCode: noEmptyValidator,
+        // comCName: noEmptyValidator,
+        // paperworkType: noEmptyValidator, // 证件类型
+        // idNumber: noEmptyValidator,
+        // birthDate: noEmptyValidator
+      },
+      page: '',
+      disabledEdit: false,
+      longFlag1: false,
+      dialogInsurer: false,
+      Benefit: '1',
+      liveBenefit: '1',
+      disabledEdit1: false,
+      disabledEdit2: false,
+      isdisabled: false,
+      chec: false,
+      // longFlag1: false,
+      longFlag2: false,
+      longFlag3: false,
+      dialogTableVisibleInsert: false,
+      dialogTableVisibleQuery: false,
+      dialogTableVisibleCode: false,
+      dialogTableOrg: false,
+      identifyValiddate: false,
+      // dialogInsurer: false, // 投保人代码
+      dialogTableVisibleAdd: false, // 新增个人客户弹框
+      dialogsustomerOrg: false, // 客户所属机构
+      searchcode: {
+        customerCodeOrName: '',
+        idNumber: '',
+        pageSize: 5,
+        currentPage: 1
+      },
+      searchcOrg: {}, // 客户所属机构的查询对象
+      selfFlag1: '0',
+      selfinsuranted: {},
+      addcheck: {},
+      addCheckSame: {}, // 简称
+      insureNoD1: false,  //  自保件将input置灰
+      insureNameD1: false,
+      insureAddressD1: false,
+      postNoD1: false,
+      sexTypeD1: false,
+      countryD1: false,
+      educationCodeD1: false,
+      marriageD1: false,
+      birthDateD1: false,
+      remark1: false,
+      identifyTypeD1: false,
+      identifyNumberD1: false,
+      insureTelD1: false,
+      mobilePhoneD1: false,
+      workingUnitD1: false,
+      jobD1: false,
+      e_mailD1: false,
+      weixinD1: false,
+      habitualResidenceD1: false
+    }
+  },
+  mounted () {
+  },
+
+  methods: {
+    ...mapActions([
+      'queryproposalForm_1',
+      'queryPolicyById_1',
+      'getInsurers_1',
+      'getInsurersOrg_1',
+      'customerFind_1',
+      'customerOfOrg_1',
+      'checkCustomerSimilar_1',
+      'checkCustomerIsExist_1',
+      'customerAdd_1'
+    ]),
+    changeName () {
+      this.checkSame()
+    },
+    query (page) {
+      // this.info.current = page
+      // alert(this.info.currentPage)
+      this.queryproposalForm_1(this.info)
+    },
+    handleCurrentChange (val) {
+
+      // this.info.currentPage = val
+
+      // this.query(val)
+    },
+    /** ******************开始********************** */
+    handleSizeChange (val) {
+      this.info.pageSize = val
+      this.info.currentPage = 1
+      this.customerFind_1(this.info).then(result => {
+        if (result.code === '000000') {
+          this.tableData = result.data.data
+          this.customerFindTotals = result.data.totalRecords
+        } else {
+          this.open('error', result.msg)
+          this.tableData = []
+          this.customerFindTotals = 0
+          this.searchcode.customerCodeOrName = ''
+          this.searchcode.idNumber = ''
+        }
+      })
+    },
+    // 客户信息查询的分页 跳转至第几页
+    currentChangeval (val) {
+      this.info.currentPage = val
+      this.info.customerCodeOrName = this.searchcode.customerCodeOrName
+      this.customerFind_1(this.info).then(result => {
+        if (result.code === '000000') {
+          this.tableData = result.data.data
+          this.customerFindTotals = result.data.totalRecords
+        } else {
+          this.open('error', result.msg)
+          this.tableData = []
+          this.customerFindTotals = 0
+          this.searchcode.customerCodeOrName = ''
+          this.searchcode.idNumber = ''
+        }
+      })
+    },
+    /** ******************结束********************** */
+    tableRowChange (row, event, column) {
+      this.dialogTableVisibleQuery = true
+      this.info.proposalNo = row.proposalNo
+      // alert('proposalNo:' + this.info.proposalNo)
+      this.info.currentPage = ''
+      this.queryPolicyById_1(this.info)
+
+      //
+    },
+    handleValid () {
+      if (this.longFlag2) {
+        // false的话  时间不能填 longFlag == 1 永久有效
+        this.insertForm1.longFlagD = '1'
+        this.insertForm1.identifyValiddateD = ''
+
+        this.disabledEdit = true
+        this.longFlag3 = true
+      } else {
+        // true的话  时间可以填 longFlag == 0 有效期
+        // this.insertForm1.identifyValiddateD = '0'
+        this.insertForm1.longFlagD = '0'
+        this.insertForm1.identifyValiddateD = ''
+        this.disabledEdit = false
+        this.longFlag3 = false
+      }
+    },
+    // 投保人代码
+    alertDialoginsuCode (page) {  // 投保人code 双击
+      if (!this.insureNoD1) {
+        this.pageSize = 5
+        this.sizeList = [5, 10, 20, 50]
+        this.info.currentPage = page
+        this.info.pageSize = this.searchcode.pageSize
+        this.info.clickType = '2'
+        this.info.customerCodeOrName = this.insertForm1.insureNoD
+        this.searchcode.customerCodeOrName = this.insertForm1.insureNoD
+        this.customerFind_1(this.info).then(result => {
+          if (result.code === '000000') {
+            this.tableData = result.data.data
+            this.customerFindTotals = result.data.totalRecords
+            this.dialogInsurer = true
+          } else if (result.code === '000002') {
+            this.tableData = []
+            this.dialogInsurer = true
+          } else {
+            this.open('error', result.msg)
+          }
+        })
+      }
+    },
+    alertDialoginsuCode1 (page) {  // 投保人name 双击
+      if (!this.insureNameD1) {
+        this.pageSize = 5
+        this.sizeList = [5, 10, 20, 50]
+        this.info.currentPage = page
+        this.info.pageSize = this.searchcode.pageSize
+        this.info.clickType = '2'
+        this.info.customerCodeOrName = this.insertForm1.insureNameD
+        this.searchcode.customerCodeOrName = this.insertForm1.insureNameD
+        this.customerFind_1(this.info).then(result => {
+          if (result.code === '000000') {
+            this.tableData = result.data.data
+            this.customerFindTotals = result.data.totalRecords
+            this.dialogInsurer = true
+          } else if (result.code === '000002') {
+            this.tableData = []
+            this.dialogInsurer = true
+          } else {
+            this.open('error', result.msg)
+          }
+        })
+      }
+    },
+
+    // 客户所属机构点击
+    customerinOrg (row, event, column) {
+      this.addCustom.comCode = row.comCode
+      this.addCustom.comCName = row.comCName
+      this.addCustom.comName = row.address
+      this.dialogsustomerOrg = false
+    },
+    // 客户所属机构点击
+    customerinOrg1 (row, event, column) {
+     // alert(JSON.stringify(row))
+      this.closeDailog().then(() => {
+        this.searchcode.customerCodeOrName = ''
+        this.searchcode.idNumber = ''
+        this.sizeList = []
+        this.customerFindTotals = 0
+        this.longFlag2 = false
+        this.insertForm1.insureNameD = row.custName
+        this.insertForm1.identifyNumberD = row.idNumber
+        this.insertForm1.insureAddressD = row.address
+        this.insertForm1.postNoD = row.zipCode
+        this.insertForm1.sexTypeD = row.sex
+        this.insertForm1.countryD = row.country
+        this.insertForm1.birthDateD = row.birthDate
+        this.insertForm1.mobilePhoneD = row.mobile // 添加的手机
+        this.insertForm1.remark = row.remark // 添加的备注
+        this.insertForm1.educationCodeD = row.education
+        this.insertForm1.insureTelD = row.phone
+        this.insertForm1.weixinD = row.weChat
+        this.insertForm1.e_mailD = row.email
+        this.insertForm1.jobD = row.job
+        this.insertForm1.workingUnitD = row.workingUnit
+        if (row.identifyValiddate) {
+          this.insertForm1.identifyValiddateD = moment(row.identifyValiddate).format('YYYY-MM-DD')
+        } else {
+          this.insertForm1.identifyValiddateD = row.identifyValiddate
+        }
+        this.insertForm1.habitualResidenceD = row.habitualResidence
+        this.insertForm1.insureNoD = row.custId
+        this.insertForm1.marriageD = row.maritalStatus
+        this.insertForm1.longFlagD = row.longFlag
+
+        this.insertForm1.identifyTypeD = row.paperworkType
+        if (this.insertForm1.identifyTypeD === '1' || this.insertForm1.identifyTypeD === '2') {
+          this.insertRules1['identifyNumberD'] = this.IdValidator
+        } else {
+          // this.insertRules1['identifyNumberD'] = this.noEmptyValidator
+          this.insertRules1['identifyNumberD'] = ''
+        }
+        this.dialogInsurer = false
+
+        if (this.insertForm1.identifyValiddateD === null) {
+          this.insertForm1.identifyValiddateD = ''
+        }
+        if (row.isLongFlag === 1) {
+          this.disabledEdit1 = true
+          this.isdisabled = true
+          this.longFlag2 = true
+        } else {
+          this.disabledEdit1 = false
+        }
+
+      //   // 根据时间戳来计算年龄
+      //   let date = new Date(row.birthDate)
+      //   let Y = date.getFullYear() + '-'
+      //   let M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '-'
+      //   let D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
+      //   let shcformdate = Y + M + D
+      // // alert(shcformdate)
+      //   this.jsGetAge(shcformdate)
+      //   if (this.judgeage < 18) {
+      //     this.open('error', '投保人必须大于十八周岁，请重新选择!')
+      //     this.insertForm1 = {}
+      //     return false
+      //   }
+
+        //   把其余的全部置灰
+        // this.insureNameD1 = true   // 把被保人置为readonly
+        this.insureNoD1 = true
+        this.insureAddressD1 = true
+        this.postNoD1 = true
+        this.sexTypeD1 = true
+        this.countryD1 = true
+        this.educationCodeD1 = true
+        this.marriageD1 = true
+        this.birthDateD1 = true
+        this.remark1 = true
+        this.identifyTypeD1 = true
+        this.identifyNumberD1 = true
+        this.insureTelD1 = true
+        this.mobilePhoneD1 = true
+        this.workingUnitD1 = true
+        this.jobD1 = true
+        this.e_mailD1 = true
+        this.weixinD1 = true
+        this.habitualResidenceD1 = true
+        this.disabledEdit = true
+        this.disabledEdit2 = true
+      })
+    },
+    toubaorenClose () { // 关闭弹框的事件
+      this.pageSize = 5
+      this.sizeList = []
+      this.insertForm1.insureNameD = ''
+      this.insertForm1.insureNameD = ''
+      this.insertForm1.identifyNumberD = ''
+      this.insertForm1.insureAddressD = ''
+      this.insertForm1.postNoD = ''
+      this.insertForm1.sexTypeD = ''
+      this.insertForm1.countryD = ''
+      this.insertForm1.birthDateD = ''
+      this.insertForm1.mobilePhoneD = '' // 添加的手机
+      this.insertForm1.remark = ''// 添加的备注
+
+      this.insertForm1.educationCodeD = ''
+      this.insertForm1.insureTelD = ''
+      this.insertForm1.weixinD = ''
+      this.insertForm1.e_mailD = ''
+      this.insertForm1.jobD = ''
+      this.insertForm1.workingUnitD = ''
+      this.insertForm1.identifyValiddateD = ''
+      this.insertForm1.habitualResidenceD = ''
+      this.insertForm1.insureNoD = ''
+      this.insertForm1.marriageD = ''
+      this.insertForm1.longFlagD = ''
+      this.insertForm1.identifyTypeD = ''
+      if (this.isEdit) {
+        this.insertForm1 = {
+          insureNoD: '',
+          insureNameD: '',
+          insureAddressD: '',
+          postNoD: '',
+          sexTypeD: '',
+          countryD: '',
+          educationCodeD: '',
+          marriageD: '',
+          birthDateD: '',
+          remark: '',
+          identifyTypeD: '',
+          identifyNumberD: '',
+          identifyValiddateD: '',
+          insureTelD: '',
+          mobilePhoneD: '',
+          workingUnitD: '',
+          jobD: '',
+          e_mailD: '',
+          weixinD: '',
+          habitualResidenceD: ''
+        }
+        this.thisDisabled = false
+      }
+      this.dialogInsurer = false
+      // this.$store.state.proposalForm.selfFlag = '0'
+
+      this.insureNameD1 = false   // 把被保人置为readonly
+      this.insureNoD1 = false
+      this.insureAddressD1 = false
+      this.postNoD1 = false
+      this.sexTypeD1 = false
+      this.countryD1 = false
+      this.educationCodeD1 = false
+      this.marriageD1 = false
+      this.birthDateD1 = false
+      this.remark1 = false
+      this.identifyTypeD1 = false
+      this.identifyNumberD1 = false
+      this.insureTelD1 = false
+      this.mobilePhoneD1 = false
+      this.workingUnitD1 = false
+      this.jobD1 = false
+      this.e_mailD1 = false
+      this.weixinD1 = false
+      this.habitualResidenceD1 = false
+      this.disabledEdit = false
+      this.disabledEdit2 = false
+      this.longFlag2 = false
+      this.thisDisabled = false
+      this.searchcode = {
+        customerCodeOrName: '',
+        idNumber: '',
+        pageSize: 5,
+        currentPage: 1
+      }
+    },
+    handleCurrentChangeCode (val) {
+      this.info.currentPage = val
+      // alert(JSON.stringify(this.info))
+
+      this.getInsurers_1(this.info)
+    },
+    open (type, mesg) { // toast提示
+      this.$message({
+        showClose: true,
+        message: mesg,
+        type: type
+      })
+    },
+    throttle (fun, delay) {
+      let last, deferTimer
+      return function (args) {
+        let that = this
+        let _args = arguments
+        let now = +new Date()
+        if (last && now < last + delay) {
+          clearTimeout(deferTimer)
+          deferTimer = setTimeout(function () {
+            last = now
+            fun.apply(that, _args)
+          }, delay)
+        } else {
+          last = now
+          fun.apply(that, _args)
+        }
+      }
+    },
+    /** *****客户信息查询********* */
+    searchCode () {
+      this.searchcode.currentPage = this.info.currentPage
+      this.customerFind_1(this.searchcode).then(result => {
+        if (result.code === '000000') {
+          this.tableData = result.data.data
+
+          this.customerFindTotals = result.data.totalRecords
+        } else if (result.code === '000002') {
+          this.tableData = []
+          this.customerFindTotals = 0
+        } else {
+          this.open('error', result.msg)
+          this.tableData = []
+          this.customerFindTotals = 0
+          this.searchcode.customerCodeOrName = ''
+          this.searchcode.idNumber = ''
+        }
+      })
+    },
+
+    // 客户所属机构的查询
+    searchOfOrg (page) {
+      // this.info.currentPage = page
+      this.info.currentPage = page
+
+      this.info.comCodeOrName = this.addCustom.comCode
+
+      this.customerOfOrg_1(this.info)
+
+      this.dialogsustomerOrg = true
+    },
+    validateForm () {
+      let flag = false
+      this.$refs.insertForm1.validate((valid) => {
+        flag = valid
+      })
+      return flag
+    },
+    closeDailog () {
+      return new Promise((resolve, reject) => {
+        this.show_dialog = false
+        resolve()
+      })
+    },
+
+    checkSame () {  // 判断相似客户
+      if (this.insertForm1.insureNameD !== '' && this.insertForm1.sexTypeD !== '' && this.insertForm1.birthDateD !== '') {
+        this.addCheckSame.custName = this.insertForm1.insureNameD
+        this.addCheckSame.sex = this.insertForm1.sexTypeD
+        this.addCheckSame.birthDate = this.insertForm1.birthDateD
+        this.checkCustomerSimilar_1(this.addCheckSame).then(result => {
+          if (result.flag === '0') {
+            this.$confirm('该客户与系统中的某位客户相似, 是否继续录入?', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+              this.$message({
+                type: 'success',
+                message: '继续录入!'
+              })
+            }).catch(() => {
+              this.insertForm1.insureNameD = ''
+              this.insertForm1.sexTypeD = ''
+              this.insertForm1.birthDateD = ''
+            })
+          }
+        })
+      }
+    },
+    cIdentifyNumber (val) {
+      this.insertForm1.identifyNumberD = ''
+      this.insertForm1.birthDateD = ''
+      this.insertForm1.sexTypeD = ''
+      this.sexTypeD1 = false
+      this.birthDateD1 = false
+
+      if (val === '1' || val === '2') {
+        this.sexTypeD1 = true
+        this.birthDateD1 = true
+        this.insertRules1['identifyNumberD'] = this.IdValidator
+      } else {
+        // this.insertRules1['identifyNumberD'] = this.noEmptyValidator
+        this.insertRules1['identifyNumberD'] = ''
+      }
+    },
+    checkcusExist () { // 判断客户是否存在
+      this.addcheck.paperworkType = this.insertForm1.identifyTypeD
+      this.addcheck.idNumber = this.insertForm1.identifyNumberD
+      this.checkCustomerIsExist_1(this.addcheck).then(result => {
+        if (result.flag === '0') {
+          this.open('error', '该客户已存在，请重新录入！')
+          this.insertForm1.identifyNumberD = ''
+          this.insertForm1.birthDateD = ''
+          this.insertForm1.sexTypeD = ''
+          this.birthDateD1 = false
+          this.sexTypeD1 = false
+        } else {
+          this.checkSame()
+        }
+      })
+    },
+    idtypeNumber2 () { // 除身份证户口本 证件号码 change
+      if (this.insertForm1.identifyTypeD === '') {
+        this.open('error', '请先选择证件类型！')
+        this.insertForm1.identifyNumberD = ''
+        return false
+      } else {
+        if (this.insertForm1.identifyNumberD === '') {
+
+        } else {
+          this.checkcusExist()
+        }
+      }
+    },
+    idtypeNumber () { // 身份证 证件号码 change
+      if (this.insertForm1.identifyNumberD === '') {
+
+      } else {
+        let _idTypehao = this.insertForm1.identifyNumberD.substr(6, 8)
+        let idTypehao1 = _idTypehao.substring(0, 4) + '-' + _idTypehao.substring(4, 6) + '-' + _idTypehao.substr(6)
+        var date = new Date(idTypehao1)
+        var idTypehao = date.getTime()
+        this.insertForm1.birthDateD = idTypehao
+
+        let _sex = this.insertForm1.identifyNumberD.substr(16, 1)
+
+        if (_sex === '1' || _sex === '3' || _sex === '5' || _sex === '7' || _sex === '9') {
+          this.insertForm1.sexTypeD = '0'
+          this.birthDateD1 = true
+          this.sexTypeD1 = true
+        } else if (_sex === '2' || _sex === '4' || _sex === '6' || _sex === '8' || _sex === '0') {
+          this.insertForm1.sexTypeD = '1'
+          this.birthDateD1 = true
+          this.sexTypeD1 = true
+        }
+        this.checkcusExist()
+        // this.checkSame()
+      }
+    },
+    idtypeNumber1 () { // 户口本 证件号码 change
+      if (this.insertForm1.identifyNumberD === '') {
+
+      } else {
+        let _idTypehao = this.insertForm1.identifyNumberD.substr(6, 8)
+        let idTypehao1 = _idTypehao.substring(0, 4) + '-' + _idTypehao.substring(4, 6) + '-' + _idTypehao.substr(6)
+        // alert(idTypehao)
+        var date = new Date(idTypehao1)
+        var idTypehao = date.getTime()
+        this.insertForm1.birthDateD = idTypehao
+        this.jsGetAge(idTypehao1)
+        // alert(idTypehao)
+        // alert(this.judgeage)
+        if (this.judgeage > 18) {
+          this.open('error', '大于18岁不能选择户口本，请重新选择!')
+          this.insertForm1.identifyNumberD = ''
+          this.insertForm1.birthDateD = ''
+          this.insertForm1.sexTypeD = ''
+          this.birthDateD1 = false
+          this.sexTypeD1 = false
+        }
+
+        let _sex = this.insertForm1.identifyNumberD.substr(16, 1)
+
+        if (_sex === '1' || _sex === '3' || _sex === '5' || _sex === '7' || _sex === '9') {
+          this.insertForm1.sexTypeD = '0'
+          this.birthDateD1 = true
+          this.sexTypeD1 = true
+        } else if (_sex === '2' || _sex === '4' || _sex === '6' || _sex === '8' || _sex === '0') {
+          this.insertForm1.sexTypeD = '1'
+          this.birthDateD1 = true
+          this.sexTypeD1 = true
+        }
+
+        this.checkcusExist()
+        this.checkSame()
+      }
+    },
+    jsGetAge (strBirthday) {  // 根据出生日期判断年龄
+      var returnAge
+      var strBirthdayArr = strBirthday.split('-')
+      var birthYear = strBirthdayArr[0]
+      var birthMonth = strBirthdayArr[1]
+      var birthDay = strBirthdayArr[2]
+
+      var d = new Date()
+      var nowYear = d.getFullYear()
+      var nowMonth = d.getMonth() + 1
+      var nowDay = d.getDate()
+
+      if (nowYear === birthYear) {
+        returnAge = 0// 同年 则为0岁
+      } else {
+        var ageDiff = nowYear - birthYear  // 年之差
+        if (ageDiff > 0) {
+          if (nowMonth === birthMonth) {
+            var dayDiff = nowDay - birthDay// 日之差
+            if (dayDiff < 0) {
+              returnAge = ageDiff - 1
+            } else {
+              returnAge = ageDiff
+            }
+          } else {
+            var monthDiff = nowMonth - birthMonth// 月之差
+            if (monthDiff < 0) {
+              returnAge = ageDiff - 1
+            } else {
+              returnAge = ageDiff
+            }
+          }
+        } else {
+          returnAge = -1// 返回-1 表示出生日期输入错误 晚于今天
+        }
+      }
+      this.judgeage = returnAge
+      return returnAge// 返回周岁年龄
+    }
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LabelText.name]: LabelText,
+    [LineTittle.name]: LineTittle
+  },
+  watch: {
+    byMyself (val) {  // 自保件时根据投保人自动带入被保险人信息
+      this.selfFlag1 = val
+
+      // alert('haha:' + this.selfFlag1)
+      if (this.selfFlag1 === '1') {
+        this.insertForm1 = this.$store.state.proposalForm.formData
+        if (this.insertForm1.longFlagD === '1' || this.insertForm1.longFlagD === 1 || this.insertForm1.longFlagD === null) {
+          this.longFlag2 = true
+        } else {
+          this.longFlag2 = false
+        }
+        if (this.insertForm1.identifyTypeD === '1' || this.insertForm1.identifyTypeD === '2') {
+          this.insertRules1['identifyNumberD'] = this.IdValidator
+        } else {
+          // this.insertRules1['identifyNumberD'] = this.noEmptyValidator
+          this.insertRules1['identifyNumberD'] = ''
+        }
+
+        this.insureNoD1 = true
+        this.insureNameD1 = true
+        this.insureAddressD1 = true
+        this.postNoD1 = true
+        this.sexTypeD1 = true
+        this.countryD1 = true
+        this.educationCodeD1 = true
+        this.marriageD1 = true
+        this.birthDateD1 = true
+        this.remark1 = true
+        this.identifyTypeD1 = true
+        this.identifyNumberD1 = true
+        this.insureTelD1 = true
+        this.mobilePhoneD1 = true
+        this.workingUnitD1 = true
+        this.jobD1 = true
+        this.e_mailD1 = true
+        this.weixinD1 = true
+        this.habitualResidenceD1 = true
+        this.disabledEdit = true // 证件有效期
+        this.disabledEdit2 = true // 证件有效期 是否永久
+        this.$store.state.proposalForm.zhihuiFlag = '1'
+      } else {
+        this.insertForm1.insureNoD = '' // 被保险人代码
+        this.insertForm1.insureNameD = '' // 被保险人代码
+        this.insertForm1.insureAddressD = '' // 被保险人地址
+        this.insertForm1.postNoD = '' // 被保险人邮编
+        this.insertForm1.sexTypeD = '' // 被保险人性别
+        this.insertForm1.countryD = '' // 被保险人国籍
+        this.insertForm1.educationCodeD = '' // 被保险人学历
+        this.insertForm1.marriageD = '' // 被保险人婚姻状况
+        this.insertForm1.birthDateD = '' // 被保险人出生日期
+        this.insertForm1.remark = '' // 被保险人备注
+        this.insertForm1.identifyTypeD = '' // 被保险人证件类型
+        this.insertForm1.identifyNumberD = ''  // 被保险人证件号
+        this.insertForm1.identifyValiddateD = '' // 被保险人证件有效期
+        this.insertForm1.longFlagD = ''  // 被保险人证件有效期    永久有效
+        this.insertForm1.insureTelD = '' // 被保险人固话
+        this.insertForm1.mobilePhoneD = '' // 被保险人手机
+        this.insertForm1.workingUnitD = ''  // 被保险人工作单位
+        this.insertForm1.jobD = '' // 被保险人职业
+        this.insertForm1.e_mailD = '' // 被保险人email
+        this.insertForm1.weixinD = '' // 被保险人微信号
+        this.insertForm1.habitualResidenceD = ''  // 被保险人经常居住地
+        if (this.isEdit) {
+          this.insertForm1 = {
+            insureNoD: '',
+            insureNameD: '',
+            insureAddressD: '',
+            postNoD: '',
+            sexTypeD: '',
+            countryD: '',
+            educationCodeD: '',
+            marriageD: '',
+            birthDateD: '',
+            remark: '',
+            identifyTypeD: '',
+            identifyNumberD: '',
+            identifyValiddateD: '',
+            insureTelD: '',
+            mobilePhoneD: '',
+            workingUnitD: '',
+            jobD: '',
+            e_mailD: '',
+            weixinD: '',
+            habitualResidenceD: ''
+          }
+          this.thisDisabled = false
+        }
+        this.longFlag2 = false
+        this.insureNoD1 = false
+        this.insureNameD1 = false
+        this.insureAddressD1 = false
+        this.postNoD1 = false
+        this.sexTypeD1 = false
+        this.countryD1 = false
+        this.educationCodeD1 = false
+        this.marriageD1 = false
+        this.birthDateD1 = false
+        this.remark1 = false
+        this.identifyTypeD1 = false
+        this.identifyNumberD1 = false
+        this.insureTelD1 = false
+        this.mobilePhoneD1 = false
+        this.workingUnitD1 = false
+        this.jobD1 = false
+        this.e_mailD1 = false
+        this.weixinD1 = false
+        this.habitualResidenceD1 = false
+        this.$refs['insertForm1'].resetFields()
+        this.disabledEdit = false // 证件有效期
+        this.disabledEdit2 = false // 证件有效期 是否永久
+        this.$store.state.proposalForm.zhihuiFlag = '0'
+      }
+    },
+    insurant (val) {
+      this.insertForm1 = val
+      if (this.insertForm1.longFlagD === 1 || this.insertForm1.longFlagD === null) {
+        this.longFlag2 = true
+      } else {
+        this.longFlag2 = false
+      }
+
+      if (val.insureNoD !== '') {
+        this.thisDisabled = true
+      } else {
+        this.thisDisabled = false
+      }
+      this.oldNo = this.insertForm1.identifyNumberD
+    },
+    isChange (val) {
+      this.selfFlag1 = this.byMyself
+
+      // alert('haha:' + this.selfFlag1)
+      if (this.selfFlag1 === '1' || this.selfFlag1 === 1) {
+        this.insertForm1 = this.$store.state.proposalForm.formData
+        if (this.insertForm1.longFlagD === '1' || this.insertForm1.longFlagD === 1 || this.insertForm1.longFlagD === null) {
+          this.longFlag2 = true
+        } else {
+          this.longFlag2 = false
+        }
+        if (this.insertForm1.identifyTypeD === '1' || this.insertForm1.identifyTypeD === '2') {
+          this.insertRules1['identifyNumberD'] = this.IdValidator
+        } else {
+          // this.insertRules1['identifyNumberD'] = this.noEmptyValidator
+          this.insertRules1['identifyNumberD'] = ''
+        }
+
+        this.insureNoD1 = true
+        this.insureNameD1 = true
+        this.insureAddressD1 = true
+        this.postNoD1 = true
+        this.sexTypeD1 = true
+        this.countryD1 = true
+        this.educationCodeD1 = true
+        this.marriageD1 = true
+        this.birthDateD1 = true
+        this.remark1 = true
+        this.identifyTypeD1 = true
+        this.identifyNumberD1 = true
+        this.insureTelD1 = true
+        this.mobilePhoneD1 = true
+        this.workingUnitD1 = true
+        this.jobD1 = true
+        this.e_mailD1 = true
+        this.weixinD1 = true
+        this.habitualResidenceD1 = true
+        this.disabledEdit = true // 证件有效期
+        this.disabledEdit2 = true // 证件有效期 是否永久
+        this.$store.state.proposalForm.zhihuiFlag = '1'
+      } else {
+        this.insertForm1.insureNoD = '' // 被保险人代码
+        this.insertForm1.insureNameD = '' // 被保险人代码
+        this.insertForm1.insureAddressD = '' // 被保险人地址
+        this.insertForm1.postNoD = '' // 被保险人邮编
+        this.insertForm1.sexTypeD = '' // 被保险人性别
+        this.insertForm1.countryD = '' // 被保险人国籍
+        this.insertForm1.educationCodeD = '' // 被保险人学历
+        this.insertForm1.marriageD = '' // 被保险人婚姻状况
+        this.insertForm1.birthDateD = '' // 被保险人出生日期
+        this.insertForm1.remark = '' // 被保险人备注
+        this.insertForm1.identifyTypeD = '' // 被保险人证件类型
+        this.insertForm1.identifyNumberD = ''  // 被保险人证件号
+        this.insertForm1.identifyValiddateD = '' // 被保险人证件有效期
+        this.insertForm1.longFlagD = ''  // 被保险人证件有效期    永久有效
+        this.insertForm1.insureTelD = '' // 被保险人固话
+        this.insertForm1.mobilePhoneD = '' // 被保险人手机
+        this.insertForm1.workingUnitD = ''  // 被保险人工作单位
+        this.insertForm1.jobD = '' // 被保险人职业
+        this.insertForm1.e_mailD = '' // 被保险人email
+        this.insertForm1.weixinD = '' // 被保险人微信号
+        this.insertForm1.habitualResidenceD = ''  // 被保险人经常居住地
+        if (this.isEdit) {
+          this.insertForm1 = {
+            insureNoD: '',
+            insureNameD: '',
+            insureAddressD: '',
+            postNoD: '',
+            sexTypeD: '',
+            countryD: '',
+            educationCodeD: '',
+            marriageD: '',
+            birthDateD: '',
+            remark: '',
+            identifyTypeD: '',
+            identifyNumberD: '',
+            identifyValiddateD: '',
+            insureTelD: '',
+            mobilePhoneD: '',
+            workingUnitD: '',
+            jobD: '',
+            e_mailD: '',
+            weixinD: '',
+            habitualResidenceD: ''
+          }
+          this.thisDisabled = false
+        }
+        this.insureNoD1 = false
+        this.insureNameD1 = false
+        this.insureAddressD1 = false
+        this.postNoD1 = false
+        this.sexTypeD1 = false
+        this.countryD1 = false
+        this.educationCodeD1 = false
+        this.marriageD1 = false
+        this.birthDateD1 = false
+        this.remark1 = false
+        this.identifyTypeD1 = false
+        this.identifyNumberD1 = false
+        this.insureTelD1 = false
+        this.mobilePhoneD1 = false
+        this.workingUnitD1 = false
+        this.jobD1 = false
+        this.e_mailD1 = false
+        this.weixinD1 = false
+        this.habitualResidenceD1 = false
+        this.$refs['insertForm1'].resetFields()
+        this.disabledEdit = false // 证件有效期
+        this.disabledEdit2 = false // 证件有效期 是否永久
+        this.$store.state.proposalForm.zhihuiFlag = '0'
+      }
+    },
+    longFlag2 (val) {
+      if (val === true) {
+        this.insertForm1.longFlagD = '1'
+      } else {
+        this.insertForm1.longFlagD = '0'
+      }
+    },
+    huancun (val) {
+      if (val === true) {
+        this.insureNoD1 = false
+        this.insureNameD1 = false
+      }
+    },
+    insertForm1: {
+      handler (newValue, oldValue) {
+        // 可以读到独立的被保险人相关信息,在外部点击相应删除时，去store里删除相应的值
+        this.$store.state.proposalForm.insurantIdRes = false
+        // 自保件判断逻辑，被保险人证件号或投保人证件号与获取到的当前分公司所有业务员证件号码比较，若有任意一个相同的则为自保件
+        this.$store.state.proposalForm.insurantNumber[this.createID] = newValue.identifyNumberD
+        if (!IsEmpty(newValue.identifyNumberD)) {
+          for (let i = 0; i < this.$store.state.login.allAgentData.length; i++) {
+            for (const key in this.$store.state.proposalForm.insurantNumber) {
+              if (this.$store.state.proposalForm.insurantNumber.hasOwnProperty(key)) {
+                if (this.$store.state.login.allAgentData[i] === this.$store.state.proposalForm.insurantNumber[key]) {
+                  this.$store.state.proposalForm.insurantIdRes = true
+                }
+              }
+            }
+          }
+        }
+        if (this.$store.state.proposalForm.insurantIdRes || this.$store.state.proposalForm.insureIdRes) {
+          this.$store.state.proposalForm.selfFlag = '1'
+        } else {
+          this.$store.state.proposalForm.selfFlag = '0'
+        }
+      },
+      deep: true,
+      immediate: true
+    }
+  },
+  computed: {
+    // 客户所属机构
+    customOfOrg () {
+      return this.$store.state.proposalForm.customOfOrg
+    },
+    // 客户所属机构查询出来的总条数
+    totalsOrg () {
+      return parseInt(this.$store.state.proposalForm.totalredords)
+    },
+    byMyself () {
+      return this.$store.state.proposalForm.insurSame
+    },
+    huancun () {
+      return this.$store.state.proposalForm.qinglihuancun
+    },
+    isChange () {
+      return this.$store.state.proposalForm.change
+    }
+  },
+  created () {
+    if (this.insurant !== undefined) {
+      this.insertForm1 = this.insurant
+      if (this.insertForm1.longFlagD === 1) {
+        this.longFlag2 = true
+      } else {
+        this.longFlag2 = false
+      }
+      this.oldNo = this.insertForm1.identifyNumberD
+    }
+    if (this.oldNo !== '') {
+      this.thisDisabled = true
+    } else {
+      this.thisDisabled = false
+    }
+    // if (this.$store.state.proposalForm.zhihuiFlag === '1') {
+    //   this.insureNoD1 = true
+    //   this.insureNameD1 = true
+    // }
+  }
+}
+</script>
+
+<style lang="scss" scoped type="text/css">
+ .ri-line { margin-bottom: 10px; }
+ .center{text-align: center}
+ .marginTB{margin:15px 0;}
+ .datestyle{color: #717171}
+</style>

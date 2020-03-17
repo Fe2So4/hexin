@@ -1,0 +1,402 @@
+<template>
+  <div id="advance-index" >
+    <ui-notice-bar slot="breadcast" >
+      <el-breadcrumb slot="location" separator=">">
+        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+        <el-breadcrumb-item>寿险续期佣金管理</el-breadcrumb-item>
+        <el-breadcrumb-item>续期佣金汇总</el-breadcrumb-item>
+      </el-breadcrumb>
+    </ui-notice-bar>
+    <div class="ri-content">
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form :model="info" ref="queryForm">
+            <el-form-item
+              prop="persistencyDate"
+              :rules="{ required: true, message: '日期不能为空', type: 'string'}"
+            >
+              <ui-label-text labelWidth="200" label="继续率月份:" required=true >
+                <el-date-picker
+                  v-model="info.persistencyDate"
+                  slot="text"
+                  type="month"
+                  value-format="yyyy-MM"
+                  placeholder="选择月">
+                </el-date-picker>
+              </ui-label-text>
+            </el-form-item>
+          </el-form>
+        </el-col>
+        <el-col :span="12">
+          <ui-label-text labelWidth="200" label="人员类型" >
+            <el-select v-model="info.jobType" slot="text" placeholder="请选择">
+              <el-option
+                  v-for="(item, index) in options"
+                  :key="index"
+                  :label="item.label"
+                  :value="item.value">
+              </el-option>
+            </el-select>
+          </ui-label-text>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <ui-label-text labelWidth="200" label="省级分公司代码:" >
+            <el-input
+            v-model="info.provinceComCode"
+            slot="text"
+            placeholder="双击选择"
+            clearable
+            @dblclick.native="dbqueryCom"
+            @blur="onDbBlur('provinceComCode')"
+            ></el-input>
+          </ui-label-text>
+        </el-col>
+        <el-col :span="12">
+          <ui-label-text labelWidth="200" label="省级分公司名称:" >
+            <el-input v-model="info.provinceComName"
+            slot="text"
+            placeholder="双击选择"
+            clearable
+            @dblclick.native="dbqueryCom"
+            @blur="onDbBlur('provinceComName')"
+            ></el-input>
+          </ui-label-text>
+        </el-col>
+      </el-row>
+    </div>
+    <div class="btn-container">
+      <el-button type="primary" @click="query">查询</el-button>
+      <el-button type="primary" @click="getVaildateForm">导出</el-button>
+    </div>
+    <!-- table -->
+    <div class="rate-table" v-show="isTableShow">
+      <el-table
+        :data="tableData"
+        style="width: 100%">
+          <el-table-column
+            v-for="(item, index) in tableColumnList"
+            :key="index"
+            :label="item.label"
+            :prop="item.prop"
+            width="180">
+          </el-table-column>
+      </el-table>
+      <el-pagination
+        v-show="tablePage.total!=0"
+        @current-change="handleCurrentChange"
+        @size-change="handleSizeChange"
+        :current-page="tablePage.currentPage"
+        :page-size="tablePage.size"
+        :page-sizes="tablePage.sizes"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="tablePage.total">
+      </el-pagination>
+    </div>
+    <!-- db-dialog-select -->
+    <el-dialog
+      title="请选择"
+      append-to-body
+      center
+      :visible.sync="dialogVisible"
+      width="50%"
+      >
+      <div class="rate-table" >
+        <el-table
+          :data="dbPopPageList"
+          highlight-current-row
+          @row-click="onselectColumn"
+          style="width: 100%">
+            <el-table-column
+              v-for="(item, index) in dialogColumnList"
+              :key="index"
+              :label="item.label"
+              :prop="item.prop"
+              >
+            </el-table-column>
+        </el-table>
+        <el-pagination
+          v-show="dbPopPage.total!=0"
+          @current-change="handleCurrentChangeDb"
+          @size-change="handleSizeChangeDb"
+          :current-page="dbPopPage.currentPage"
+          :page-size="dbPopPage.pageSize"
+          :page-sizes="dbPopPage.sizes"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="dbPopPage.total">
+        </el-pagination>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import NoticeBar from '@/components/notice-bar'
+import LineTittle from '@/components/line-tittle'
+import LabelText from '@/components/label-text'
+import api from '@/api/agreeRate_mgr/util/zxcrequest'
+export default {
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LineTittle.name]: LineTittle,
+    [LabelText.name]: LabelText
+  },
+  data () {
+    return {
+      info: {
+        provinceComCode: '',
+        provinceComName: '',
+        persistencyDate: '',
+        jobType: '0',
+        pageSize: 5
+      },
+      tableData: [],
+      isTableShow: false,
+      tablePage: {
+        currentPage: 1,
+        total: 0,
+        size: 5,
+        sizes: [5, 10, 20, 50]
+      },
+      num: 0,
+      expData: {},
+      options: [
+        {label: '全部', value: '0'},
+        {label: '合同制', value: '1'},
+        {label: '代理制', value: '3'},
+        {label: '代理制-昆仑', value: '6'},
+        {label: '出单工号', value: '2'},
+        {label: '劳务派遣', value: '4'},
+        {label: '内勤合同制', value: '5'}
+      ],
+      tableColumnList: [
+        {prop: 'persistencyDate', label: '继续率月份'},
+        {prop: 'commissionDate', label: '续佣发放月份'},
+        {prop: 'provinceComCode', label: '省级分公司代码'},
+        {prop: 'provinceComName', label: '省级分公司名称'},
+        {prop: 'comCode', label: '地级市分公司代码'},
+        {prop: 'comName', label: '地级市分公司名称'},
+        {prop: 'agentcode', label: '业务员代码'},
+        {prop: 'agentName', label: '业务员姓名'},
+        {prop: 'jobGrade', label: '职级'},
+        {prop: 'jobType', label: '人员类型'},
+        {prop: 'instructCode', label: '增员人代码'},
+        {prop: 'instructName', label: '增员人姓名'},
+        {prop: 'xqyj', label: '第二年续期佣金'},
+        {prop: 'xqyj25', label: '第三年续期佣金'},
+        {prop: 'xqyj37', label: '第四年续期佣金'}
+      ],
+      // dialog
+      dialogVisible: false,
+      dialogColumnList: [
+        {label: '省级分公司代码', prop: 'comCode'},
+        {label: '省级分公司名称', prop: 'comCName'}
+      ],
+      dbPopPage: {
+        currentPage: 1,
+        total: 0,
+        pageSize: 5,
+        sizes: [5, 10, 20, 50]
+      },
+      dbPopPageList: []
+    }
+  },
+  mounted () {
+  },
+  methods: {
+    // 加载中开始
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    // 加载中结束
+    closeLoading () {
+      this.loading.close()
+    },
+    getcommissionSumQuery (currentPage = 1) {
+      this.Loading()
+      api('/reports/commissionSumQuery', 'post', {
+        currentPage,
+        pageSize: this.info.pageSize,
+        jobType: this.info.jobType,
+        provinceComCode: this.info.provinceComCode,
+        provinceComName: this.info.provinceComName,
+        persistencyDate: this.info.persistencyDate
+      }).then(r => {
+        this.closeLoading()
+        if (r.length !== 0) {
+          this.isTableShow = true
+          this.tableData = r.data.content
+          this.tablePage.total = r.data.totalElements
+          // this.tablePage.size = r.data.size
+          // this.tablePage.currentPage = r.data.content[0].currentPage
+        } else {
+          this.$message({
+            type: 'error',
+            message: r.msg
+          })
+        }
+      })
+    },
+    getDictionaryQuery (currentPage = 1, clickType = 2) {
+      api('/reports/provincialBanchQuery', 'post', {
+        currentPage,
+        clickType,
+        codeType: 'getCompanyCode',
+        comCode: this.info.provinceComCode,
+        comCName: this.info.provinceComName,
+        pageSize: this.dbPopPage.pageSize
+      }).then(r => {
+        console.log(r.data)
+        let length = r.data.content.length
+        if (length < 1) {
+          this.$message({
+            message: '无此查询',
+            type: 'warning'
+          })
+          this.info.provinceComCode = ''
+          this.info.provinceComName = ''
+        } else if (length === 1 && clickType === 1) {
+          this.info.provinceComName = r.data.content[0].comCName
+          this.info.provinceComCode = r.data.content[0].comCode
+        } else {
+          this.dbPopPage.total = r.data.totalElements
+          this.dbPopPageList = r.data.content
+        }
+      })
+    },
+    query () {
+      this.getVaildateForm('1')
+    },
+    getVaildateForm (e) {
+      this.$refs['queryForm'].validate((valid) => {
+        if (valid) {
+          if (e === '1') {
+            this.getcommissionSumQuery()
+          } else {
+            this.onexport()
+          }
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
+    },
+    handleCurrentChange (val) {
+      this.getcommissionSumQuery(val)
+    },
+    handleSizeChange (val) {
+      console.log(val)
+      this.info.pageSize = val
+      this.getcommissionSumQuery()
+    },
+    dbqueryCom () {
+      this.dialogVisible = true
+      this.getDictionaryQuery()
+    },
+    onDbBlur (e) {
+      console.log(e)
+      if (this.info[e] === '') {
+        console.log('为空')
+      } else {
+        console.log('b')
+        this.getDictionaryQuery(1, 1)
+      }
+    },
+    // dbDialog的分页
+    handleCurrentChangeDb (val) {
+      this.getDictionaryQuery(val)
+    },
+    handleSizeChangeDb (val) {
+      console.log(val)
+      this.dbPopPage.pageSize = val
+      this.getDictionaryQuery()
+    },
+    onselectColumn (row) {
+      this.info.provinceComName = row.comCName
+      this.info.provinceComCode = row.comCode
+      this.dialogVisible = false
+    },
+    onexport () {
+      // if (!this.isTableShow) {
+      //   this.$message.error('无数据可以导出')
+      // } else {
+      this.$confirm('此过程可能比较缓慢，导出过程中请勿关闭浏览器, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.$message({
+          type: 'success',
+          message: `即将下载`
+        })
+        this.Loading()
+        this.exp()
+        this.closeLoading()
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消下载'
+        })
+      })
+      // }
+    },
+    exp () {
+      window.open(`/tabycore/reports/commissionSumExport?jobType=${this.info.jobType}&provinceComCode=${this.info.provinceComCode}&provinceComName=${this.info.provinceComName}&persistencyDate=${this.info.persistencyDate}`)
+    }
+  },
+  created () {
+  },
+  watch: {
+    'info.provinceComCode' () {
+      if (this.info.provinceComCode === '') {
+        this.info.provinceComName = ''
+      }
+    },
+    'info.provinceComName' () {
+      if (this.info.provinceComName === '') {
+        this.info.provinceComCode = ''
+      }
+    }
+  },
+  computed: {
+    resultNum () {
+      return this.num
+    }
+  }
+}
+</script>
+
+<style lang="scss">
+#advance-index{
+  .el-form-item__error{
+    left: 148px;
+  }
+  .el-table__empty-block{
+    justify-content: flex-start;
+    text-align: left;
+    margin-left: 490px;
+  }
+}
+</style>
+
+<style lang="scss" scoped type="text/css">
+#advance-index{
+  padding-left: 30px;
+  padding-right: 30px;
+}
+.btn-container{
+  text-align: center;
+  margin-top: 60px;
+  margin-bottom: 30px;
+}
+.ri-line{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+</style>

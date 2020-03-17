@@ -1,0 +1,642 @@
+<template>
+  <div class="wrap">
+    <ui-notice-bar slot="breadcast" >
+      <el-breadcrumb slot="location" separator=">">
+        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+        <el-breadcrumb-item>寿险业务报表管理</el-breadcrumb-item>
+        <el-breadcrumb-item>合作经代手续费清单</el-breadcrumb-item>
+      </el-breadcrumb>
+    </ui-notice-bar>
+    <el-form class="verify-content" :model="queryInfo" ref="queryInfo" :rules="rules">
+      <el-row class="ri-line">
+        <el-col :span=12>
+          <el-form-item prop='comCode'>
+            <ui-label-text labelWidth="180" label="佰盈机构代码：">
+              <el-input v-model="queryInfo.comCode" slot="text" @dblclick.native="openComDialog(2)"  @blur='opensingleComDialog(0)' clearable placeholder="双击可选择"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span=12>
+          <el-form-item prop='comName'>
+            <ui-label-text labelWidth="180" label="佰盈机构名称：">
+              <el-input v-model="queryInfo.comName" slot="text" @dblclick.native="openComDialog(2)"  @blur='opensingleComDialog(0)' clearable placeholder="双击可选择" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item prop='companyCode'>
+            <ui-label-text labelWidth="180" label="合作经代公司代码：">
+              <el-input v-model="queryInfo.companyCode" ref="jingdaiCompanyCodeText" slot="text" clearable @dblclick.native="openComDialog(0)" placeholder="双击可选择" @blur='opensingleComDialog(1)'></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item prop='companyName'>
+            <ui-label-text labelWidth="180" label="合作经代公司名称：">
+              <el-input v-model="queryInfo.companyName" ref="jingdaiCompanyNameText" slot="text" clearable @dblclick.native="openComDialog(0)" placeholder="双击可选择" @blur='opensingleComDialog(1)'></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span=12>
+          <el-form-item prop='yearMonth'>
+            <ui-label-text labelWidth="180" :required="true" label="结算年月：" >
+              <el-input v-model="queryInfo.yearMonth" slot="text" placeholder="范例：YYYYMM(201706)"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+    </el-form>
+    <div class="btn">
+      <el-button type="primary" :disabled="quanxian.query" @click="submitForm('queryInfo',0)">查询</el-button>
+      <el-button type="primary" :disabled="quanxian.export" @click="submitForm('queryInfo',2)">导出</el-button>
+      <el-button type="primary" :disabled="quanxian.exportDetail" @click="submitForm('queryInfo',3)">导出明细</el-button>
+    </div>
+    <ComDialog :vis='comDialog' :workerVis='comDialogworker' :comVis='comDialogCom' :newTableData='tempTableData1' @onClose='comDialogClosing(0)' @selectDialog='dialogBackData' @comdialogChangePageFunction='changeComdialogPage1' @comdialogChangePageSizeFunction='changeComdialogPageSize1' :fenyetotal='fenyetotalData'/>
+    <ComDialog :vis='comDialog2' :workerVis='comDialogworker2' :comVis='comDialogCom2' :newTableData='tempTableData3' @onClose='comDialogClosing(2)' @selectDialog='dialogBackData2' @comdialogChangePageFunction='changeComdialogPage3' @comdialogChangePageSizeFunction='changeComdialogPageSize3' :fenyetotal='fenyetotalData'/>
+    <div class="table" v-if="tableShowOrnot">
+      <el-table :data="tableData" style="width: 100%">
+        <el-table-column prop="yearMonth" label="结算年月"  width="140" >
+          <template slot-scope="scope" >
+            <span @click="getDetailExamine(scope.row)" class="tableButton">{{ scope.row.yearMonth }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="comCode" label="佰盈机构代码"  width="140"></el-table-column>
+        <el-table-column prop="comName" label="佰盈机构名称"  width="250" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="companyCode" label="合作经代公司代码" width="140" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="companyName" label="合作经代公司名称" width="250" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="sqFee" label="首期手续费合计" show-overflow-tooltip width="200"></el-table-column>
+        <el-table-column prop="xqFee" label="续期手续费合计" show-overflow-tooltip width="200"></el-table-column>
+        <el-table-column prop="sqAddXqFee" label="手续费合计" show-overflow-tooltip width="200"></el-table-column>
+        <el-table-column prop="sqTaxFee" label="税后首期手续费合计" show-overflow-tooltip width="200"></el-table-column>
+        <el-table-column prop="xqTaxFee" label="税后续期手续费合计" show-overflow-tooltip width="200"></el-table-column>
+        <el-table-column prop="sqAddXqTaxFee" label="税后手续费合计" show-overflow-tooltip width="200"></el-table-column>
+      </el-table>
+      <div class="block">
+        <el-pagination
+          @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
+          :current-page="queryInfo.currentPage"
+          :page-size ="queryInfo.pageSize"
+          :page-sizes="[10,20,50]"
+          :total="totalRecords"
+          layout="total, sizes, prev, pager, next, jumper"
+          >
+        </el-pagination>
+      </div>
+    </div>
+    <el-dialog
+      append-to-body
+      center
+      title="详情"
+      :visible.sync="detailVisible"
+      width="100%"
+      :before-close='detailDialogClose'>
+        <ui-line-tittle :collapsible="true">
+          <div slot="content">
+            <el-table :data="dialogTableData" style="width: 100%">
+              <el-table-column prop="yearMonth" label="结算年月"  width="140" ></el-table-column>
+              <el-table-column prop="comCode" label="佰盈机构代码"  width="140"></el-table-column>
+              <el-table-column prop="comName" label="佰盈机构名称"  width="250" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="companyCode" label="合作经代公司代码" width="140" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="companyName" label="合作经代公司名称" width="250" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="paystatus" label="首/续期" width="100" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="proposalno" label="投保单号" width="210" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="policyNo" label="保单号" width="210" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="insureName" label="投保人姓名" width="120" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="riskCode" label="险种代码" width="120" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="riskName" label="险种名称" show-overflow-tooltip width="300"></el-table-column>
+              <el-table-column prop="paymentperiod" label="缴费年期" width="120"></el-table-column>
+              <el-table-column prop="mainflag" label="主险/附加险" width="100" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="acceptdate" label="承保日期" width="120" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="effectiveDate" label="生效日期" width="210" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="receiptDate" label="回执日期" show-overflow-tooltip width="120"></el-table-column>
+              <el-table-column prop="hfdate" label="回访日期" show-overflow-tooltip width="180"></el-table-column>
+              <el-table-column prop="ssdate" label="实收日期" show-overflow-tooltip width="120"></el-table-column>
+              <el-table-column prop="paidpremium" label="实收保费" width="140" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="bzPonudage" label="佰盈标保" show-overflow-tooltip width="120"></el-table-column>
+              <el-table-column prop="fxPonudage" label="分销标保" show-overflow-tooltip width="120"></el-table-column>
+              <el-table-column prop="basicServiceFeeRate" label="首年基础服务费率" width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="basicServiceFee" label="首年基础服务费" width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="xqJcFwfRate" label="续期基础服务费率" width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="xqJcFwf" label="续期基础服务费" width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="xqFwJtRate" label="续期服务津贴费率"  width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="xqFwJt" label="续期服务津贴"  width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="nqhsxs" label="年期别换算系数" show-overflow-tooltip width="120"></el-table-column>
+              <el-table-column prop="hxlJj" label="继续率奖金" show-overflow-tooltip width="120"></el-table-column>
+              <el-table-column prop="snAddPremiumA" label="首年加减费1" width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="snAddPremiumB" label="首年加减费2" width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="snAddPremiumC" label="首年加减费3" width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="xqAddPremiumA" label="续期加减费1" width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="xqAddPremiumB" label="续期加减费2" width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="xqAddPremiumC" label="续期加减费3" width="140" show-overflow-tooltip>
+              </el-table-column>
+              <el-table-column prop="sqFee" label="首期手续费合计" show-overflow-tooltip width="140"></el-table-column>
+              <el-table-column prop="xqFee" label="续期手续费合计" show-overflow-tooltip width="140"></el-table-column>
+              <el-table-column prop="sqAddXqFee" label="手续费合计" show-overflow-tooltip width="140"></el-table-column>
+              <el-table-column prop="sqTaxFee" label="税后首期手续费合计" show-overflow-tooltip width="140"></el-table-column>
+              <el-table-column prop="xqTaxFee" label="税后续期手续费合计" show-overflow-tooltip width="140"></el-table-column>
+              <el-table-column prop="sqAddXqTaxFee" label="税后手续费合计" show-overflow-tooltip width="140"></el-table-column>
+            </el-table>
+            <div class="btn dis-top">
+              <el-button type="primary" :disabled="quanxian.exportDetail" @click="exportDetail">导出</el-button>
+            </div>
+          </div>
+        </ui-line-tittle>
+    </el-dialog>
+  </div>
+</template>
+<script>
+import replaceStr from '@/utils/myFunction'
+import NoticeBar from '@/components/notice-bar'
+import LineTittle from '@/components/line-tittle'
+import LabelText from '@/components/label-text'
+import IsEmpty from '@/utils/IsEmpty'
+import { mapActions } from 'vuex'
+import ComDialog from '@/components/comDialog'
+import {
+  api
+} from '@/api/lifeInsur_mgr/quitListMgr.js'
+export default {
+  data () {
+    return {
+      // from
+      queryInfo: {
+        comCode: '',
+        comName: '',
+        companyCode: '',
+        companyName: '',
+        yearMonth: '',
+        currentPage: 1,
+        pageSize: 10
+      },
+      coopComQueryData: {
+        current: 1,
+        companyCodeOrName: '',
+        pageSize: 10,
+        clickType: '2'
+      },
+      rules: {
+        yearMonth: [
+          { required: true, message: '请输入结算年月', trigger: 'change' }
+        ]
+      },
+      quanxian: {
+        query: true,
+        export: true,
+        exportDetail: true
+      },
+      orgQueryInfo: {
+        clickType: '2',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10
+      },
+      dialogTableData: [],
+      detailVisible: false,
+      examineNo: {},
+      comDialog: false,
+      comDialogCom: false,
+      comDialogworker: false,
+      comDialog1: false,
+      comDialogCom1: false,
+      comDialogworker1: false,
+      comDialog2: false,
+      comDialogCom2: false,
+      comDialogworker2: false,
+      tableData: [],
+      totalRecords: 0,
+      fenyetotalData: 0,
+      tempTableData1: [],
+      tempTableData2: [],
+      tempTableData3: [],
+      detailDialogData1: {},
+      tableShowOrnot: false
+    }
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LineTittle.name]: LineTittle,
+    [LabelText.name]: LabelText,
+    ComDialog
+  },
+  mounted () {
+    api(`/auth/findButtonByUserCodeAndPage?userId=${this.$store.state.login.loginUserId}&page=合作经代手续费清单`, 'get').then(result => {
+      console.log(result)
+      if (result.data.code === '000000') {
+        for (let i = 0; i < result.data.data.length; i++) {
+          this.quanxian[result.data.data[i].code] = false
+        }
+      }
+    }).catch((e) => {
+      console.log(e)
+    })
+  },
+  watch: {
+    'queryInfo.comCode' () {
+      if (this.queryInfo.comCode === '') {
+        this.queryInfo.comName = ''
+      }
+    },
+    'queryInfo.comName' () {
+      if (this.queryInfo.comName === '') {
+        this.queryInfo.comCode = ''
+      }
+    },
+    'queryInfo.companyCode' () {
+      if (this.queryInfo.companyCode === '') {
+        this.queryInfo.companyName = ''
+      }
+    },
+    'queryInfo.companyName' () {
+      if (this.queryInfo.companyName === '') {
+        this.queryInfo.companyCode = ''
+      }
+    }
+  },
+  methods: {
+    submitForm (formName, index) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          console.log('submit!')
+          switch (index) {
+            case 0:
+              this.totalRecords = 0
+              this.queryInfo.currentPage = 1
+              this.queryData()
+              break
+            case 1:
+              if (IsEmpty(this.queryInfo.yearMonth)) {
+                this.openToast('warning', '请输入结算年月')
+              } else if (IsEmpty(this.queryInfo.companyCode)) {
+                this.openToast('warning', '请输入合作经代公司')
+              } else {
+                this.makeBillList()
+              }
+              break
+            case 2:
+              this.exportData()
+              break
+            case 3:
+              this.exportDataDetail()
+              break
+            default:
+              break
+          }
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
+    },
+    queryData () {
+      this.Loading()
+      this.tableData = []
+      api('/baseCooComFee/queryCooComFeeBill', 'post', this.queryInfo).then((res) => {
+        console.log(res)
+        this.closeLoading()
+        if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+          this.openToast('warning', res.data.msg)
+        } else {
+          this.tableData = res.data.data.data
+          this.tableShowOrnot = true
+          this.totalRecords = res.data.data.totalRecords
+        }
+      })
+    },
+    exportData () {
+      window.open(`/tabycore/baseCooComFee/exportCooComFeeBill?comCode=${this.queryInfo.comCode}&comName=${this.queryInfo.comName}&companyCode=${this.queryInfo.companyCode}&companyName=${this.queryInfo.companyName}&yearMonth=${this.queryInfo.yearMonth}`)
+    },
+    exportDataDetail () {
+      window.open(`/tabycore/baseCooComFee/exportDetail?comCode=${this.queryInfo.comCode}&comName=${this.queryInfo.comName}&companyCode=${this.queryInfo.companyCode}&companyName=${this.queryInfo.companyName}&yearMonth=${this.queryInfo.yearMonth}`)
+    },
+    exportDetail () {
+      window.open(`/tabycore/baseCooComFee/exportCooComFeeBillDetail?yearMonth=${this.examineNo.yearMonth}&comCode=${this.examineNo.comCode}&comName=${this.examineNo.comName}&companyCode=${this.examineNo.companyCode}&companyName=${this.examineNo.companyName}&sqFee=${this.examineNo.sqFee}&xqFee=${this.examineNo.xqFee}&sqAddXqFee=${this.examineNo.sqAddXqFee}`)
+    },
+    getDetailExamine (info) {
+      this.Loading()
+      api('/baseCooComFee/queryCooComFeeBillDetail', 'post', info).then((res) => {
+        console.log(res)
+        this.examineNo = info
+        this.closeLoading()
+        if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+          this.openToast('warning', res.data.msg)
+        } else {
+          this.dialogTableData = res.data.data
+          this.detailVisible = true
+        }
+      })
+    },
+    handleCurrentChange (val) {
+      this.queryInfo.currentPage = val
+      this.queryData()
+    },
+    handleSizeChange (val) {
+      this.queryInfo.currentPage = 1
+      this.queryInfo.pageSize = val
+      this.queryData()
+    },
+    handleCurrentChange1 (val) {
+      this.detailQueryData.currentPage = val
+      this.getDetailExamine(this.examineNo)
+    },
+    handleSizeChange1 (val) {
+      this.detailQueryData.currentPage = 1
+      this.detailQueryData.pageSize = val
+      this.getDetailExamine(this.examineNo)
+    },
+    changeComdialogPage1 (data) {
+      this.coopComQueryData.current = data
+      this.openComDialog(0)
+    },
+    changeComdialogPage2 (data) {
+      this.coopOrgQueryData.current = data
+      this.openComDialog(1)
+    },
+    changeComdialogPageSize1 (data) {
+      this.coopComQueryData.current = 1
+      this.coopComQueryData.pageSize = data
+      this.openComDialog(0)
+    },
+    changeComdialogPageSize2 (data) {
+      this.coopOrgQueryData.current = 1
+      this.coopOrgQueryData.pageSize = data
+      this.openComDialog(1)
+    },
+    initDialogData () {
+      this.detailDialogData1 = {}
+      this.dialogTableData = []
+      this.coopComQueryData = {
+        current: 1,
+        companyCodeOrName: '',
+        pageSize: 10,
+        clickType: '2'
+      }
+      this.coopOrgQueryData = {
+        current: 1,
+        orgCodeOrName: '',
+        companyCode: '',
+        pageSize: 10,
+        clickType: '2'
+      }
+      this.orgQueryInfo = {
+        clickType: '2',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10
+      }
+    },
+    detailDialogClose () {
+      this.detailVisible = false
+      this.detailDialogData1 = {}
+      this.dialogTableData = []
+      this.examineNo = {}
+      this.initDialogData()
+    },
+    comDialogClosing (index) {
+      this.comDialog = false
+      this.comDialog1 = false
+      this.comDialog2 = false
+      this.initDialogData()
+      switch (index) {
+        case 0:
+          this.queryInfo.companyCode = ''
+          this.queryInfo.companyName = ''
+          break
+        case 2:
+          this.queryInfo.comCode = ''
+          this.queryInfo.comName = ''
+          break
+        default:
+          break
+      }
+    },
+    changeComdialogPage3 (data) {
+      this.orgQueryInfo.currentPage = data
+      this.openComDialog(2)
+    },
+    changeComdialogPageSize3 (data) {
+      this.orgQueryInfo.currentPage = 1
+      this.orgQueryInfo.pageSize = data
+      this.openComDialog(2)
+    },
+    opensingleComDialog (index) {
+      if (!(this.comDialog || this.comDialog1 || this.comDialog2)) {
+        switch (index) {
+          case 0:
+            this.orgQueryInfo.clickType = '1'
+            if (!IsEmpty(this.queryInfo.comCode)) {
+              this.orgQueryInfo.comCodeOrName = this.queryInfo.comCode
+            } else if (!IsEmpty(this.queryInfo.comName)) {
+              this.orgQueryInfo.comCodeOrName = this.queryInfo.comName
+            } else {
+              this.orgQueryInfo.comCodeOrName = ''
+              return
+            }
+            this.contiListCheckDialogDataGet1(this.orgQueryInfo).then(
+              (res) => {
+                console.log(res)
+                if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                  this.openToast('warning', res.data.msg)
+                } else {
+                  if (res.data.data.data.length === 1) {
+                    for (let i = 0; i < res.data.data.data.length; i++) {
+                      res.data.data.data[i].comCName = replaceStr(res.data.data.data[i].comCName)
+                    }
+                    this.queryInfo.comCode = res.data.data.data[0].comCode
+                    this.queryInfo.comName = res.data.data.data[0].comCName
+                  }
+                }
+              }
+            )
+            break
+          case 1:
+            this.coopComQueryData.clickType = '1'
+            if (!IsEmpty(this.queryInfo.companyCode)) {
+              this.coopComQueryData.companyCodeOrName = this.queryInfo.companyCode
+            } else if (!IsEmpty(this.queryInfo.companyName)) {
+              this.coopComQueryData.companyCodeOrName = this.queryInfo.companyName
+            } else {
+              this.coopComQueryData.companyCodeOrName = ''
+              return
+            }
+            this.cooperInsureBillFinancedblqueryCom1(this.coopComQueryData).then(
+              (res) => {
+                console.log(res)
+                if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                  this.openToast('warning', res.data.msg)
+                } else {
+                  if (res.data.data.data.length === 1) {
+                    this.queryInfo.companyCode = res.data.data.data[0].companyCode
+                    this.queryInfo.companyName = res.data.data.data[0].companyName
+                  }
+                }
+              }
+            )
+            break
+          default:
+            break
+        }
+      }
+    },
+    dialogBackData (data) {
+      this.initDialogData()
+      this.comDialog = false
+      let temp = []
+      temp = data.split('-')
+      this.queryInfo.companyCode = temp[0]
+      this.queryInfo.companyName = temp[1]
+    },
+    dialogBackData2 (data) {
+      this.initDialogData()
+      this.comDialog2 = false
+      let temp = []
+      temp = data.split('-')
+      this.queryInfo.comCode = temp[0]
+      this.queryInfo.comName = temp[1]
+    },
+    // toast提示
+    openToast (type, mesg) {
+      this.$message({
+        showClose: true,
+        message: mesg,
+        type: type
+      })
+    },
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    closeLoading () {
+      this.loading.close()
+    },
+    ...mapActions([
+      'cooperInsureBillFinancedblqueryCom1', 'contiListCheckDialogDataGet1'
+    ]),
+    openComDialog (index) {
+      switch (index) {
+        case 0:
+          this.coopComQueryData.clickType = '2'
+          if (!IsEmpty(this.queryInfo.companyCode)) {
+            this.coopComQueryData.companyCodeOrName = this.queryInfo.companyCode
+          } else if (!IsEmpty(this.queryInfo.companyName)) {
+            this.coopComQueryData.companyCodeOrName = this.queryInfo.companyName
+          } else {
+            this.coopComQueryData.companyCodeOrName = ''
+          }
+          this.cooperInsureBillFinancedblqueryCom1(this.coopComQueryData).then(
+            (res) => {
+              console.log(res)
+              if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                this.openToast('warning', res.data.msg)
+              } else {
+                this.tempTableData1 = res.data.data.data
+                for (let i = 0; i < this.tempTableData1.length; i++) {
+                  this.tempTableData1[i]['renderData'] = `${this.tempTableData1[i].companyCode}-${this.tempTableData1[i].companyName}`
+                }
+                this.fenyetotalData = res.data.data.totalRecords
+                this.comDialog = true
+                this.comDialogCom = true
+                this.comDialogworker = false
+              }
+            }
+          )
+          break
+        case 2:
+          if (!IsEmpty(this.queryInfo.comCode)) {
+            this.orgQueryInfo.comCodeOrName = this.queryInfo.comCode
+          } else if (!IsEmpty(this.queryInfo.comName)) {
+            this.orgQueryInfo.comCodeOrName = this.queryInfo.comName
+          } else {
+            this.orgQueryInfo.comCodeOrName = ''
+          }
+          this.orgQueryInfo.clickType = '2'
+          this.contiListCheckDialogDataGet1(this.orgQueryInfo).then(
+            (res) => {
+              console.log(res)
+              if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                this.openToast('warning', res.data.msg)
+              } else {
+                for (let i = 0; i < res.data.data.data.length; i++) {
+                  res.data.data.data[i].comCName = replaceStr(res.data.data.data[i].comCName)
+                }
+                this.tempTableData3 = res.data.data.data
+                for (let i = 0; i < this.tempTableData3.length; i++) {
+                  this.tempTableData3[i]['renderData'] = `${this.tempTableData3[i].comCode}-${this.tempTableData3[i].comCName}`
+                }
+                this.fenyetotalData = res.data.data.totalRecords
+                this.comDialog2 = true
+                this.comDialogCom2 = true
+                this.comDialogworker2 = false
+              }
+            }
+          )
+          break
+        default:
+          break
+      }
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped type="text/css">
+.wrap{
+  padding-left: 30px;
+  padding-right: 30px;
+}
+.verify-content{
+  padding: 20px 0;
+}
+.btn{
+  text-align: center;
+}
+.btn .el-button{
+  margin-right: 10px;
+}
+.table{
+  margin: 20px 0;
+}
+.btn-export{
+  margin: 10px auto;
+}
+.upload-content{
+  width: 100%;
+  text-align: center;
+}
+.red-color{
+  color: red;
+}
+.download{
+  color:blue;
+  cursor:pointer;
+}
+.dis-top{
+  margin-top: 10px;
+}
+.dis-bottom{
+  margin-bottom: 10px;
+}
+.tableButton {
+  cursor: pointer;
+  color: #66B1FF;
+}
+</style>

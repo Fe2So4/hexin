@@ -1,0 +1,472 @@
+<template>
+  <div id="silverListImp" >
+    <ui-notice-bar slot="breadcast" >
+      <el-breadcrumb slot="location" separator=">">
+        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+        <el-breadcrumb-item>银保代理业务报表管理 </el-breadcrumb-item>
+        <el-breadcrumb-item>银保代理承保清单</el-breadcrumb-item>
+      </el-breadcrumb>
+    </ui-notice-bar>
+    <el-form class="mesg_form" :model="info" ref="info" :rules="rule"  style="margin-top: 20px; ">
+      <el-row>
+        <el-col :span="12">
+          <el-form-item>
+            <ui-label-text labelWidth="120" label="保险公司代码:" >
+              <el-input v-model="info.insurerCode" slot="text" placeholder="双击选择" clearable  @dblclick.native="getAllInsCom(1)" @blur="blurInsCom($event, 0)"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item>
+            <ui-label-text labelWidth="120" label="保险公司名称:" >
+              <el-input v-model="info.insurerName" slot="text" placeholder="双击选择" clearable  @dblclick.native="getAllInsCom(1)" @blur="blurInsCom($event, 1)"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="12">
+          <el-form-item>
+            <ui-label-text labelWidth="120" label="佰盈机构代码:" >
+              <el-input v-model="info.comCode" slot="text" placeholder="双击选择" clearable  @dblclick.native="getAllByOrg(1, $event)" @blur="blurOrg($event, 0)" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item>
+            <ui-label-text labelWidth="120" label="佰盈机构名称:" >
+              <el-input v-model="info.comName" @blur="blurOrg($event, 1)" slot="text" placeholder="双击选择" clearable  @dblclick.native="getAllByOrg(1, $event)"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="12">
+          <el-form-item prop="startDate">
+            <ui-label-text :required="true" labelWidth="120" label="承保日期起：">
+              <el-date-picker slot="text" v-model="info.startDate" placeholder="选择日期" type="date" value-format="yyyy-MM-dd" >
+              </el-date-picker>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item prop="endDate">
+            <ui-label-text :required="true" labelWidth="120" label="承保日期止：">
+              <el-date-picker slot="text"  v-model="info.endDate" placeholder="选择日期" type="date" value-format="yyyy-MM-dd" >
+              </el-date-picker>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <div class="btn-container">
+        <el-button type="primary" @click="query(1)">查询</el-button>
+        <el-button type="primary" @click="onexport">导出</el-button>
+      </div>
+    </el-form>
+    <!-- 表格 -->
+    <div class="rate-table" v-show="isTableShow">
+      <el-table stripe :data="tableData" style="width: 100%">
+        <el-table-column prop="acceptDate" label="月份" width="120"></el-table-column>
+        <el-table-column prop="orgname" label="分公司名称" width="200" ></el-table-column>
+        <el-table-column prop="comcname" label="佰盈中支机构名称" width="200" ></el-table-column>
+        <el-table-column prop="companyZzCode" label="中心支公司代码" width="200" ></el-table-column>
+        <el-table-column prop="companyZzName" label="中心支公司名称" width="200"></el-table-column>
+        <el-table-column prop="insurename" label="合作银代公司名称" width="200" ></el-table-column>
+        <el-table-column prop="channelName" label="渠道名称" width="150" ></el-table-column>
+        <el-table-column prop="subbranch" label="二级支行" width="150" ></el-table-column>
+        <el-table-column prop="siteCode" label="网点代码" width="150" ></el-table-column>
+        <el-table-column prop="networkName" label="网点名称" width="150" ></el-table-column>
+        <el-table-column prop="proposalNo" label="投保单号" width="150" ></el-table-column>
+        <el-table-column prop="policyNo" label="保单号" width="150" ></el-table-column>
+        <el-table-column prop="salesWay" label="销售方式" width="120" ></el-table-column>
+        <el-table-column prop="riskName" label="险种名称" width="120" ></el-table-column>
+        <el-table-column prop="payType" label="缴费类型" width="120" ></el-table-column>
+        <el-table-column prop="paymentperiod" label="交费年期" width="120" ></el-table-column>
+        <el-table-column prop="insurancePeriod" label="保险期间" width="120" ></el-table-column>
+        <el-table-column prop="premium" label="规模保费" width="120" ></el-table-column>
+        <el-table-column prop="standardPremium" label="标准保费" width="120" ></el-table-column>
+        <el-table-column prop="policyStatus" label="保单状态" width="120" ></el-table-column>
+        <el-table-column prop="proposalDate" label="投保日期" width="120" ></el-table-column>
+        <el-table-column prop="acceptCBDate" label="承保日期" width="120" ></el-table-column>
+        <el-table-column prop="surrenderDate" label="退保日期" width="120" ></el-table-column>
+        <el-table-column prop="signDate" label="回执签收日期" width="120" ></el-table-column>
+        <el-table-column prop="writeOffDate" label="回执核销日期" width="120" ></el-table-column>
+        <el-table-column prop="visitDate" label="回访日期" width="120" ></el-table-column>
+        <el-table-column prop="visitStatus" label="回访结果" width="120" ></el-table-column>
+        <el-table-column prop="customerNameT" label="投保人姓名" width="120" ></el-table-column>
+        <el-table-column prop="customerNameB" label="被保险人姓名" width="120" ></el-table-column>
+        <el-table-column prop="handlerCode" label="佰盈业务员代码" width="150" ></el-table-column>
+        <el-table-column prop="agentname" label="佰盈业务员姓名" width="120" ></el-table-column>
+      </el-table>
+    </div>
+    <div class="pagination" v-if='isTableShow'>
+      <el-pagination @size-change="handleSizeChange" @current-change='handleCurrentChange' :current-page.sync="current" :pager-count='5' :page-size='5' :page-sizes='[5, 10, 20, 50]' :total="totalRecords" layout="total, sizes, prev, pager, next, jumper" :page-count="totalPages"></el-pagination>
+    </div>
+    <!-- 获取保险公司 -->
+    <el-dialog title="保险公司" :before-close='closeInsCom' :append-to-body='true' :visible.sync="ins_dialog" width="50%" center>
+      <el-table stripe @row-click='selectRowInsCom' ref="multipleTable" :data="searchInsComTableData" >
+        <el-table-column prop="insurercode" label="保险公司代码" center ></el-table-column>
+        <el-table-column prop="insurername" label="保险公司名称" center ></el-table-column>
+      </el-table>
+      <div class="pagination" >
+        <el-pagination @size-change="insSizeChange" @current-change='insCurrentChange' :current-page.sync="currentD" :pager-count='5' :page-size='5' :page-sizes='sizeList'  :total="totalRecordsD" layout="total, sizes, prev, pager, next, jumper" > </el-pagination>
+      </div>
+    </el-dialog>
+    <!-- 获取省级地市分公司 -->
+    <el-dialog title="佰盈机构" :before-close='closeOrg' :append-to-body='true' :visible.sync="org_dialog" width="50%" center>
+      <el-table stripe @row-click='selectRowOrg' ref="multipleTable" :data="searchOrgTableData" >
+        <el-table-column prop="comCode" label="机构代码" center ></el-table-column>
+        <el-table-column prop="comCName" label="机构名称" center ></el-table-column>
+      </el-table>
+      <div class="pagination" >
+        <el-pagination @size-change="orgSizeChange" @current-change='orgCurrentChange' :current-page.sync="currentD" :pager-count='5' :page-size='5' :page-sizes='sizeList'  :total="totalRecordsD" layout="total, sizes, prev, pager, next, jumper" > </el-pagination>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import replaceStr from '@/utils/myFunction'
+import NoticeBar from '@/components/notice-bar'
+import LineTittle from '@/components/line-tittle'
+import LabelText from '@/components/label-text'
+import RateUpload from '@/pages/rate_mgr/rateUpload'
+import { mapActions } from 'vuex'
+export default {
+  name: '',
+  data () {
+    return {
+      info: {
+        'insurerCode': '',
+        'insurerName': '',
+        'comCode': '',
+        'comName': '',
+        'startDate': '',
+        'endDate': ''
+      },
+      infoPost: {},
+      totalRecords: 0, // 分页总条数
+      totalPages: 0, // 分页总页数
+      current: 1,
+      pageSize: '5', // 当前显示条数
+      isTableShow: false,
+      tableData: [],
+      loading: '',
+      rule: {
+        startDate: [
+          { required: true, message: '请输入承保日期起', trigger: 'change' }
+        ],
+        endDate: [
+          { required: true, message: '请输入承保日期止', trigger: 'change' }
+        ]
+      },
+      org_dialog: false,
+      searchInsComTableData: [],
+      totalRecordsD: 0, // 分页总条数
+      totalPagesD: 0, // 分页总页数
+      currentD: 1,
+      pageSizeD: '5', // 当前显示条数
+      sizeList: [5, 10, 20, 50],
+      isComType: '',
+      comCodeOrName: '', // 获取公司code
+      _event: '',
+      ins_dialog: false,
+      searchOrgTableData: []
+    }
+  },
+  mounted () {
+  },
+  methods: {
+    ...mapActions([
+      'bankReportQuery',
+      'getAllsilverCom',
+      'getAllsilverAllOrg'
+    ]),
+    query (page) {
+      this.info.currentPage = page
+      this.info.pageSize = this.pageSize
+      this.$refs['info'].validate((valid) => {
+        if (valid) {
+          this.infoPost = JSON.parse(JSON.stringify(this.info))
+          this.getVaildateForm(this.infoPost)
+        } else {
+          return false
+        }
+      })
+    },
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    closeLoading () {
+      this.loading.close()
+    },
+    getVaildateForm (data) {
+      this.Loading()
+      this.bankReportQuery(data).then(resp => {
+        this.closeLoading()
+        if (resp.hasOwnProperty('code') && resp.code !== '000000') {
+          this.open('error', resp.msg)
+        } else {
+          this.isTableShow = true
+          this.tableData = resp.data
+          this.totalRecords = resp.totalRecords
+          this.totalPages = resp.totalPages
+        }
+      })
+    },
+    handleSizeChange (val) {
+      this.pageSize = val
+      this.infoPost.pageSize = this.pageSize
+      this.infoPost.currentPage = 1
+      this.current = 1
+      this.getVaildateForm(this.infoPost)
+    },
+    handleCurrentChange (val) {
+      this.infoPost.currentPage = val
+      this.current = val
+      this.getVaildateForm(this.infoPost)
+    },
+    closeDailog () {
+      return new Promise((resolve, reject) => {
+        this.org_dialog = false
+        this.ins_dialog = false
+        console.log('ok222')
+        resolve()
+      })
+    },
+    getAllInsCom (page) { // 获取地市级公司
+      this.sizeList = [5, 10, 20, 50]
+      this.currentD = page
+      let postData = {
+        'insurerName': this.info.insurerName,
+        'currentPage': page,
+        'insurerCode': this.info.insurerCode,
+        'pageSize': this.pageSizeD,
+        'clickType': '2',
+        'type': '3'
+      }
+      this.getAllsilverCom(postData).then(resp => {
+        if (resp.code === '000000' || resp.code === '000002') {
+          if (resp.code === '000002') {
+            this.searchInsComTableData = []
+          } else {
+            this.searchInsComTableData = resp.data.data
+          }
+          this.ins_dialog = true
+          this.totalPagesD = resp.data.totalPages
+          this.totalRecordsD = resp.data.totalRecords
+        }
+      })
+    },
+    insCurrentChange (val) { // 选择保险公司分页
+      this.getAllInsCom(val)
+    },
+    insSizeChange (val) {
+      this.pageSizeD = val
+      this.getAllInsCom(1)
+    },
+    selectRowInsCom (row) { // 公司选择
+      this.closeDailog().then(() => {
+        row = JSON.parse(JSON.stringify(row))
+        this.info.insurerCode = row.insurercode
+        this.info.insurerName = row.insurername
+        this.ins_dialog = false
+      })
+    },
+    blurInsCom (event, tag) {
+      if (event.target.value === '' || this.ins_dialog) {
+        return false
+      }
+      let postData = {
+        'insurerCode': '',
+        'insurerName': '',
+        'clickType': '1',
+        'type': '3'
+      }
+      if (tag === 0) {
+        postData.insurerCode = event.target.value
+      } else {
+        postData.insurerName = event.target.value
+      }
+      this.getAllsilverCom(postData).then(resp => {
+        if (resp.code === '000000') {
+          this.info.insurerCode = resp.data.data[0].insurercode
+          this.info.insurerName = resp.data.data[0].insurername
+        } else {
+          this.info.insurerName = ''
+          this.info.insurerCode = ''
+          this.open('error', '该代码或名称不存在！')
+        }
+      })
+    },
+    closeInsCom () {
+      this.sizeList = []
+      this.pageSizeD = 5
+      this.info.insurerName = ''
+      this.info.insurerCode = ''
+      this.ins_dialog = false
+    },
+    getAllByOrg (page, event) { // 获取佰盈机构
+      this.sizeList = [5, 10, 20, 50]
+      this.currentD = page
+      let postData = {
+        'comCodeOrName': event.target.value,
+        'currentPage': page,
+        'pageSize': this.pageSizeD,
+        'clickType': '2'
+      }
+      this.getAllsilverAllOrg(postData).then(resp => {
+        if (resp.code === '000000' || resp.code === '000002') {
+          if (resp.code === '000002') {
+            this.searchOrgTableData = []
+          } else {
+            for (let i = 0; i < resp.data.data.length; i++) {
+              resp.data.data[i].comCName = replaceStr(resp.data.data[i].comCName)
+            }
+            this.searchOrgTableData = resp.data.data
+          }
+          this.org_dialog = true
+          this.totalPagesD = resp.data.totalPages
+          this.totalRecordsD = resp.data.totalRecords
+        }
+      })
+    },
+    orgCurrentChange (val) { // 选择保险公司分页
+      this.getAllInsCom(val)
+    },
+    orgSizeChange (val) {
+      this.pageSizeD = val
+      this.getAllInsCom(1)
+    },
+    blurOrg (event, tag) {
+      if (event.target.value === '' || this.org_dialog) {
+        return false
+      }
+      let postData = {
+        'comCodeOrName': event.target.value,
+        'clickType': '1'
+      }
+      this.getAllsilverAllOrg(postData).then(resp => {
+        if (resp.code === '000000') {
+          this.info.comCode = resp.data.data[0].comCode
+          this.info.comName = resp.data.data[0].comCName
+        } else {
+          this.info.comCode = ''
+          this.info.comName = ''
+          this.open('error', '该代码或名称不存在！')
+        }
+      })
+    },
+    selectRowOrg (row) { // 机构选择
+      this.closeDailog().then(() => {
+        row = JSON.parse(JSON.stringify(row))
+        this.info.comCode = row.comCode
+        this.info.comName = row.comCName
+        this.ins_dialog = false
+      })
+    },
+    closeOrg () {
+      this.sizeList = []
+      this.pageSizeD = 5
+      this.info.comCode = ''
+      this.info.comName = ''
+      this.org_dialog = false
+    },
+    onexport () {
+      this.$refs['info'].validate((valid) => {
+        if (valid) {
+          window.open(`/tabycore//bankReports/bankReportExport?insurerCode=${this.info.insurerCode}&insurerName=${this.info.insurerName}&comCode=${this.info.comCode}&comName=${this.info.comName}&startDate=${this.info.startDate}&endDate=${this.info.endDate}`)
+        } else {
+          return false
+        }
+      })
+    },
+    open (types, mesg) { // 提示
+      this.$message({
+        message: mesg,
+        type: types
+      })
+    }
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LineTittle.name]: LineTittle,
+    [LabelText.name]: LabelText,
+    [RateUpload.name]: RateUpload
+  },
+  created () {
+  },
+  computed: {
+    resultNum () {
+      return this.num
+    }
+  },
+  watch: {
+    'info.insurerCode' () {
+      if (this.info.insurerCode === '') {
+        this.info.insurerName = ''
+      }
+    },
+    'info.insurerName' () {
+      if (this.info.insurerName === '') {
+        this.info.insurerCode = ''
+      }
+    },
+    'info.comCode' () {
+      if (this.info.comCode === '') {
+        this.info.comName = ''
+      }
+    },
+    'info.comName' () {
+      if (this.info.comName === '') {
+        this.info.comCode = ''
+      }
+    }
+  }
+}
+</script>
+
+<style lang="scss">
+#silverListImp{
+  .mesg_form .el-form-item__error{
+    left: 120px;
+  }
+}
+</style>
+
+<style lang="scss" scoped type="text/css">
+  #silverListImp {
+    padding: 0px 30px 30px 30px;
+  }
+  .rate-wrapper {
+    width: 300px;
+    margin: 20px auto;
+  }
+  .btn-container{
+    text-align: center;
+    margin-top: 30px;
+  }
+  .ri-line{
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+ .mesg_form {
+    margin: 20px 0 ;
+  }
+  .pagination {
+    text-align: right;
+    margin: 20px auto;
+  }
+</style>
+<style>
+  .mesg_form .required:before{
+    font-size: 14px!important;
+    top: 3px !important;
+  }
+</style>
+

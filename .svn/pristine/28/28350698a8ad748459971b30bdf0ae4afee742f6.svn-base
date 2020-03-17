@@ -1,0 +1,433 @@
+<template>
+  <div id="orgadd" >
+      <ui-notice-bar slot="breadcast" >
+        <el-breadcrumb slot="location" separator=">">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>寿险业务报表管理</el-breadcrumb-item>
+            <el-breadcrumb-item>总公司业绩报表</el-breadcrumb-item>
+          </el-breadcrumb>
+      </ui-notice-bar>
+      <div class="ri-content" slot="content">
+        <el-row class="ri-line">
+            <el-col :span="12">
+                <ui-label-text label="报表类型：" labelWidth="120" >
+                  <el-select v-model="queryInfo.type" slot="text" placeholder="请选择">
+                    <el-option label="省级分公司" value="省级分公司"></el-option>
+                    <el-option label="地市级分公司" value="地市级分公司"></el-option>
+                    <el-option label="管理精英" value="管理精英"></el-option>
+                    <el-option label="销售精英" value="销售精英"></el-option>
+                    <el-option label="卓越合伙人" value="卓越合伙人"></el-option>
+                  </el-select>
+                </ui-label-text>
+            </el-col>
+            <el-col :span="12" v-if="queryInfo.type === '省级分公司'">
+              <ui-label-text labelWidth="120" label="预收季度：">
+                <el-select v-model="queryInfo.reportDate" slot="text" placeholder="请选择">
+                  <el-option
+                    v-for="item in provinceOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+                  </el-option>
+                </el-select>
+              </ui-label-text>
+            </el-col>
+            <el-col :span="12" v-else>
+              <ui-label-text labelWidth="120" label="预收季度：">
+                <el-select v-model="queryInfo.reportDate" slot="text" placeholder="请选择">
+                  <el-option
+                    v-for="item in selectOpentions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value">
+                  </el-option>
+                  <!-- <el-option label="2020-一季度" value="2020-一季度"></el-option>
+                  <el-option label="2020-二季度" value="2020-二季度"></el-option>
+                  <el-option label="2020-三季度" value="2020-三季度"></el-option>
+                  <el-option label="2020-四季度" value="2020-四季度"></el-option> -->
+                </el-select>
+              </ui-label-text>
+            </el-col>
+        </el-row>
+      </div>
+      <div class="btn-container" slot="controlbar" >
+        <el-button type="primary" @click.native.prevent="submitForm(0)">查询</el-button>
+        <el-button type="primary" @click.native.prevent="submitForm(1)">导出</el-button>
+      </div>
+      <div v-if="tableShowOrNot">
+        <div v-if="queryInfo.type === '省级分公司'&&changeQueryShowRes.type1">
+          <el-table :data="tableData" class="ri-content1" style="width: 100%">
+            <el-table-column prop="rankFront" label="排名"  width="170" ></el-table-column>
+            <el-table-column prop="comCNName" label="省级分公司"  width="280" ></el-table-column>
+            <el-table-column prop="quarter" label="季度预收标保（万）"  width="230" ></el-table-column>
+            <el-table-column prop="month" label="半年度预收报表（万）"  width="230" ></el-table-column>
+          </el-table>
+          <el-pagination
+            @current-change="handleCurrentChange"
+            @size-change="handleSizeChange"
+            :current-page="queryInfo.currentPage"
+            :page-size ="queryInfo.pageSize"
+            :page-sizes="[5,10,20,50]"
+            :total="totalRecords"
+            layout="total, sizes, prev, pager, next, jumper"
+            >
+          </el-pagination>
+        </div>
+        <div v-else-if="queryInfo.type === '地市级分公司'&&changeQueryShowRes.type2">
+          <el-table :data="tableData" class="ri-content1" style="width: 100%">
+            <el-table-column prop="rankFront" label="排名"  width="170" ></el-table-column>
+            <el-table-column prop="comName" label="地市级分公司"  width="280" ></el-table-column>
+            <el-table-column prop="comCNName" label="省级分公司"  width="280" ></el-table-column>
+            <el-table-column prop="quarter" label="季度预收标保（万）"  width="230" ></el-table-column>
+          </el-table>
+          <el-pagination
+            @current-change="handleCurrentChange"
+            @size-change="handleSizeChange"
+            :current-page="queryInfo.currentPage"
+            :page-size ="queryInfo.pageSize"
+            :page-sizes="[5,10,20,50]"
+            :total="totalRecords"
+            layout="total, sizes, prev, pager, next, jumper"
+            >
+          </el-pagination>
+        </div>
+        <div v-else-if="queryInfo.type === '卓越合伙人'&&changeQueryShowRes.type5">
+          <el-table :data="tableData" class="ri-content1" style="width: 100%">
+            <el-table-column prop="reportDate" label="排名"  width="170" ></el-table-column>
+            <el-table-column prop="agentName" label="团队长"  width="280" ></el-table-column>
+            <el-table-column prop="jobGrade" label="职级"  width="170" ></el-table-column>
+            <el-table-column prop="comCNName" label="省级分公司"  width="280" ></el-table-column>
+            <el-table-column prop="quarter" label="季度预收标保（万）"  width="230" ></el-table-column>
+          </el-table>
+          <el-pagination
+            @current-change="handleCurrentChange1"
+            @size-change="handleSizeChange1"
+            :current-page="queryInfo.currentPage"
+            :page-size ="queryInfo.pageSize"
+            :page-sizes="[5,10,20,50]"
+            :total="totalRecords"
+            layout="total, sizes, prev, pager, next, jumper"
+            >
+          </el-pagination>
+        </div>
+        <div v-else-if="queryInfo.type === '管理精英'&&changeQueryShowRes.type3">
+          <el-table :data="tableData" class="ri-content1" style="width: 100%">
+            <el-table-column prop="rankFront" label="排名"  width="170" ></el-table-column>
+            <el-table-column prop="agentName" label="团队长"  width="280" ></el-table-column>
+            <el-table-column prop="jobGrade" label="职级"  width="170" ></el-table-column>
+            <el-table-column prop="comCNName" label="省级分公司"  width="280" ></el-table-column>
+            <el-table-column prop="quarter" label="季度预收标保（万）"  width="230" ></el-table-column>
+          </el-table>
+          <el-pagination
+            @current-change="handleCurrentChange"
+            @size-change="handleSizeChange"
+            :current-page="queryInfo.currentPage"
+            :page-size ="queryInfo.pageSize"
+            :page-sizes="[5,10,20,50]"
+            :total="totalRecords"
+            layout="total, sizes, prev, pager, next, jumper"
+            >
+          </el-pagination>
+        </div>
+        <div v-else-if="queryInfo.type === '销售精英'&&changeQueryShowRes.type4">
+          <el-table :data="tableData" class="ri-content1" style="width: 100%">
+            <el-table-column prop="rankFront" label="排名"  width="170" ></el-table-column>
+            <el-table-column prop="agentName" label="业务员"  width="280" ></el-table-column>
+            <el-table-column prop="comCNName" label="省级分公司"  width="280" ></el-table-column>
+            <el-table-column prop="quarter" label="季度预收标保（万）"  width="230" ></el-table-column>
+          </el-table>
+          <el-pagination
+            @current-change="handleCurrentChange"
+            @size-change="handleSizeChange"
+            :current-page="queryInfo.currentPage"
+            :page-size ="queryInfo.pageSize"
+            :page-sizes="[5,10,20,50]"
+            :total="totalRecords"
+            layout="total, sizes, prev, pager, next, jumper"
+            >
+          </el-pagination>
+        </div>
+      </div>
+  </div>
+</template>
+
+<script>
+import NoticeBar from '@/components/notice-bar'
+import LineTittle from '@/components/line-tittle'
+import LabelText from '@/components/label-text'
+import IsEmpty from '@/utils/IsEmpty'
+import { mapActions } from 'vuex'
+import moment from 'moment'
+import {
+  api
+} from '@/api/lifeInsur_mgr/quitListMgr.js'
+export default {
+  name: '',
+  data () {
+    return {
+      provinceOptions:[],
+      selectOpentions:[],
+      fenyetotalData: 0,
+      loading: '',
+      toastMessage: '',
+      queryInfo: {
+        type: '省级分公司',
+        reportDate: '',
+        currentPage: 1,
+        pageSize: 5
+      },
+      changeQueryShowRes: {
+        type1: '',
+        type2: '',
+        type3: '',
+        type4: '',
+        type5: ''
+      },
+      tableShowOrNot: false,
+      tableData: [],
+      oriTableData: [],
+      totalRecords: 0,
+      typeTemp: ''
+    }
+  },
+  mounted () {
+    this.queryInfo.reportDate = moment().format('YYYY-MM');
+    this.getNewYear()
+  },
+  watch: {
+    queryInfo: {
+      handler (newValue, oldValue) {
+        let temp = moment().format('MM')
+        var date=new Date;
+        var y = date.getFullYear()
+        if (newValue.type !== this.typeTemp) {
+          if (temp >= 1 && temp <= 3) {
+            // 是第一季度
+            this.queryInfo.reportDate = `${y}-一季度`
+          } else if (temp >= 4 && temp <= 6) {
+            // 是第二季度
+            this.queryInfo.reportDate = `${y}-二季度`
+          } else if (temp >= 7 && temp <= 9) {
+            // 是第三季度
+            this.queryInfo.reportDate = `${y}-三季度`
+          } else if (temp >= 10 && temp <= 12) {
+            // 是第四季度
+            this.queryInfo.reportDate = `${y}-四季度`
+          }
+          if (newValue.type === '管理精英') {
+            this.queryInfo.pageSize = 20
+          } else {
+            this.queryInfo.pageSize = 5
+          }
+          this.typeTemp = newValue.type
+        }
+      },
+      deep: true
+    }
+  },
+  methods: {
+    //获取当前年份
+    getNewYear() {
+      var date=new Date;
+      var y = date.getFullYear()
+      let selectOpentions = [{
+          value: `${y}-一季度`,
+          label: `${y}-一季度`
+        }, {
+          value: `${y}-二季度`,
+          label: `${y}-二季度`
+        }, {
+          value: `${y}-三季度`,
+          label: `${y}-三季度`
+        }, {
+          value: `${y}-四季度`,
+          label: `${y}-四季度`
+        },{
+          value: `${y}-上半年度`,
+          label: `${y}-上半年度`
+        },{
+          value: `${y}-下半年度`,
+          label: `${y}-下半年度`
+        }
+        ]
+        let provinceOptions = [{
+          value: `${y}-一季度`,
+          label: `${y}-一季度`
+        }, {
+          value: `${y}-二季度`,
+          label: `${y}-二季度`
+        }, {
+          value: `${y}-三季度`,
+          label: `${y}-三季度`
+        }, {
+          value: `${y}-四季度`,
+          label: `${y}-四季度`
+        }]
+      this.selectOpentions = selectOpentions
+      this.provinceOptions = provinceOptions
+    },
+    submitForm (index) {
+      switch (index) {
+        case 0:
+          this.queryInfo.currentPage = 1
+          this.queryData1()
+          break
+        case 1:
+          window.open(`/tabycore/performanceReport/exportReport?type=${this.queryInfo.type}&reportDate=${this.queryInfo.reportDate}`)
+          break
+        default:
+          break
+      }
+    },
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    closeLoading () {
+      this.loading.close()
+    },
+    queryData1 () {
+      this.tableShowOrNot = false
+      this.totalRecords = 0
+      this.tableData = []
+      this.oriTableData = []
+      this.Loading()
+      api('/performanceReport/queryReport', 'post', this.queryInfo).then((res) => {
+        this.closeLoading()
+        this.tableShowOrNot = true
+        switch (this.queryInfo.type) {
+          case '省级分公司':
+            this.changeQueryShowRes.type1 = true
+            this.changeQueryShowRes.type2 = false
+            this.changeQueryShowRes.type3 = false
+            this.changeQueryShowRes.type4 = false
+            this.changeQueryShowRes.type5 = false
+            break
+          case '地市级分公司':
+            this.changeQueryShowRes.type1 = false
+            this.changeQueryShowRes.type2 = true
+            this.changeQueryShowRes.type3 = false
+            this.changeQueryShowRes.type4 = false
+            this.changeQueryShowRes.type5 = false
+            break
+          case '管理精英':
+            this.changeQueryShowRes.type1 = false
+            this.changeQueryShowRes.type2 = false
+            this.changeQueryShowRes.type3 = true
+            this.changeQueryShowRes.type4 = false
+            this.changeQueryShowRes.type5 = false
+            break
+          case '销售精英':
+            this.changeQueryShowRes.type1 = false
+            this.changeQueryShowRes.type2 = false
+            this.changeQueryShowRes.type3 = false
+            this.changeQueryShowRes.type4 = true
+            this.changeQueryShowRes.type5 = false
+            break
+          case '卓越合伙人':
+            this.changeQueryShowRes.type1 = false
+            this.changeQueryShowRes.type2 = false
+            this.changeQueryShowRes.type3 = false
+            this.changeQueryShowRes.type4 = false
+            this.changeQueryShowRes.type5 = true
+            break
+          default:
+            break
+        }
+        if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+          this.openToast('warning', res.data.msg, 0)
+        } else {
+          // for (let i = 0; i < res.data.data.content.length; i++) {
+          //   for (let j = i + 1; j < res.data.data.content.length; j++) {
+          //     if ((res.data.data.content[i].quarter ? res.data.data.content[i].quarter : 0) < (res.data.data.content[j].quarter ? res.data.data.content[j].quarter : 0)) {
+          //       let temp = res.data.data.content[i]
+          //       res.data.data.content[i] = res.data.data.content[j]
+          //       res.data.data.content[j] = temp
+          //     }
+          //   }
+          // }
+          if (this.queryInfo.type === '卓越合伙人') {
+            this.oriTableData = res.data.data.content
+            this.tableData = res.data.data.content.slice(0, this.queryInfo.pageSize)
+            this.totalRecords = res.data.data.content.length
+          } else {
+            for (let i = 0; i < res.data.data.content.length; i++) {
+              res.data.data.content[i]['rankFront'] = i + 1 + (this.queryInfo.currentPage - 1) * this.queryInfo.pageSize
+            }
+            this.tableData = res.data.data.content
+            this.totalRecords = res.data.data.totalElements
+          }
+        }
+      })
+    },
+    handleCurrentChange (val) {
+      this.queryInfo.currentPage = val
+      this.queryData1()
+    },
+    handleSizeChange (val) {
+      this.queryInfo.pageSize = val
+      this.queryInfo.currentPage = 1
+      this.queryData1()
+    },
+    handleCurrentChange1 (val) {
+      this.queryInfo.currentPage = val
+      this.tableData = this.oriTableData.slice((this.queryInfo.currentPage - 1) * this.queryInfo.pageSize, this.queryInfo.pageSize * this.queryInfo.currentPage)
+    },
+    handleSizeChange1 (val) {
+      this.queryInfo.pageSize = val
+      this.queryInfo.currentPage = 1
+      this.tableData = this.oriTableData.slice(0, this.queryInfo.pageSize)
+    },
+    // toast提示
+    openToast (type, mesg, time = 0) {
+      this.toastMessage = this.$message({
+        showClose: true,
+        message: mesg,
+        type: type,
+        duration: time
+      })
+    },
+    ...mapActions([
+      'commissionConfigdblqueryCom3'
+    ])
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LineTittle.name]: LineTittle,
+    [LabelText.name]: LabelText
+  },
+  created () {
+  },
+  computed: {
+  }
+}
+</script>
+
+<style lang="scss" scoped type="text/css">
+.ri-content{
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+.ri-content1{
+  text-align: -webkit-center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+#orgadd {
+  padding-left: 30px;
+  padding-right: 30px;
+}
+.btn-container{
+  text-align: center;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+.ri-line{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+</style>

@@ -1,0 +1,838 @@
+<template>
+  <div id="orgadd" >
+    <ui-notice-bar slot="breadcast" >
+      <el-breadcrumb slot="location" separator=">">
+          <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+          <el-breadcrumb-item>业务员薪资审核管理</el-breadcrumb-item>
+        </el-breadcrumb>
+    </ui-notice-bar>
+    <div slot="content">
+      <el-form ref="agentSalCheck" :rules="rules" :model="queryInfo">
+        <el-row class="ri-line">
+          <el-col :span="12">
+            <el-form-item prop='comCNcode'>
+              <ui-label-text labelWidth="150" label="佰盈机构代码:">
+                <el-input :disabled="agentComId !== '01'" v-model="queryInfo.comCNcode" clearable slot="text" @dblclick.native="openComDialog()" placeholder="双击可选择"></el-input>
+              </ui-label-text>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item prop='comCNname'>
+              <ui-label-text labelWidth="150" label="佰盈机构名称:" >
+                <el-input :disabled="agentComId !== '01'" v-model="queryInfo.comCNname" clearable slot="text" @dblclick.native="openComDialog()" placeholder="双击可选择"></el-input>
+              </ui-label-text>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row class="ri-line">
+          <el-col :span="12">
+            <el-form-item prop='sHstatus'>
+              <ui-label-text labelWidth="150" label="审核状态:" >
+                <el-select v-model="queryInfo.sHstatus" slot="text" placeholder="请选择" :disabled="sHstatusDisable">
+                  <el-option v-for="option in queryOptions" :label="option.name" :value="option.id" :key="option.id"></el-option>
+                </el-select>
+              </ui-label-text>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item prop='salaryMonth'>
+              <ui-label-text labelWidth="150" label="月份:" :required="true">
+                <el-date-picker
+                    v-model="queryInfo.salaryMonth"
+                    value-format="yyyy-MM"
+                    type="month"
+                    slot="text"
+                  >
+                </el-date-picker>
+              </ui-label-text>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row class="ri-line">
+          <el-col :span="12">
+            <el-form-item prop='jobtype'>
+              <ui-label-text labelWidth="150" label="用工类型:" >
+                <el-select v-model="queryInfo.jobtype" slot="text" placeholder="请选择">
+                  <el-option label="全部" value="0"></el-option>
+                  <el-option label="代理制" value="1"></el-option>
+                  <el-option label="合同制" value="2"></el-option>
+                </el-select>
+              </ui-label-text>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-form>
+    </div>
+    <el-row class="btn-container" slot="controlbar" >
+      <el-button type="primary" v-if="!quanxian.query" @click.native.prevent="submitForm('agentSalCheck', 0)">查询</el-button>
+      <el-button type="primary" v-if="!quanxian.export" @click.native.prevent="submitForm('agentSalCheck', 1)">导出报表</el-button>
+      <el-button type="primary" v-if="!quanxian.exportDetail" @click.native.prevent="submitForm('agentSalCheck', 2)">导出明细</el-button>
+      <el-button type="primary" v-if="!quanxian.export2" @click.native.prevent="submitForm('agentSalCheck', 9)">财务导出</el-button>
+      <el-button type="primary" v-if="!quanxian.review1" @click.native.prevent="submitForm('agentSalCheck', 3)">提交审核</el-button>
+      <el-button type="primary" v-if="!quanxian.review2" @click.native.prevent="submitForm('agentSalCheck', 8)">审核</el-button>
+      <el-button type="primary" v-if="!quanxian.review3" @click.native.prevent="submitForm('agentSalCheck', 4)">审核</el-button>
+      <el-button type="primary" v-if="!quanxian.review4" @click.native.prevent="submitForm('agentSalCheck', 5)">审核</el-button>
+      <el-button type="primary" v-if="!quanxian.review5" @click.native.prevent="submitForm('agentSalCheck', 6)">审核</el-button>
+      <el-button type="primary" v-if="!quanxian.review6" @click.native.prevent="submitForm('agentSalCheck', 7)">审核</el-button>
+    </el-row>
+    <div v-if="tableShowOrNot">
+      <!-- 总公司用户查询结果 -->
+      <el-table v-if="this.agentComId === '01'" @selection-change="handleSelectionChange" ref="multipleTable"
+        :data="tableData" tooltip-effect="dark" style="width: 100%">
+        <el-table-column type="selection" width="80" :selectable="checkSelectable"></el-table-column>
+        <el-table-column prop="comCNName" label="省级分公司" width="120"></el-table-column>
+        <el-table-column prop="socialSecurity" label="社保津贴" width="100"> </el-table-column>
+        <el-table-column prop="ybdlcommission" label="银保代理佣金" width="100"></el-table-column>
+        <el-table-column prop="ccxcommission" label="财产险佣金" width="100"></el-table-column>
+        <el-table-column prop="sxsqcommission" label="寿险首期佣金" width="100"></el-table-column>
+        <el-table-column prop="sxxqcommission" label="寿险续期佣金" width="100"></el-table-column>
+        <el-table-column prop="ybdljscash" label="银保代理竞赛兑现" width="100"></el-table-column>
+        <el-table-column prop="sxjscash" label="寿险总公司竞赛兑现" width="100"></el-table-column>
+        <el-table-column prop="sxbranchJScash" label="寿险分公司竞赛兑现" width="100"></el-table-column>
+        <el-table-column prop="ctxjscash" label="传统险竞赛兑现" width="100"></el-table-column>
+        <el-table-column prop="xqjscash" label="续期竞赛兑现" width="100"></el-table-column>
+        <el-table-column prop="sqqttzcommission" label="税前其他调整佣金" width="100"></el-table-column>
+        <el-table-column prop="sqsyarrears" label="税前上月欠款" width="100"></el-table-column>
+        <el-table-column prop="yfsalary" label="应发收入" width="100"></el-table-column>
+        <el-table-column prop="shsalary" label="税后收入" width="100"></el-table-column>
+        <el-table-column prop="t1" label="T+1发佣" width="100"></el-table-column>
+        <el-table-column prop="shqttzcommission" label="税后其他调整佣金" width="100"></el-table-column>
+        <el-table-column prop="sftotal" label="实发合计" width="100"></el-table-column>
+        <el-table-column prop="shstatus" label="审核状态" width="80">
+          <template slot-scope="scope" v-if="scope.row.comCNName !== '合计'">
+            <span>{{scope.row.shstatus}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="examHis" label="审核历史" width="80">
+          <template slot-scope="scope" v-if="scope.row.comCNName !== '合计'">
+            <span @click="checkHis(scope.row)" class="tableButton">查看</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="downDatail" label="下载明细" width="80">
+          <template slot-scope="scope" v-if="scope.row.comCNName !== '合计'">
+            <span @click="downloadDetail(scope.row)" class="tableButton">下载</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-table v-else :span-method="objectSpanMethod" :data="tableData" tooltip-effect="dark" style="width: 100%">
+        <el-table-column prop="comCNName" label="省级分公司" width="120"></el-table-column>
+        <el-table-column prop="comName" label="地市级分公司" width="120"> </el-table-column>
+        <el-table-column prop="socialSecurity" label="社保津贴" width="100"> </el-table-column>
+        <el-table-column prop="ybdlcommission" label="银保代理佣金" width="100"></el-table-column>
+        <el-table-column prop="ccxcommission" label="财产险佣金" width="100"></el-table-column>
+        <el-table-column prop="sxsqcommission" label="寿险首期佣金" width="100"></el-table-column>
+        <el-table-column prop="sxxqcommission" label="寿险续期佣金" width="100"></el-table-column>
+        <el-table-column prop="ybdljscash" label="银保代理竞赛兑现" width="100"></el-table-column>
+        <el-table-column prop="sxjscash" label="寿险总公司竞赛兑现" width="100"></el-table-column>
+        <el-table-column prop="sxbranchJScash" label="寿险分公司竞赛兑现" width="100"></el-table-column>
+        <el-table-column prop="ctxjscash" label="传统险竞赛兑现" width="100"></el-table-column>
+        <el-table-column prop="xqjscash" label="续期竞赛兑现" width="100"></el-table-column>
+        <el-table-column prop="sqqttzcommission" label="税前其他调整佣金" width="100"></el-table-column>
+        <el-table-column prop="sqsyarrears" label="税前上月欠款" width="100"></el-table-column>
+        <el-table-column prop="yfsalary" label="应发收入" width="100"></el-table-column>
+        <el-table-column prop="shsalary" label="税后收入" width="100"></el-table-column>
+        <el-table-column prop="t1" label="T+1发佣" width="100"></el-table-column>
+        <el-table-column prop="shqttzcommission" label="税后其他调整佣金" width="100"></el-table-column>
+        <el-table-column prop="sftotal" label="实发合计" width="100"></el-table-column>
+        <el-table-column prop="shstatus" label="审核状态" width="80"></el-table-column>
+        <el-table-column prop="examHis" label="审核历史" width="80">
+          <template slot-scope="scope" >
+            <span @click="checkHis(scope.row)" class="tableButton">查看</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="downDatail" label="下载明细" width="80">
+          <template slot-scope="scope" >
+            <span @click="downloadDetail(scope.row)" class="tableButton">下载</span>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div class="block">
+        <el-pagination
+          @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
+          :current-page="queryInfo.currentPage"
+          :page-size ="queryInfo.pageSize"
+          :page-sizes="[5,10,20,50]"
+          :total="totalRecords"
+          layout="total, sizes, prev, pager, next, jumper"
+          >
+        </el-pagination>
+      </div>
+    </div>
+    <!-- 审核弹框 -->
+    <ComDialog :vis='comDialog' :workerVis='comDialogworker' :comVis='comDialogCom' :newTableData='tempTableData1' @onClose='comDialogClosing()' @selectDialog='dialogBackData' @comdialogChangePageFunction='changeComdialogPage1' @comdialogChangePageSizeFunction='changeComdialogPageSize1' :fenyetotal='fenyetotalData'/>
+    <el-dialog title="业务员薪资审核" :append-to-body='true' :before-close="auditClose" center :visible.sync="audit_dialog">
+       <ui-line-tittle :collapsible="true" >
+         <span slot="title" >
+            <i class="font_family icon-jy-menu-4" ></i>薪资审核
+          </span>
+          <div class="ri-content" slot="content">
+            <el-form :model="queryInfo">
+              <el-form-item label="审核结果:">
+                <el-radio v-model="queryInfo.sHresult" label="1">审核通过</el-radio>
+                <el-radio v-model="queryInfo.sHresult" label="0">审核不通过</el-radio>
+              </el-form-item>
+              <el-form-item label="审核意见:">
+                <el-input type="textarea"  :rows='5' style="width: 85%; "  v-model="queryInfo.sHremark" ></el-input>
+              </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+              <el-button @click="audit_dialog = false">返 回</el-button>
+              <el-button type="primary" @click="auditPut">审 核</el-button>
+            </div>
+          </div>
+       </ui-line-tittle>
+    </el-dialog>
+    <el-dialog title="业务员薪资审核" :append-to-body='true' :before-close="auditClose" center :visible.sync="audit_dialog1" width="40%">
+      <div style="font-size:28px;text-align:center">确定提交审核操作？</div>
+      <div class="btn-container1">
+        <el-button type="primary" @click.native.prevent="auditPut">确定</el-button>
+        <el-button type="primary" @click.native.prevent="audit_dialog1 = false">取消</el-button>
+      </div>
+    </el-dialog>
+    <el-dialog title="审核历史" :append-to-body='true' center :visible.sync="his_dialog">
+      <el-table stripe :data="hisData" :before-close="hisClose" tooltip-effect="dark" style="width: 100%">
+        <el-table-column prop="shstatus" label="审核状态"></el-table-column>
+        <el-table-column prop="remark1" label="审核意见"> </el-table-column>
+        <el-table-column prop="createDate" label="操作时间"> </el-table-column>
+        <el-table-column prop="createUser" label="操作员"> </el-table-column>
+      </el-table>
+    </el-dialog>
+  </div>
+</template>
+<script>
+import NoticeBar from '@/components/notice-bar'
+import LineTittle from '@/components/line-tittle'
+import LabelText from '@/components/label-text'
+import { mapActions } from 'vuex'
+import ComDialog from '@/components/comDialog'
+import IsEmpty from '@/utils/IsEmpty'
+// import moment from 'moment'
+import {
+  api
+} from '@/api/lifeInsur_mgr/quitListMgr.js'
+export default {
+  name: '',
+  data () {
+    return {
+      orgQueryInfo: {
+        clickType: '2',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10
+      },
+      queryInfo: {
+        comCNcode: '',
+        comCNname: '',
+        salaryMonth: '',
+        jobtype: '',
+        sHstatus: '',
+        sHresult: '',
+        sHremark: '',
+        currentPage: 1,
+        pageSize: 5
+      },
+      shengjiQueryData: {
+        clickType: '2',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10
+      },
+      rules: {
+        salaryMonth: [
+          { required: true, message: '请输入月份', trigger: 'change' }
+        ]
+      },
+      queryOptions: [],
+      quanxian: {
+        query: true,
+        export: true,
+        exportDetail: true,
+        review1: true,
+        review2: true,
+        review3: true,
+        review4: true,
+        review5: true,
+        review6: true,
+        export2: true
+      },
+      shenheType: '',
+      multiSelections: [],
+      agentComId: '',
+      examComId: '',
+      tableShowOrNot: false,
+      audit_dialog: false,
+      audit_dialog1: false,
+      hisData: [],
+      his_dialog: false,
+      sHstatusDisable: false,
+      comDialog: false,
+      comDialogCom: false,
+      comDialogworker: false,
+      tableData: [],
+      totalRecords: 0,
+      fenyetotalData: 0,
+      tempTableData1: [],
+      enum: {
+        '全部': '-1',
+        '审核不通过': '2',
+        '审核通过': '1',
+        '未提交审核': '2',
+        '待分公司负责人审核': '3',
+        '待总公司企划督训部负责人审核': '4',
+        '待总公司财务部负责人审核': '5',
+        '待总公司财务部总监审核': '6',
+        '待总公司总裁审核': '7'
+      }
+    }
+  },
+  methods: {
+    ...mapActions([
+      'contiListCheckDialogDataGet1'
+    ]),
+    objectSpanMethod ({ row, column, rowIndex, columnIndex }) {
+      if (columnIndex === 18 || columnIndex === 19 || columnIndex === 20) {
+        if (rowIndex === 0) {
+          return {
+            rowspan: this.queryInfo.pageSize,
+            colspan: 1
+          }
+        } else {
+          return {
+            rowspan: 0,
+            colspan: 0
+          }
+        }
+      }
+    },
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    closeLoading () {
+      this.loading.close()
+    },
+    // toast提示
+    openToast (type, mesg, time = 0) {
+      this.$message({
+        showClose: true,
+        message: mesg,
+        type: type,
+        duration: time
+      })
+    },
+    submitForm (formName, index) {
+      if (index > 3 && index < 8) {
+        let temp = []
+        if (!(this.multiSelections && this.multiSelections.length > 0)) {
+          this.openToast('warning', '请先选择数据记录！')
+          return
+        }
+        for (let i = 0; i < this.multiSelections.length; i++) {
+          temp.push(this.multiSelections[i].shstatus)
+        }
+        temp = new Set(temp)
+        switch (index) {
+          case 4:
+            if (temp.size > 1 && !temp.has('待总公司企划督训部负责人审核')) {
+              this.openToast('warning', '总公司企划督训部负责人仅可对待总公司企划督训部负责人审核的记录进行审核操作')
+              return
+            }
+            break
+          case 5:
+            if (temp.size > 1 && !temp.has('待总公司财务部负责人审核')) {
+              this.openToast('warning', '总公司财务部负责人仅可对待总公司财务部负责人审核的记录进行审核操作')
+              return
+            }
+            break
+          case 6:
+            if (temp.size > 1 && !temp.has('待总公司财务部总监审核')) {
+              this.openToast('warning', '总公司财务部总监仅可对待总公司财务部总监审核的记录进行审核操作')
+              return
+            }
+            break
+          case 7:
+            if (temp.size > 1 && !temp.has('待总公司总裁审核')) {
+              this.openToast('warning', '总公司总裁仅可对待总公司总裁审核的记录进行审核操作')
+              return
+            }
+            break
+          default:
+            break
+        }
+      }
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          switch (index) {
+            case 0:
+              this.totalRecords = 0
+              this.queryInfo.currentPage = 1
+              this.queryData()
+              break
+            case 1:
+              window.open(`/tabycore/salaryReview/exportReview?comCNcode=${this.queryInfo.comCNcode}&comCNname=${this.queryInfo.comCNname}&salaryMonth=${this.queryInfo.salaryMonth}&jobtype=${this.queryInfo.jobtype}&sHstatus=${this.queryInfo.sHstatus}`)
+              break
+            case 2:
+              let comCNcodeAll = ''
+              let temp2 = {
+                comCNcode: '',
+                comCNname: '',
+                salaryMonth: '',
+                jobtype: '',
+                sHstatus: '',
+                sHresult: '',
+                sHremark: '',
+                currentPage: 1,
+                pageSize: 50
+              }
+              temp2.comCNcode = this.queryInfo.comCNcode
+              temp2.comCNname = this.queryInfo.comCNname
+              temp2.salaryMonth = this.queryInfo.salaryMonth
+              temp2.jobtype = this.queryInfo.jobtype
+              temp2.sHstatus = this.queryInfo.sHstatus
+              temp2.sHresult = this.queryInfo.sHresult
+              temp2.sHremark = this.queryInfo.sHremark
+              this.Loading()
+              api('/salaryReview/queryReview', 'post', temp2).then((res) => {
+                this.closeLoading()
+                if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                  window.open(`/tabycore/salaryReview/exportreviewdata?salaryMonth=${this.queryInfo.salaryMonth}&jobtype=${this.queryInfo.jobtype}&comCNcode=`)
+                } else {
+                  for (let i = 0; i < res.data.data.content.length; i++) {
+                    if (i === 0) {
+                      comCNcodeAll = res.data.data.content[i].comCNCode
+                    } else {
+                      comCNcodeAll += ',' + res.data.data.content[i].comCNCode
+                    }
+                  }
+                  window.open(`/tabycore/salaryReview/exportreviewdata?salaryMonth=${this.queryInfo.salaryMonth}&jobtype=${this.queryInfo.jobtype}&comCNcode=${comCNcodeAll}`)
+                }
+              })
+              break
+            case 3:
+              if (this.queryInfo.jobtype !== '0') {
+                this.openToast('warning', '提交审核时，用工类型必须选择全部')
+                return
+              }
+              let temp = {
+                comCNcode: '',
+                comCNname: '',
+                salaryMonth: '',
+                jobtype: '',
+                sHstatus: '',
+                sHresult: '',
+                sHremark: '',
+                currentPage: 1,
+                pageSize: 5
+              }
+              temp.comCNcode = this.queryInfo.comCNcode
+              temp.comCNname = this.queryInfo.comCNname
+              temp.salaryMonth = this.queryInfo.salaryMonth
+              temp.jobtype = this.queryInfo.jobtype
+              temp.sHstatus = '2'
+              temp.sHresult = this.queryInfo.sHresult
+              temp.sHremark = this.queryInfo.sHremark
+              temp.currentPage = 1
+              temp.pageSize = 5
+              this.Loading()
+              api('/salaryReview/queryReview', 'post', temp).then((res) => {
+                if (res.data.code === '000000' && res.data.data.content.length > 0) {
+                  this.closeLoading()
+                  this.shenheType = '未提交审核'
+                  this.audit_dialog1 = true
+                } else {
+                  api('/salaryReview/queryReview', 'post', temp).then((res) => {
+                    this.closeLoading()
+                    if (res.data.code === '000000' && res.data.data.content.length > 0) {
+                      this.shenheType = '审核不通过'
+                      this.audit_dialog1 = true
+                    } else {
+                      this.openToast('warning', '当前状态不允许提交审核操作')
+                    }
+                  })
+                }
+              })
+              break
+            case 4:
+              if (this.queryInfo.jobtype !== '1') {
+                this.openToast('warning', '总公司企划督训部负责人审核时，用工类型必须选择代理制')
+                return
+              }
+              this.shenheType = '待总公司企划督训部负责人审核'
+              this.audit_dialog = true
+              break
+            case 5:
+              if (this.queryInfo.jobtype !== '1') {
+                this.openToast('warning', '总公司财务部负责人审核时，用工类型必须选择代理制')
+                return
+              }
+              this.shenheType = '待总公司财务部负责人审核'
+              this.audit_dialog = true
+              break
+            case 6:
+              if (this.queryInfo.jobtype !== '1') {
+                this.openToast('warning', '总公司财务部总监审核时，用工类型必须选择代理制')
+                return
+              }
+              this.shenheType = '待总公司财务部总监审核'
+              this.audit_dialog = true
+              break
+            case 7:
+              if (this.queryInfo.jobtype !== '1') {
+                this.openToast('warning', '总公司总裁审核时，用工类型必须选择代理制')
+                return
+              }
+              this.shenheType = '待总公司总裁审核'
+              this.audit_dialog = true
+              break
+            case 8:
+              if (this.queryInfo.jobtype !== '0') {
+                this.openToast('warning', '分公司负责人审核时，用工类型必须选择全部')
+                return
+              }
+              let temp1 = {
+                comCNcode: '',
+                comCNname: '',
+                salaryMonth: '',
+                jobtype: '',
+                sHstatus: '',
+                sHresult: '',
+                sHremark: '',
+                currentPage: 1,
+                pageSize: 5
+              }
+              temp1.comCNcode = this.queryInfo.comCNcode
+              temp1.comCNname = this.queryInfo.comCNname
+              temp1.salaryMonth = this.queryInfo.salaryMonth
+              temp1.jobtype = this.queryInfo.jobtype
+              temp1.sHstatus = '3'
+              temp1.sHresult = this.queryInfo.sHresult
+              temp1.sHremark = this.queryInfo.sHremark
+              temp1.currentPage = 1
+              temp1.pageSize = 5
+              this.Loading()
+              api('/salaryReview/queryReview', 'post', temp1).then((res) => {
+                this.closeLoading()
+                if (res.data.code === '000000' && res.data.data.content.length > 0) {
+                  this.shenheType = '待分公司负责人审核'
+                  this.audit_dialog = true
+                } else {
+                  this.openToast('warning', '分公司负责人仅可对待分公司负责人审核的记录进行审核操作')
+                }
+              })
+              break
+            case 9:
+              if (this.queryInfo.sHstatus !== '1') {
+                this.openToast('warning', '财务导出只能选择审核通过的业务员薪资记录！')
+                return
+              }
+              window.open(`/tabycore/salaryReview/exportFinancial?comCNcode=${this.queryInfo.comCNcode}&comCNname=${this.queryInfo.comCNname}&salaryMonth=${this.queryInfo.salaryMonth}&jobtype=${this.queryInfo.jobtype}&sHstatus=${this.queryInfo.sHstatus}`)
+              break
+            default:
+              break
+          }
+        } else {
+          return false
+        }
+      })
+    },
+    queryData () {
+      this.tableShowOrNot = false
+      this.tableData = []
+      this.Loading()
+      api('/salaryReview/queryReview', 'post', this.queryInfo).then((res) => {
+        this.closeLoading()
+        this.tableShowOrNot = true
+        if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+        } else {
+          this.tableData = res.data.data.content
+          this.totalRecords = res.data.data.totalElements
+        }
+      })
+    },
+    openComDialog () {
+      if (this.agentComId === '01') {
+        if (!IsEmpty(this.queryInfo.comCNcode)) {
+          this.orgQueryInfo.comCodeOrName = this.queryInfo.comCNcode
+        } else if (!IsEmpty(this.queryInfo.comCNname)) {
+          this.orgQueryInfo.comCodeOrName = this.queryInfo.comCNname
+        } else {
+          this.orgQueryInfo.comCodeOrName = ''
+        }
+        this.orgQueryInfo.clickType = '2'
+        this.contiListCheckDialogDataGet1(this.orgQueryInfo).then(
+          (res) => {
+            if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+              this.openToast('warning', res.data.msg)
+            } else {
+              this.tempTableData1 = res.data.data.data
+              for (let i = 0; i < this.tempTableData1.length; i++) {
+                this.tempTableData1[i]['renderData'] = `${this.tempTableData1[i].comCode}-${this.tempTableData1[i].comCName}`
+              }
+              this.fenyetotalData = res.data.data.totalRecords
+              this.comDialog = true
+              this.comDialogCom = true
+              this.comDialogworker = false
+            }
+          }
+        )
+      }
+    },
+    checkHis (data) {
+      let temp = {}
+      temp.salaryMonth = this.queryInfo.salaryMonth
+      temp.jobtype = this.queryInfo.jobtype
+      temp.comCNcode = data.comCNCode
+      this.Loading()
+      api('/salaryReview/queryHistory', 'post', temp).then((res) => {
+        this.closeLoading()
+        console.log(res)
+        // hisData his_dialog
+        this.hisData = res.data.data
+        this.his_dialog = true
+      })
+    },
+    downloadDetail (data) {
+      window.open(`/tabycore/salaryReview/exportreviewdata?salaryMonth=${this.queryInfo.salaryMonth}&jobtype=${this.queryInfo.jobtype}&comCNcode=${data.comCNCode}`)
+    },
+    auditClose () {
+      this.audit_dialog = false
+      this.audit_dialog1 = false
+      this.queryInfo.sHresult = ''
+      this.queryInfo.sHremark = ''
+    },
+    hisClose () {
+      this.hisData = []
+      this.his_dialog = false
+    },
+    auditPut () {
+      if (this.queryInfo.sHresult === '' && !(this.shenheType === '未提交审核' || this.shenheType === '审核不通过')) {
+        this.openToast('warning', '请先勾选审核结果')
+        return
+      }
+      let temp = {}
+      // temp.comCNcode = this.queryInfo.comCNcode
+      // temp.comCNname = this.queryInfo.comCNname
+      temp.salaryMonth = this.queryInfo.salaryMonth
+      temp.jobtype = this.queryInfo.jobtype
+      temp.sHstatus = this.enum[this.shenheType]
+      temp.sHresult = this.queryInfo.sHresult === '' ? '1' : this.queryInfo.sHresult
+      temp.sHremark = this.queryInfo.sHremark
+      temp.comCNcode = this.agentComId === '01' ? this.examComId : this.agentComId.substring(0, 6)
+      this.Loading()
+      api('/salaryReview/updateSHstatus', 'post', temp).then((res) => {
+        this.closeLoading()
+        console.log(res)
+        // hisData his_dialog
+        if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+          this.openToast('warning', res.data.msg)
+        } else {
+          this.openToast('success', res.data.msg)
+          this.queryInfo.sHresult = ''
+          this.queryInfo.sHremark = ''
+          this.examComId = ''
+          this.audit_dialog = false
+          this.audit_dialog1 = false
+          this.multiSelections = []
+          if (this.agentComId === '01') {
+            this.submitForm('agentSalCheck', 0)
+          } else {
+            this.tableData = []
+            this.totalRecords = 0
+          }
+        }
+      })
+    },
+    handleSelectionChange (val) {
+      this.examComId = ''
+      this.multiSelections = val
+      for (let i = 0; i < val.length; i++) {
+        if (i === 0) {
+          this.examComId = String(val[i].comCNCode)
+        } else {
+          this.examComId += ',' + val[i].comCNCode
+        }
+      }
+    },
+    checkSelectable (row, index) {
+      if (row.comCNName !== '合计') {
+        return 1
+      } else { // 不可勾选
+        return 0
+      }
+    },
+    handleCurrentChange (val) {
+      this.queryInfo.currentPage = val
+      this.queryData()
+    },
+    handleSizeChange (val) {
+      this.queryInfo.currentPage = 1
+      this.queryInfo.pageSize = val
+      this.queryData()
+    },
+    comDialogClosing (index) {
+      this.comDialog = false
+      this.orgQueryInfo = {
+        clickType: '2',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10
+      }
+      this.queryInfo.comCNcode = ''
+      this.queryInfo.comCNname = ''
+    },
+    dialogBackData (data) {
+      this.orgQueryInfo = {
+        clickType: '2',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10
+      }
+      this.comDialog = false
+      let temp = []
+      temp = data.split('-')
+      this.queryInfo.comCNcode = temp[0]
+      this.queryInfo.comCNname = temp[1]
+    },
+    changeComdialogPage1 (data) {
+      this.orgQueryInfo.currentPage = data
+      this.openComDialog()
+    },
+    changeComdialogPageSize1 (data) {
+      this.orgQueryInfo.currentPage = 1
+      this.orgQueryInfo.pageSize = data
+      this.openComDialog()
+    }
+  },
+  computed: {},
+  mounted () {
+    this.agentComId = this.$store.state.login.showComName.split('(')[1].split(')')[0]
+    // this.agentComId = 'BY0132'
+    this.shengjiQueryData.clickType = '2'
+    if (this.agentComId === '01') {
+      this.queryInfo.jobtype = '1'
+    } else {
+      this.queryInfo.jobtype = '0'
+    }
+    this.shengjiQueryData.comCodeOrName = this.agentComId.substring(0, 6)
+    this.Loading()
+    api(`/auth/findButtonByUserCodeAndPage?userId=${this.$store.state.login.loginUserId}&page=业务员薪资审核管理`, 'get').then(result => {
+      console.log(result)
+      if (result.data.code === '000000') {
+        for (let i = 0; i < result.data.data.length; i++) {
+          this.quanxian[result.data.data[i].code] = false
+        }
+        this.queryOptions = [
+          {name: '全部', id: '-1'},
+          {name: '审核不通过', id: '0'},
+          {name: '审核通过', id: '1'},
+          {name: '未提交审核', id: '2'},
+          {name: '待审核', id: '8'}
+        ]
+        this.queryInfo.sHstatus = '-1'
+        this.sHstatusDisable = false
+        if (!this.quanxian.review3) {
+          this.queryOptions = [{name: '待审核', id: '4'}]
+          this.queryInfo.sHstatus = '4'
+          this.sHstatusDisable = true
+          return
+        } else if (!this.quanxian.review4) {
+          this.queryOptions = [{name: '待审核', id: '5'}]
+          this.queryInfo.sHstatus = '5'
+          this.sHstatusDisable = true
+          return
+        } else if (!this.quanxian.review5) {
+          this.queryOptions = [{name: '待审核', id: '6'}]
+          this.queryInfo.sHstatus = '6'
+          this.sHstatusDisable = true
+          return
+        } else if (!this.quanxian.review6) {
+          this.queryOptions = [{name: '待审核', id: '7'}]
+          this.queryInfo.sHstatus = '7'
+          this.sHstatusDisable = true
+          return
+        }
+        if (!this.quanxian.review2) {
+          this.queryInfo.sHstatus = '8'
+        }
+        if (!this.quanxian.review1) {
+          this.queryInfo.sHstatus = '2'
+        }
+      }
+    }).catch((e) => {
+      console.log(e)
+    })
+    this.contiListCheckDialogDataGet1(this.shengjiQueryData).then(
+      (res) => {
+        if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+        } else {
+          for (let i = 0; i < res.data.data.data.length; i++) {
+            res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/天安佰盈保险销售有限公司/, '')
+          }
+          this.queryInfo.comCNcode = res.data.data.data[0].comCode
+          this.queryInfo.comCNname = res.data.data.data[0].comCName
+        }
+      }
+    )
+    api('/salaryReview/queryMonth', 'post', {}).then(result => {
+      this.closeLoading()
+      if (result.data.code !== '000000') {
+        this.openToast('warning', result.data.msg)
+      } else {
+        this.queryInfo.salaryMonth = result.data.data.substring(0, 7)
+      }
+    })
+  },
+  watch: {
+    'queryInfo.comCNcode' () {
+      if (this.queryInfo.comCNcode === '') {
+        this.queryInfo.comCNname = ''
+      }
+    },
+    'queryInfo.comCNname' () {
+      if (this.queryInfo.comCNname === '') {
+        this.queryInfo.comCNcode = ''
+      }
+    }
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LineTittle.name]: LineTittle,
+    [LabelText.name]: LabelText,
+    ComDialog
+  }
+}
+</script>
+<style lang="scss" scoped type="text/css">
+#orgadd {padding-left: 30px;padding-right: 30px;}
+.btn-container{text-align: center;margin-top: 60px;margin-bottom: 30px;}
+.btn-container1{text-align: center;margin-top: 30px;}
+.ri-line{margin-top: 10px;margin-bottom: 10px;}
+.datestyle{color: #717171;font-size: 0.875rem;display: inline-block;width: 120px;}
+.datestyle1{color: #717171;font-size: 0.875rem;display: inline-block;text-align: center;width: 60px;}
+.el-pagination{float: right;padding-right: 20px;}
+.center{text-align: center}
+.orgInfoTable{text-align: center}
+.orgInfoTable tr{height: 40px}
+.orgInfoTable td{ width: 15%;height: 2rem}
+.head{background: #d3e7fa;color: #2585e6;height: 40px}
+.tableButton {
+  cursor: pointer;
+  color: #66B1FF;
+  font-size: 14px;
+}
+.upload-content{
+  width: 100%;
+  text-align: center;
+  }
+.block {
+  position: relative;
+  bottom: 10px;
+  margin-top: 40px;
+
+}
+</style>

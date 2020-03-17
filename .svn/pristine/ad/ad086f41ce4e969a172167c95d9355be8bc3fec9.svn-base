@@ -1,0 +1,903 @@
+<template>
+  <div id="orgadd" >
+      <ui-notice-bar slot="breadcast" >
+        <el-breadcrumb slot="location" separator=">">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>寿险业务报表管理</el-breadcrumb-item>
+            <el-breadcrumb-item>寿险续期清单</el-breadcrumb-item>
+          </el-breadcrumb>
+      </ui-notice-bar>
+      <div class="ri-content" slot="content" >
+        <el-form ref="queryInfo" :rules="rules1" :model="queryInfo">
+          <el-row class="ri-line">
+            <el-col :span=12>
+              <el-form-item prop='upComCode'>
+                <ui-label-text labelWidth="120" label="省级分公司代码：">
+                  <el-input v-model="queryInfo.upComCode" slot='text' @dblclick.native="openComDialog(0)" clearable @blur="opensingleComDialog(0)" placeholder="双击可选择"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span=12>
+              <el-form-item prop='upComName'>
+                <ui-label-text labelWidth="120" label="省级分公司名称：">
+                  <el-input v-model="queryInfo.upComName" slot='text' @dblclick.native="openComDialog(0)" clearable @blur="opensingleComDialog(0)" placeholder="双击可选择"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span=12>
+              <el-form-item prop='comCode'>
+                <ui-label-text labelWidth="120" label="地市级分公司代码：">
+                  <el-input v-model="queryInfo.comCode" slot='text' @dblclick.native="openComDialog(1)" clearable @blur="opensingleComDialog(1)" placeholder="双击可选择"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span=12>
+              <el-form-item prop='comName'>
+                <ui-label-text labelWidth="120" label="地市级分公司名称：">
+                  <el-input v-model="queryInfo.comName" slot='text' @dblclick.native="openComDialog(1)" clearable @blur="opensingleComDialog(1)" placeholder="双击可选择"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span=12>
+              <el-form-item prop='agentCode'>
+                <ui-label-text labelWidth="120" label="业务员代码：">
+                  <el-input v-model="queryInfo.agentCode" slot='text' @dblclick.native="openComDialog(2)" @blur="opensingleComDialog(2)" clearable placeholder="双击可选择"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span=12>
+              <el-form-item prop='agentName' >
+                <ui-label-text labelWidth="120" label="业务员名称：">
+                  <el-input v-model="queryInfo.agentName" slot='text' @dblclick.native="openComDialog(2)" @blur="opensingleComDialog(2)" clearable placeholder="双击可选择"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span=12>
+              <el-form-item prop='recommenderCode'>
+                <ui-label-text labelWidth="120" label="增员人代码：">
+                  <el-input v-model="queryInfo.recommenderCode" slot='text' @dblclick.native="openComDialog(3)" @blur="opensingleComDialog(3)" clearable placeholder="双击可选择"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span=12>
+              <el-form-item prop='recommenderName' >
+                <ui-label-text labelWidth="120" label="增员人名称：">
+                  <el-input v-model="queryInfo.recommenderName" slot='text' @dblclick.native="openComDialog(3)" @blur="opensingleComDialog(3)" clearable placeholder="双击可选择"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop='crateMouth'>
+                <ui-label-text labelWidth="120" label="继续率月份：" :required="true">
+                  <el-date-picker
+                    v-model="queryInfo.crateMouth"
+                    value-format="yyyy-MM"
+                    type="month"
+                    slot='text'>
+                  </el-date-picker>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop='jobType'>
+                <ui-label-text labelWidth="120" label="人员类型：" >
+                  <el-select v-model="queryInfo.jobType" slot="text">
+                    <el-option
+                      label="全部"
+                      value="-1">
+                    </el-option>
+                    <el-option
+                      label="合同制"
+                      value="1">
+                    </el-option>
+                    <el-option
+                      label="代理制"
+                      value="3">
+                    </el-option>
+                    <el-option
+                      label="代理制-昆仑"
+                      value="6">
+                    </el-option>
+                    <el-option
+                      label="出单工号"
+                      value="2">
+                    </el-option>
+                    <el-option
+                      label="劳务派遣"
+                      value="4">
+                    </el-option>
+                    <el-option
+                      label="内勤合同制"
+                      value="5">
+                    </el-option>
+                  </el-select>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span=12>
+              <el-form-item prop='policyNo'>
+                <ui-label-text labelWidth="120" label="保单号">
+                  <el-input v-model="queryInfo.policyNo" slot='text'></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span=12>
+              <el-form-item prop='jixilvFlag' >
+                <ui-label-text labelWidth="120" label="继续率类型：" :required="true">
+                  <el-select v-model="queryInfo.jixilvFlag" slot="text">
+                    <el-option
+                        label="R13"
+                        value="1">
+                    </el-option>
+                    <el-option
+                        label="R25"
+                        value="2">
+                    </el-option>
+                    <el-option
+                        label="R37"
+                        value="3">
+                    </el-option>
+                  </el-select>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+        <div class="btn-container">
+          <el-button type="primary" @click="submitForm('queryInfo',1)">查询</el-button>
+          <el-button type="primary" @click="submitForm('queryInfo',2)">导出</el-button>
+        </div>
+      </div>
+      <ComDialog :vis='comDialog' :workerVis='comDialogworker' :comVis='comDialogCom' :newTableData='tempTableData1' @onClose='comDialogClosing(0)' @selectDialog='dialogBackData' @comdialogChangePageFunction='changeComdialogPage1' @comdialogChangePageSizeFunction='changeComdialogPageSize1' :fenyetotal='fenyetotalData'/>
+      <ComDialog :vis='comDialog1' :workerVis='comDialogworker1' :comVis='comDialogCom1' :newTableData='tempTableData2' @onClose='comDialogClosing(1)' @selectDialog='dialogBackData1' @comdialogChangePageFunction='changeComdialogPage2' @comdialogChangePageSizeFunction='changeComdialogPageSize2' :fenyetotal='fenyetotalData'/>
+      <ComDialog :vis='comDialog2' :workerVis='comDialogworker2' :comVis='comDialogCom2' :newTableData='tempTableData3' @onClose='comDialogClosing(2)' @selectDialog='dialogBackData2' @comdialogChangePageFunction='changeComdialogPage3' @comdialogChangePageSizeFunction='changeComdialogPageSize3' :fenyetotal='fenyetotalData'/>
+      <ComDialog :vis='comDialog3' :workerVis='comDialogworker3' :comVis='comDialogCom3' :newTableData='tempTableData4' @onClose='comDialogClosing(3)' @selectDialog='dialogBackData3' @comdialogChangePageFunction='changeComdialogPage4' @comdialogChangePageSizeFunction='changeComdialogPageSize4' :fenyetotal='fenyetotalData'/>
+      <div v-if='tableShowOrNot'>
+        <el-table ref="multipleTable" stripe tooltip-effect="dark" style="width: 100%" :data="tableData"
+          >
+          <el-table-column prop="crateMouth" label="继续率月份"  width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="upComCode" label="省级分公司代码" width="370" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="upComName" label="省级分公司名称" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="comCode" label="地市级分公司代码" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="comName" label="地市级分公司名称" width="300" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="agentCode" label="业务员代码" width="370" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="agentName" label="业务员姓名" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="jobGrade" label="职级" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="personnelAttributes" label="人员类型" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="recommenderCode" label="增员人代码" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="recommenderName" label="增员人姓名"  width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="policyNo" label="保单号" width="370" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="riskCode" label="险种代码" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="riskName" label="险种名称" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="mainFlag" label="主/附险" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="applyName" label="投保人姓名" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="periodPremium" label="首期保费"  width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="xq_paidPremium" label="续期实收保费" width="370" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="paymentPeriod" label="缴费年期" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="paymentCycle" label="缴费频率" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="effectDate" label="生效日期" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="payableDate" label="应缴日期" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="paidDate" label="实收日期" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="policyStatus" label="保单状态" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="paymentStatus" label="是否完成实收" width="150" show-overflow-tooltip>
+          </el-table-column>
+        </el-table>
+        <div class="block">
+          <el-pagination
+            @current-change="handleCurrentChange"
+            @size-change="handleSizeChange"
+            :page-sizes="[10,20,50]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalRecords"
+            >
+          </el-pagination>
+        </div>
+      </div>
+      <!-- <div v-show="false">
+        <el-table id="exportTable" ref="exportTable" tooltip-effect="dark" style="width: 100%" :data="exportTableData"
+          >
+          <el-table-column prop="crateMouth" label="继续率月份"  width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="upComCode" label="省级分公司代码" width="370" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="upComName" label="省级分公司名称" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="comCode" label="地市级分公司代码" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="comName" label="地市级分公司名称" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="agentCode" label="业务员代码" width="370" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="agentName" label="业务员姓名" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="jobGrade" label="职级" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="personnelAttributes" label="人员类型" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="recommenderCode" label="增员人代码" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="recommenderName" label="增员人姓名"  width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="policyNo" label="保单号" width="370" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="riskCode" label="险种代码" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="riskName" label="险种名称" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="mainFlag" label="主/附险" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="applyName" label="投保人姓名" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="periodPremium" label="首期保费"  width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="xq_paidPremium" label="续期实收保费" width="370" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="paymentPeriod" label="缴费年期" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="paymentCycle" label="缴费频率" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="effectDate" label="生效日期" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="payableDate" label="应缴日期" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="paidDate" label="实收日期" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="policyStatus" label="保单状态" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="paymentStatus" label="是否完成实收" width="150" show-overflow-tooltip>
+          </el-table-column>
+        </el-table>
+      </div> -->
+  </div>
+</template>
+
+<script>
+import NoticeBar from '@/components/notice-bar'
+import LineTittle from '@/components/line-tittle'
+import LabelText from '@/components/label-text'
+import { mapActions } from 'vuex'
+import ComDialog from '@/components/comDialog'
+import IsEmpty from '@/utils/IsEmpty'
+// import FileSaver from 'file-saver'
+import {
+  api
+} from '@/api/lifeInsur_mgr/lifeInsureBillMake.js'
+export default {
+  name: '',
+  data () {
+    return {
+      queryInfo: {
+        upComCode: '',
+        upComName: '',
+        comCode: '',
+        comName: '',
+        agentCode: '',
+        agentName: '',
+        jobType: '-1',
+        recommenderCode: '',
+        recommenderName: '',
+        crateMouth: '',
+        jixilvFlag: '1',
+        policyNo: '',
+        currentPage: 1,
+        pageSize: 10
+      },
+      shengjiInfo: {
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10,
+        clickType: '2'
+      },
+      dijiInfo: {
+        upperComCode: '',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10,
+        clickType: '2'
+      },
+      workerInfo: {
+        agentCode: '',
+        agentName: '',
+        comCode: '',
+        comName: '',
+        validStatus: '1',
+        pageSize: 10,
+        currentPage: 1,
+        clickType: '2'
+      },
+      loading: '',
+      rules: {
+      },
+      rules1: {
+        jixilvFlag: [
+          { required: true, message: '请输入继续率类型', trigger: 'blur' }
+        ],
+        crateMouth: [
+          { required: true, message: '请输入继续率月份', trigger: 'blur' }
+        ]
+      },
+      fileList: [],
+      quitDialogVis: false,
+      tableShowOrNot: false,
+      comDialog: false,
+      comDialogworker: true,
+      comDialogCom: false,
+      comDialog1: false,
+      comDialogworker1: true,
+      comDialogCom1: false,
+      comDialog2: false,
+      comDialogworker2: true,
+      comDialogCom2: false,
+      comDialog3: false,
+      comDialogworker3: true,
+      comDialogCom3: false,
+      fenyetotalData: 0,
+      totalRecords: 0,
+      tableData: [],
+      exportTableData: [],
+      tempTableData1: [],
+      tempTableData2: [],
+      tempTableData3: [],
+      tempTableData4: []
+    }
+  },
+  mounted () {
+  },
+  watch: {
+    'queryInfo.comCode' () {
+      if (this.queryInfo.comCode === '') {
+        this.queryInfo.comName = ''
+      }
+    },
+    'queryInfo.comName' () {
+      if (this.queryInfo.comName === '') {
+        this.queryInfo.comCode = ''
+      }
+    },
+    'queryInfo.upComCode' () {
+      if (this.queryInfo.upComCode === '') {
+        this.queryInfo.upComName = ''
+        this.queryInfo.comCode = ''
+        this.queryInfo.comName = ''
+      }
+    },
+    'queryInfo.upComName' () {
+      if (this.queryInfo.upComName === '') {
+        this.queryInfo.upComCode = ''
+        this.queryInfo.comCode = ''
+        this.queryInfo.comName = ''
+      }
+    },
+    'queryInfo.agentCode' () {
+      if (this.queryInfo.agentCode === '') {
+        this.queryInfo.agentName = ''
+      }
+    },
+    'queryInfo.agentName' () {
+      if (this.queryInfo.agentName === '') {
+        this.queryInfo.agentCode = ''
+      }
+    },
+    'queryInfo.recommenderCode' () {
+      if (this.queryInfo.recommenderCode === '') {
+        this.queryInfo.recommenderName = ''
+      }
+    },
+    'queryInfo.recommenderName' () {
+      if (this.queryInfo.recommenderName === '') {
+        this.queryInfo.recommenderCode = ''
+      }
+    }
+  },
+  methods: {
+    submitForm (formName, index) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          console.log('submit!')
+          switch (index) {
+            case 1:
+              this.totalRecords = 0
+              this.queryInfo.currentPage = 1
+              this.queryData()
+              break
+            case 2:
+              this.exportData()
+              break
+            default:
+              break
+          }
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
+    },
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    closeLoading () {
+      this.loading.close()
+    },
+    queryData () {
+      this.Loading()
+      this.tableData = []
+      api('/persistencyBill/queryPersistencyBill', 'post', this.queryInfo).then(res => {
+        this.closeLoading()
+        this.tableShowOrNot = true
+        console.log(res)
+        if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+          this.openToast('warning', res.data.msg)
+        } else {
+          this.tableData = res.data.data.data
+          this.totalRecords = res.data.data.totalRecords
+        }
+      }).catch((e) => {
+        console.log(e)
+      })
+    },
+    exportData () {
+      window.open(`/tabycore/persistencyBill/exportPersistencyBill?upComCode=${this.queryInfo.upComCode}&upComName=${this.queryInfo.upComName}&comCode=${this.queryInfo.comCode}&comName=${this.queryInfo.comName}&agentCode=${this.queryInfo.agentCode}&agentName=${this.queryInfo.agentName}&jobType=${this.queryInfo.jobType}&recommenderCode=${this.queryInfo.recommenderCode}&recommenderName=${this.queryInfo.recommenderName}&crateMouth=${this.queryInfo.crateMouth}&jixilvFlag=${this.queryInfo.jixilvFlag}&policyNo=${this.queryInfo.policyNo}`)
+    },
+    searchForCom1 (info) {
+      this.contiListCheckDialogDataGet1(info).then(
+        (res) => {
+          console.log(res)
+          if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+            this.openToast('warning', res.data.msg)
+          } else {
+            for (let i = 0; i < res.data.data.data.length; i++) {
+              res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/天安佰盈保险销售有限公司/, '')
+              res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/分公司/, '')
+            }
+            this.tempTableData1 = res.data.data.data
+            this.fenyetotalData = res.data.data.totalRecords
+            for (let i = 0; i < this.tempTableData1.length; i++) {
+              this.tempTableData1[i]['renderData'] = `${this.tempTableData1[i].comCode}-${this.tempTableData1[i].comCName}`
+            }
+            this.comDialog = true
+            this.comDialogCom = true
+            this.comDialogworker = false
+          }
+        })
+    },
+    searchForCom2 (info) {
+      console.log(info)
+      this.contiListCheckDialogDataGet2(info).then(
+        (res) => {
+          console.log(res)
+          if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+            this.openToast('warning', res.data.msg)
+          } else {
+            for (let i = 0; i < res.data.data.data.length; i++) {
+              res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/天安佰盈保险销售有限公司/, '')
+              res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/分公司/, '')
+            }
+            this.tempTableData2 = res.data.data.data
+            this.fenyetotalData = res.data.data.totalRecords
+            for (let i = 0; i < this.tempTableData2.length; i++) {
+              this.tempTableData2[i]['renderData'] = `${this.tempTableData2[i].comCode}-${this.tempTableData2[i].comCName}`
+            }
+            this.comDialog1 = true
+            this.comDialogCom1 = true
+            this.comDialogworker1 = false
+          }
+        })
+    },
+    searchForCom3 (info) {
+      console.log(info)
+      this.contiListCheckclickWorker(info).then(
+        (res) => {
+          if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+            this.openToast('warning', res.data.msg)
+          } else {
+            this.tempTableData3 = res.data.data.data
+            this.fenyetotalData = res.data.data.totalRecords
+            for (let i = 0; i < this.tempTableData3.length; i++) {
+              this.tempTableData3[i]['renderData'] = `${this.tempTableData3[i].agentCode}-${this.tempTableData3[i].agentName}`
+            }
+            this.comDialog2 = true
+            this.comDialogCom2 = true
+            this.comDialogworker2 = false
+          }
+        })
+    },
+    searchForCom4 (info) {
+      console.log(info)
+      this.contiListCheckclickWorker(info).then(
+        (res) => {
+          console.log(res)
+          if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+            this.openToast('warning', res.data.msg)
+          } else {
+            this.tempTableData4 = res.data.data.data
+            this.fenyetotalData = res.data.data.totalRecords
+            for (let i = 0; i < this.tempTableData4.length; i++) {
+              this.tempTableData4[i]['renderData'] = `${this.tempTableData4[i].agentCode}-${this.tempTableData4[i].agentName}`
+            }
+            this.comDialog3 = true
+            this.comDialogCom3 = true
+            this.comDialogworker3 = false
+          }
+        })
+    },
+    openComDialog (index) {
+      switch (index) {
+        case 0:
+          if (IsEmpty(this.queryInfo.upComCode) && !IsEmpty(this.queryInfo.upComName)) {
+            this.shengjiInfo.comCodeOrName = this.queryInfo.upComName
+          } else if (!IsEmpty(this.queryInfo.upComCode) && IsEmpty(this.queryInfo.upComName)) {
+            this.shengjiInfo.comCodeOrName = this.queryInfo.upComCode
+          } else {
+            this.shengjiInfo.comCodeOrName = this.queryInfo.upComCode
+          }
+          this.shengjiInfo.clickType = '2'
+          this.searchForCom1(this.shengjiInfo)
+          break
+        case 1:
+          if (IsEmpty(this.queryInfo.upComCode) && IsEmpty(this.queryInfo.upComName)) {
+            this.openToast('warning', '请先选择省级分公司')
+          } else {
+            this.dijiInfo.clickType = '2'
+            this.dijiInfo.upperComCode = this.queryInfo.upComCode
+            if (IsEmpty(this.queryInfo.comCode) && !IsEmpty(this.queryInfo.comName)) {
+              this.dijiInfo.comCodeOrName = this.queryInfo.comCode
+            } else if (!IsEmpty(this.queryInfo.comCode) && IsEmpty(this.queryInfo.comName)) {
+              this.dijiInfo.comCodeOrName = this.queryInfo.comCode
+            } else {
+              this.dijiInfo.comCodeOrName = this.queryInfo.comCode
+            }
+            this.searchForCom2(this.dijiInfo)
+          }
+          break
+        case 2:
+          this.workerInfo.agentCode = this.queryInfo.agentCode
+          this.workerInfo.agentName = this.queryInfo.agentName
+          this.workerInfo.clickType = '2'
+          this.searchForCom3(this.workerInfo)
+          break
+        case 3:
+      //   workerInfo: {
+      //   agentCode: '',
+      //   agentName: '',
+      //   comCode: '',
+      //   comName: '',
+      //   validStatus: '1',
+      //   pageSize: 10,
+      //   currentPage: 1
+      // },
+          this.workerInfo.agentCode = this.queryInfo.recommenderCode
+          this.workerInfo.agentName = this.queryInfo.recommenderName
+          this.workerInfo.clickType = '2'
+          this.searchForCom4(this.workerInfo)
+          break
+        default:
+          break
+      }
+    },
+    dialogBackData (data) {
+      this.initDbDialog()
+      this.comDialog = false
+      let temp = []
+      temp = data.split('-')
+      this.queryInfo.upComCode = temp[0]
+      this.queryInfo.upComName = temp[1]
+    },
+    dialogBackData1 (data) {
+      this.initDbDialog()
+      this.comDialog1 = false
+      let temp = []
+      temp = data.split('-')
+      this.queryInfo.comCode = temp[0]
+      this.queryInfo.comName = temp[1]
+    },
+    dialogBackData2 (data) {
+      this.initDbDialog()
+      this.comDialog2 = false
+      let temp = []
+      temp = data.split('-')
+      this.queryInfo.agentCode = temp[0]
+      this.queryInfo.agentName = temp[1]
+    },
+    dialogBackData3 (data) {
+      this.initDbDialog()
+      this.comDialog3 = false
+      let temp = []
+      temp = data.split('-')
+      this.queryInfo.recommenderCode = temp[0]
+      this.queryInfo.recommenderName = temp[1]
+    },
+    changeComdialogPage1 (data) {
+      this.shengjiInfo.currentPage = data
+      this.searchForCom1(this.shengjiInfo)
+    },
+    changeComdialogPage2 (data) {
+      this.dijiInfo.currentPage = data
+      this.searchForCom2(this.dijiInfo)
+    },
+    changeComdialogPage3 (data) {
+      this.workerInfo.currentPage = data
+      this.searchForCom3(this.workerInfo)
+    },
+    changeComdialogPage4 (data) {
+      this.workerInfo.currentPage = data
+      this.searchForCom4(this.workerInfo)
+    },
+    changeComdialogPageSize1 (data) {
+      this.shengjiInfo.pageSize = data
+      this.searchForCom1(this.shengjiInfo)
+    },
+    changeComdialogPageSize2 (data) {
+      this.dijiInfo.pageSize = data
+      this.searchForCom2(this.dijiInfo)
+    },
+    changeComdialogPageSize3 (data) {
+      this.workerInfo.currentPage = data
+      this.searchForCom3(this.workerInfo)
+    },
+    changeComdialogPageSize4 (data) {
+      this.workerInfo.currentPage = data
+      this.searchForCom4(this.workerInfo)
+    },
+    opensingleComDialog (index) {
+      if (!(this.comDialog || this.comDialog1 || this.comDialog2 || this.comDialog3)) {
+        switch (index) {
+          case 0:
+            if (IsEmpty(this.queryInfo.upComCode) && !IsEmpty(this.queryInfo.upComName)) {
+              this.shengjiInfo.comCodeOrName = this.queryInfo.upComName
+            } else if (!IsEmpty(this.queryInfo.upComCode) && IsEmpty(this.queryInfo.upComName)) {
+              this.shengjiInfo.comCodeOrName = this.queryInfo.upComCode
+            } else {
+              this.shengjiInfo.comCodeOrName = this.queryInfo.upComCode
+            }
+            this.shengjiInfo.clickType = '1'
+            this.contiListCheckDialogDataGet1(this.shengjiInfo).then(
+            (res) => {
+              console.log(res)
+              if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                this.openToast('warning', res.data.msg)
+              } else {
+                for (let i = 0; i < res.data.data.data.length; i++) {
+                  res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/天安佰盈保险销售有限公司/, '')
+                  res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/分公司/, '')
+                }
+                if (res.data.data.data.length === 1) {
+                  this.queryInfo.upComCode = res.data.data.data[0].comCode
+                  this.queryInfo.upComName = res.data.data.data[0].comCName
+                }
+              }
+            })
+            break
+          case 1:
+            this.dijiInfo.clickType = '1'
+            this.dijiInfo.upperComCode = this.queryInfo.upComCode
+            if (IsEmpty(this.queryInfo.comCode) && !IsEmpty(this.queryInfo.comName)) {
+              this.dijiInfo.comCodeOrName = this.queryInfo.comCode
+            } else if (!IsEmpty(this.queryInfo.comCode) && IsEmpty(this.queryInfo.comName)) {
+              this.dijiInfo.comCodeOrName = this.queryInfo.comCode
+            } else {
+              this.dijiInfo.comCodeOrName = this.queryInfo.comCode
+            }
+            this.contiListCheckDialogDataGet2(this.dijiInfo).then(
+            (res) => {
+              console.log(res)
+              if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                this.openToast('warning', res.data.msg)
+              } else {
+                for (let i = 0; i < res.data.data.data.length; i++) {
+                  res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/天安佰盈保险销售有限公司/, '')
+                  res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/分公司/, '')
+                }
+                if (res.data.data.data.length === 1) {
+                  this.queryInfo.comCode = res.data.data.data[0].comCode
+                  this.queryInfo.comName = res.data.data.data[0].comCName
+                }
+              }
+            })
+            break
+          case 2:
+            this.workerInfo.agentCode = this.queryInfo.agentCode
+            this.workerInfo.agentName = this.queryInfo.agentName
+            this.workerInfo.clickType = '1'
+            this.contiListCheckclickWorker(this.workerInfo).then(
+              (res) => {
+                if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                  this.openToast('warning', res.data.msg)
+                } else {
+                  if (!IsEmpty(res.data.data.data)) {
+                    this.queryInfo.agentCode = res.data.data.data[0].agentCode
+                    this.queryInfo.agentName = res.data.data.data[0].agentName
+                  }
+                }
+              })
+            break
+          case 3:
+            this.workerInfo.agentCode = this.queryInfo.recommenderCode
+            this.workerInfo.agentName = this.queryInfo.recommenderName
+            this.workerInfo.clickType = '1'
+            this.contiListCheckclickWorker(this.workerInfo).then(
+              (res) => {
+                if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                  this.openToast('warning', res.data.msg)
+                } else {
+                  if (!IsEmpty(res.data.data.data)) {
+                    this.queryInfo.recommenderCode = res.data.data.data[0].agentCode
+                    this.queryInfo.recommenderName = res.data.data.data[0].agentName
+                  }
+                }
+              })
+            break
+          default:
+            break
+        }
+      }
+    },
+    initDbDialog () {
+      this.shengjiInfo = {
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10,
+        clickType: '2'
+      }
+      this.dijiInfo = {
+        upperComCode: '',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10,
+        clickType: '2'
+      }
+      this.workerInfo = {
+        agentCode: '',
+        agentName: '',
+        comCode: '',
+        comName: '',
+        validStatus: '1',
+        pageSize: 10,
+        currentPage: 1,
+        clickType: '2'
+      }
+    },
+    comDialogClosing (index) {
+      this.initDbDialog()
+      this.comDialog = false
+      this.comDialog1 = false
+      this.comDialog2 = false
+      this.comDialog3 = false
+      switch (index) {
+        case 0:
+          this.queryInfo.upComCode = ''
+          this.queryInfo.upComName = ''
+          this.queryInfo.comCode = ''
+          this.queryInfo.comName = ''
+          break
+        case 1:
+          this.queryInfo.comCode = ''
+          this.queryInfo.comName = ''
+          break
+        case 2:
+          this.queryInfo.agentCode = ''
+          this.queryInfo.agentName = ''
+          break
+        case 3:
+          this.queryInfo.recommenderCode = ''
+          this.queryInfo.recommenderName = ''
+          break
+        default:
+          break
+      }
+    },
+    handleCurrentChange (val) {
+      this.queryInfo.currentPage = val
+      this.queryData()
+    },
+    handleSizeChange (val) {
+      this.queryInfo.currentPage = 1
+      this.queryInfo.pageSize = val
+      this.queryData()
+    },
+    ...mapActions([
+      'contiListCheckclickWorker', 'contiListCheckDialogDataGet1', 'contiListCheckDialogDataGet2'
+    ]),
+    // toast提示
+    openToast (type, mesg) {
+      this.$message({
+        showClose: true,
+        message: mesg,
+        type: type
+      })
+    }
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LineTittle.name]: LineTittle,
+    [LabelText.name]: LabelText,
+    ComDialog
+  },
+  created () {
+  },
+  computed: {
+    // comDialogData () {
+    //   let temp = this.tempTableData1
+    //   if (!IsEmpty(temp)) {
+    //     for (let i = 0; i < temp.length; i++) {
+    //       console.log(temp[i].comCode)
+    //       temp[i]['renderData'] = `${temp[i].comCode}-${temp[i].comCName}`
+    //     }
+    //   }
+    //   return temp
+    // },
+    // comDialogData1 () {
+    //   let temp = this.tempTableData2
+    //   if (!IsEmpty(temp)) {
+    //     if (!IsEmpty(temp[0].orgcode) && !IsEmpty(temp[0].orgname)) {
+    //       for (let i = 0; i < temp.length; i++) {
+    //         temp[i]['renderData'] = `${temp[i].orgcode}-${temp[i].orgname}`
+    //       }
+    //     }
+    //   }
+    //   return temp
+    // }
+  }
+}
+</script>
+
+<style lang="scss" scoped type="text/css">
+#orgadd {
+  padding-left: 30px;
+  padding-right: 30px;
+}
+.btn-container{
+  text-align: center;
+  margin-top: 60px;
+  margin-bottom: 30px;
+}
+.ri-line{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.renderButton{
+  border:0;
+  cursor:pointer;
+  width:40px;
+  font-size:14px;
+  //background-color: white
+}
+</style>

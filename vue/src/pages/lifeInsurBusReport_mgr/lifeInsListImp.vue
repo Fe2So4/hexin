@@ -1,0 +1,653 @@
+<template>
+  <div id="lifeInsListImp" >
+    <ui-notice-bar slot="breadcast" >
+      <el-breadcrumb slot="location" separator=">">
+        <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+        <el-breadcrumb-item>寿险业务报表管理</el-breadcrumb-item>
+        <el-breadcrumb-item>寿险导入承保清单</el-breadcrumb-item>
+      </el-breadcrumb>
+    </ui-notice-bar>
+    <el-form class="mesg_form" :model="info" ref="info" :rules="rule" style="margin-top: 20px; ">
+      <el-row>
+        <el-col :span="8" style="display: none;">
+          <el-form-item>
+            <ui-label-text labelWidth="150" label="省级分公司代码:" >
+              <el-input v-model="info.iOrgCode" slot="text" placeholder="双击选择" clearable  @dblclick.native="getAllProCom(1, 0, $event)" @blur='blurCom($event, 0)' ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8" style="display: none;">
+          <el-form-item>
+            <ui-label-text labelWidth="150" label="地市级分公司代码:" >
+              <el-input v-model="info.iOrgName" slot="text" placeholder="双击选择" clearable  @dblclick.native="getAllCityCom(1, 1, $event)" @blur='blurCityCom($event, 1)' ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="8" style="display: none;">
+          <el-form-item>
+            <ui-label-text labelWidth="150" label="产品所属保险公司代码:" >
+              <el-input v-model="info.insurerCode" slot="text" placeholder="双击选择" clearable  @dblclick.native="getAllInsCom(1)" @blur="blurInsCom($event, 0)"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="12">
+          <el-form-item>
+            <ui-label-text labelWidth="150" label="省级分公司名称:" >
+              <el-input  v-model="info.proName" @dblclick.native="getAllProCom(1, 0, $event)" slot="text" placeholder="双击选择" @blur='blurCom($event, 0)' clearable ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item>
+            <ui-label-text labelWidth="150" label="地市级分公司名称:" >
+              <el-input v-model="info.cityName" slot="text" placeholder="双击选择" clearable  @dblclick.native="getAllCityCom(1, 1, $event)"  @blur='blurCityCom($event, 1)' ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="12">
+          <el-form-item>
+            <ui-label-text labelWidth="150" label="产品所属保险公司名称:" >
+              <el-input v-model="info.insurerName" slot="text" placeholder="双击选择" clearable @dblclick.native="getAllInsCom(1)" @blur="blurInsCom($event, 1)"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item prop="time">
+            <ui-label-text :required="true" labelWidth="150" label="保单承保日期：">
+              <el-date-picker slot="text" unlink-panels style="width: 268px;" v-model="info.time" type="daterange" value-format="yyyy-MM-dd" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期">
+              </el-date-picker>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row>
+        <el-col :span="12">
+          <el-form-item prop="period">
+            <ui-label-text labelWidth="150" label="缴费年期:" >
+              <el-input v-model="info.period" slot="text" clearable ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <div class="btn-container">
+        <el-button type="primary" @click="query(1)">查询</el-button>
+        <el-button type="primary" @click="onexport">导出</el-button>
+      </div>
+    </el-form>
+    <!-- 表格 -->
+    <div class="rate-table" v-show="isTableShow">
+      <el-table stripe :data="tableData" style="width: 100%">
+        <el-table-column prop="underwritingDate" label="月份" width="120"></el-table-column>
+        <el-table-column prop="proposalReturnDate" label="保单回录日期" width="120" ></el-table-column>
+        <el-table-column prop="proposalDate" label="投保日期" width="120" ></el-table-column>
+        <el-table-column prop="acceptDate" label="承保日期" width="120" ></el-table-column>
+        <el-table-column prop="effectDate" label="生效日期" width="120"></el-table-column>
+        <el-table-column prop="signDate" label="回执签收日期" width="120" ></el-table-column>
+        <el-table-column prop="receiptOverDate" label="回执到期日期" width="120" ></el-table-column>
+        <el-table-column prop="surrenderDate" label="犹豫期撤保日期" width="120" ></el-table-column>
+        <el-table-column prop="policyStatus" label="保单状态" width="120" ></el-table-column>
+        <el-table-column prop="proposalNo" label="投保单号" width="160" ></el-table-column>
+        <el-table-column prop="policyNo" label="保单号" width="160" ></el-table-column>
+        <el-table-column prop="comcCodeUp" label="省级分公司代码" width="120" ></el-table-column>
+        <el-table-column prop="comcNameUp" label="省级分公司名称" width="120" ></el-table-column>
+        <el-table-column prop="comCode" label="地市级分公司代码" width="150" ></el-table-column>
+        <el-table-column prop="comcName" label="地市级分公司名称" width="150" ></el-table-column>
+        <el-table-column prop="companyName" label="产品所属寿险公司" width="200" ></el-table-column>
+        <el-table-column prop="riskName" label="险种名称" width="200" ></el-table-column>
+        <el-table-column prop="appliName" label="投保人姓名" width="120" ></el-table-column>
+        <el-table-column prop="insuredName" label="被保险人姓名" width="120" ></el-table-column>
+        <el-table-column prop="paymentCycle" label="缴费年期" width="120" ></el-table-column>
+        <el-table-column prop="guaranteePeriod" label="保障年期" width="120" ></el-table-column>
+        <el-table-column prop="riskPremium" label="保额" width="120" ></el-table-column>
+        <el-table-column prop="premium" label="规模保费（元）" width="120" ></el-table-column>
+        <el-table-column prop="normalPremium" label="标准保费（元）" width="120" ></el-table-column>
+        <el-table-column prop="mainFlag" label="主险/附加险" width="120" ></el-table-column>
+        <el-table-column prop="agentName" label="业务员姓名" width="120" ></el-table-column>
+        <el-table-column prop="handlerCode" label="业务员代码" width="120" ></el-table-column>
+        <el-table-column prop="agentComCode" label="归属机构代码" width="120" ></el-table-column>
+        <el-table-column prop="agentComName" label="归属机构名称" width="120" ></el-table-column>
+        <el-table-column prop="bigKind" label="险种大类" width="120" ></el-table-column>
+        <el-table-column prop="normalKind" label="险种中类" width="120" ></el-table-column>
+        <el-table-column prop="smallKind" label="险种小类" width="120" ></el-table-column>
+        <el-table-column prop="createTime2" label="系统录入日期" width="120" ></el-table-column>
+        <el-table-column prop="createTime3" label="系统审核通过日期" width="120" ></el-table-column>
+        <el-table-column prop="introduceType" label="介绍人类型" width="120" ></el-table-column>
+        <el-table-column prop="introduceCode" label="介绍人代码" width="120" ></el-table-column>
+        <el-table-column prop="introduceName" label="介绍人姓名" width="120" ></el-table-column>
+      </el-table>
+    </div>
+    <div class="pagination" v-if='isTableShow'>
+      <el-pagination @size-change="handleSizeChange" @current-change='handleCurrentChange' :current-page.sync="current" :pager-count='5' :page-size='5' :page-sizes='[5, 10, 20, 50]' :total="totalRecords" layout="total, sizes, prev, pager, next, jumper" :page-count="totalPages"></el-pagination>
+    </div>
+    <!-- 获取省级地市分公司 -->
+    <el-dialog title="省级地市级公司" :before-close='closeCom' :append-to-body='true' :visible.sync="com_dialog" width="50%" center>
+      <el-table stripe @row-click='selectRowCom' ref="multipleTable" :data="searchComTableData" >
+        <el-table-column prop="comCode" label="公司代码" center ></el-table-column>
+        <el-table-column prop="comCName" label="公司名称" center ></el-table-column>
+      </el-table>
+      <div class="pagination" >
+        <el-pagination @size-change="comSizeChange" @current-change='comCurrentChange' :current-page.sync="currentD" :pager-count='5' :page-size='5' :page-sizes='sizeList'  :total="totalRecordsD" layout="total, sizes, prev, pager, next, jumper" > </el-pagination>
+      </div>
+    </el-dialog>
+    <!-- 获取保险公司 -->
+    <el-dialog title="保险公司" :before-close='closeInsCom' :append-to-body='true' :visible.sync="ins_dialog" width="50%" center>
+      <el-table stripe @row-click='selectRowInsCom' ref="multipleTable" :data="searchInsComTableData" >
+        <el-table-column prop="insurercode" label="保险公司代码" center ></el-table-column>
+        <el-table-column prop="insurername" label="保险公司名称" center ></el-table-column>
+      </el-table>
+      <div class="pagination" >
+        <el-pagination @size-change="insSizeChange" @current-change='insCurrentChange' :current-page.sync="currentD" :pager-count='5' :page-size='5' :page-sizes='sizeList'  :total="totalRecordsD" layout="total, sizes, prev, pager, next, jumper" > </el-pagination>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+<script>
+import replaceStr from '@/utils/myFunction'
+import NoticeBar from '@/components/notice-bar'
+import LineTittle from '@/components/line-tittle'
+import LabelText from '@/components/label-text'
+import { mapActions } from 'vuex'
+export default {
+  name: '',
+  data () {
+    const { numValidator } = this.$store.getters.validators
+    return {
+      info: {
+        iOrgCode: '',
+        proName: '',
+        iOrgName: '',
+        cityName: '',
+        insurerCode: '',
+        insurerName: '',
+        time: '',
+        period: ''
+      },
+      infoPost: {},
+      isTableShow: false,
+      tableData: [],
+      totalRecords: 0, // 分页总条数
+      totalPages: 0, // 分页总页数
+      current: 1,
+      pageSize: '5', // 当前显示条数
+      rule: {
+        iOrgCode: [
+          { required: true, message: '请输入省级分公司代码', trigger: 'change' }
+        ],
+        proName: [
+          { required: true, message: '请输入省级分公司名称', trigger: 'change' }
+        ],
+        iOrgName: [
+          { required: true, message: '请输入地市级分公司代码', trigger: 'change' }
+        ],
+        cityName: [
+          { required: true, message: '请输入地市级分公司名称', trigger: 'change' }
+        ],
+        time: [
+          { required: true, message: '请输入保单承保日期', trigger: 'change' }
+        ],
+        period: numValidator
+      },
+      com_dialog: false,
+      searchComTableData: [],
+      totalRecordsD: 0, // 分页总条数
+      totalPagesD: 0, // 分页总页数
+      currentD: 1,
+      pageSizeD: '5', // 当前显示条数
+      sizeList: [5, 10, 20, 50],
+      isComType: '',
+      comCodeOrName: '', // 获取公司code
+      _event: '',
+      city_dialog: false,
+      ins_dialog: false,
+      searchInsComTableData: [],
+      loading: ''
+    }
+  },
+  mounted () {
+  },
+  methods: {
+    query (page) {
+      this.current = page
+      this.info.currentPage = page
+      this.info.pageSize = this.pageSize
+      this.$refs['info'].validate((valid) => {
+        if (valid) {
+          this.info.startDate = this.info.time[0]
+          this.info.endDate = this.info.time[1]
+          let tag = this.checkTime(this.info.startDate, this.info.endDate)
+          if (tag) {
+            this.infoPost = JSON.parse(JSON.stringify(this.info))
+            this.queryList(this.infoPost)
+          } else {
+            this.open('error', '保单承保日期间隔不能超过三个月！')
+          }
+        } else {
+          return false
+        }
+      })
+    },
+    queryList (data) {
+      this.Loading()
+      this.queryReportImp(data).then(resp => {
+        this.closeLoading()
+        if (resp.code === '000000') {
+          this.isTableShow = true
+          this.tableData = resp.data.content
+          this.totalRecords = resp.data.totalElements
+          this.totalPages = resp.data.totalPages
+        } else {
+          this.open('error', resp.msg)
+        }
+      })
+    },
+    handleCurrentChange (val) {
+      this.info.currentPage = val
+      this.infoPost.currentPage = val
+      this.current = val
+      this.queryList(this.infoPost)
+    },
+    handleSizeChange (val) {
+      this.info.currentPage = 1
+      this.infoPost.currentPage = 1
+      this.pageSize = val
+      this.info.pageSize = this.pageSize
+      this.infoPost.pageSize = this.pageSize
+      this.current = 1
+      this.queryList(this.infoPost)
+    },
+    onexport () { // 导出
+      this.$refs['info'].validate((valid) => {
+        if (valid) {
+          this.info.startDate = this.info.time[0]
+          this.info.endDate = this.info.time[1]
+          window.open(`/tabycore/lifeAcceptInsurance/exportReport42?iOrgCode=${this.info.iOrgCode}&iOrgName=${this.info.iOrgName}&insurerCode=${this.info.insurerCode}&insurerName=${this.info.insurerName}&period=${this.info.period}&currentPage=1&pageSize=9999&startDate=${this.info.startDate}&endDate=${this.info.endDate}`)
+        } else {
+          return false
+        }
+      })
+    },
+    getAllProCom (page, tag, event) { // 获取公司
+      this.sizeList = [5, 10, 20, 50]
+      this.isComType = tag // 0 省级 1 地市
+      this._event = event
+      this.comCodeOrName = event.target.value
+      this.currentD = page
+      let postData = {
+        'currentPage': page,
+        'comCodeOrName': this.comCodeOrName,
+        'pageSize': this.pageSizeD,
+        'clickType': '2'
+      }
+      this.getAllComPImp(postData).then(resp => {
+        if (resp.code === '000000' || resp.code === '000002') {
+          if (resp.code === '000002') {
+            this.searchComTableData = []
+          } else {
+            for (let i = 0; i < resp.data.data.length; i++) {
+              resp.data.data[i].comCName = replaceStr(resp.data.data[i].comCName)
+            }
+            this.searchComTableData = resp.data.data
+          }
+          this.com_dialog = true
+          this.totalPagesD = resp.data.totalPages
+          this.totalRecordsD = resp.data.totalRecords
+        }
+      })
+    },
+    getAllCityCom (page, tag, event) { // 获取地市级公司
+      this.sizeList = [5, 10, 20, 50]
+      this.isComType = tag // 0 省级 1 地市
+      this._event = event
+      this.comCodeOrName = event.target.value
+      this.currentD = page
+      if (this.info.iOrgCode === '') {
+        this.open('warning', '请先选择省级分公司！')
+        return false
+      }
+      let postData = {
+        'upperComCode': this.info.iOrgCode,
+        'currentPage': page,
+        'comCodeOrName': this.comCodeOrName,
+        'pageSize': this.pageSizeD,
+        'clickType': '2'
+      }
+      this.getAllComCImp(postData).then(resp => {
+        if (resp.code === '000000' || resp.code === '000002') {
+          if (resp.code === '000002') {
+            this.searchComTableData = []
+          } else {
+            for (let i = 0; i < resp.data.data.length; i++) {
+              resp.data.data[i].comCName = replaceStr(resp.data.data[i].comCName)
+            }
+            this.searchComTableData = resp.data.data
+          }
+          this.com_dialog = true
+          this.totalPagesD = resp.data.totalPages
+          this.totalRecordsD = resp.data.totalRecords
+        }
+      })
+    },
+    comCurrentChange (val) { // 选择保险公司分页
+      if (this.isComType === 0) {
+        this.getAllProCom(val, this.isComType, this._event)
+      } else {
+        this.getAllCityCom(val, this.isComType, this._event)
+      }
+    },
+    comSizeChange (val) {
+      this.pageSizeD = val
+      if (this.isComType === 0) {
+        this.getAllCooCom(1, this.isComType, this._event)
+      } else {
+        this.getAllCityCom(1, this.isComType, this._event)
+      }
+    },
+    selectRowCom (row) { // 公司选择
+      this.closeDailog().then(() => {
+        row = JSON.parse(JSON.stringify(row))
+        if (this.isComType === 0) {
+          this.info.iOrgCode = row.comCode
+          this.info.proName = row.comCName
+        } else if (this.isComType === 1) {
+          this.info.iOrgName = row.comCode
+          this.info.cityName = row.comCName
+        }
+        this.com_dialog = false
+      })
+    },
+    blurCom (event, tag) {
+      if (event.target.value === '' || this.com_dialog) {
+        return false
+      }
+      let postData = {
+        'comCodeOrName': event.target.value,
+        'clickType': '1'
+      }
+      this.getAllComPImp(postData).then(resp => {
+        if (resp.code === '000000') {
+          for (let i = 0; i < resp.data.data.length; i++) {
+            resp.data.data[i].comCName = replaceStr(resp.data.data[i].comCName)
+          }
+          this.info.iOrgCode = resp.data.data[0].comCode
+          this.info.proName = resp.data.data[0].comCName
+        } else {
+          this.info.iOrgCode = ''
+          this.info.proName = ''
+          this.open('error', resp.msg)
+        }
+      })
+    },
+    blurCityCom (event, tag) {
+      if (event.target.value === '' || this.com_dialog) {
+        return false
+      }
+      if (this.info.iOrgCode === '') {
+        this.open('warning', '请先选择省级分公司！')
+        return false
+      }
+      let postData = {
+        'comCodeOrName': event.target.value,
+        'upperComCode': this.info.iOrgCode,
+        'clickType': '1'
+      }
+      this.getAllComCImp(postData).then(resp => {
+        if (resp.code === '000000') {
+          for (let i = 0; i < resp.data.data.length; i++) {
+            resp.data.data[i].comCName = replaceStr(resp.data.data[i].comCName)
+          }
+          this.info.iOrgName = resp.data.data[0].comCode
+          this.info.cityName = resp.data.data[0].comCName
+        } else {
+          this.info.iOrgName = ''
+          this.info.cityName = ''
+          this.open('error', resp.msg)
+        }
+      })
+    },
+    closeDailog () {
+      return new Promise((resolve, reject) => {
+        this.com_dialog = false
+        this.ins_dialog = false
+        resolve()
+      })
+    },
+    closeCom () {
+      this.sizeList = []
+      if (this.isComType === 0) {
+        this.info.iOrgCode = ''
+        this.info.proName = ''
+      } else {
+        this.info.iOrgName = ''
+        this.info.cityName = ''
+      }
+      this.pageSizeD = 5
+      this.com_dialog = false
+    },
+    getAllInsCom (page) { // 获取保险公司
+      this.sizeList = [5, 10, 20, 50]
+      this.currentD = page
+      let postData = {
+        'insurerName': this.info.insurerName,
+        'currentPage': page,
+        'insurerCode': this.info.insurerCode,
+        'pageSize': this.pageSizeD,
+        'clickType': '2',
+        'type': '2'
+      }
+      this.getAllInsCom_Imp(postData).then(resp => {
+        if (resp.code === '000000' || resp.code === '000002') {
+          if (resp.code === '000002') {
+            this.searchInsComTableData = []
+          } else {
+            this.searchInsComTableData = resp.data.data
+          }
+          this.ins_dialog = true
+          this.totalPagesD = resp.data.totalPages
+          this.totalRecordsD = resp.data.totalRecords
+        }
+      })
+    },
+    insCurrentChange (val) { // 选择保险公司分页
+      this.getAllInsCom(val)
+    },
+    insSizeChange (val) {
+      this.pageSizeD = val
+      this.getAllInsCom(1)
+    },
+    selectRowInsCom (row) { // 公司选择
+      this.closeDailog().then(() => {
+        row = JSON.parse(JSON.stringify(row))
+        this.info.insurerCode = row.insurercode
+        this.info.insurerName = row.insurername
+        this.ins_dialog = false
+      })
+    },
+    blurInsCom (event, tag) {
+      if (event.target.value === '' || this.ins_dialog) {
+        return false
+      }
+      let postData = {
+        'insurerCode': '',
+        'insurerName': '',
+        'clickType': '1',
+        'type': '2'
+      }
+      if (tag === 0) {
+        postData.insurerCode = event.target.value
+      } else {
+        postData.insurerName = event.target.value
+      }
+      this.getAllInsCom_Imp(postData).then(resp => {
+        if (resp.code === '000000') {
+          this.info.insurerCode = resp.data.data[0].insurercode
+          this.info.insurerName = resp.data.data[0].insurername
+        } else {
+          this.info.insurerName = ''
+          this.info.insurerCode = ''
+          this.open('error', resp.msg)
+        }
+      })
+    },
+    checkTime (starTime, endTime) {
+      // 判断时间跨度是否大于3个月
+      var arr1 = starTime.split('-')
+      var arr2 = endTime.split('-')
+      arr1[1] = parseInt(arr1[1])
+      arr1[2] = parseInt(arr1[2])
+      arr2[1] = parseInt(arr2[1])
+      arr2[2] = parseInt(arr2[2])
+      let flag = true
+      if (arr1[0] === arr2[0]) { // 同年
+        if (arr2[1] - arr1[1] > 3) { // 月间隔超过3个月
+          flag = false
+        } else if (arr2[1] - arr1[1] === 3) { // 月相隔3个月，比较日
+          if (arr2[2] > arr1[2]) { // 结束日期的日大于开始日期的日
+            flag = false
+          }
+        }
+      } else {
+        if (arr2[0] - arr1[0] > 1) {
+          flag = false
+        } else if (arr2[0] - arr1[0] === 1) {
+          if (arr1[1] < 10) { // 开始年的月份小于10时，不需要跨年
+            flag = false
+          } else if (arr1[1] + 3 - arr2[1] < 12) { // 月相隔大于3个月
+            flag = false
+          } else if (arr1[1] + 3 - arr2[1] === 12) { // 月相隔3个月，比较日
+            if (arr2[2] > arr1[2]) { // 结束日期的日大于开始日期的日
+              flag = false
+            }
+          }
+        }
+      }
+      return flag
+    },
+    closeInsCom () {
+      this.sizeList = []
+      this.pageSizeD = 5
+      this.info.insurerName = ''
+      this.info.insurerCode = ''
+      this.ins_dialog = false
+    },
+    open (types, mesg) { // 提示
+      this.$message({
+        message: mesg,
+        type: types
+      })
+    },
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    closeLoading () {
+      this.loading.close()
+    },
+    ...mapActions([
+      'queryReportImp',
+      'getAllComPImp',
+      'getAllComCImp',
+      'getAllInsCom_Imp'
+    ])
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LineTittle.name]: LineTittle,
+    [LabelText.name]: LabelText
+  },
+  created () {
+  },
+  computed: {
+  },
+  watch: {
+    'info.iOrgCode' () {
+      if (this.info.iOrgCode === '') {
+        this.info.proName = ''
+        this.info.cityName = ''
+        this.info.iOrgName = ''
+      }
+    },
+    'info.proName' () {
+      if (this.info.proName === '') {
+        this.info.iOrgCode = ''
+        this.info.cityName = ''
+        this.info.iOrgName = ''
+      }
+    },
+    'info.iOrgName' () {
+      if (this.info.iOrgName === '') {
+        this.info.cityName = ''
+      }
+    },
+    'info.cityName' () {
+      if (this.info.cityName === '') {
+        this.info.iOrgName = ''
+      }
+    },
+    'info.insurerCode' () {
+      if (this.info.insurerCode === '') {
+        this.info.insurerName = ''
+      }
+    },
+    'info.insurerName' () {
+      if (this.info.insurerName === '') {
+        this.info.insurerCode = ''
+      }
+    }
+  }
+}
+</script>
+
+<style lang="scss">
+#advance-index{
+  .el-form-item__error{
+    left: 148px;
+  }
+  .el-table__empty-block{
+    justify-content: flex-start;
+    text-align: left;
+    margin-left: 490px;
+  }
+}
+</style>
+
+
+<style lang="scss" scoped type="text/css">
+  #lifeInsListImp {
+    padding: 0px 30px 30px 30px;
+  }
+  .rate-wrapper {
+    width: 300px;
+    margin: 20px auto;
+  }
+  .btn-container{
+    text-align: center;
+    margin-top: 30px;
+  }
+  .ri-line{
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+ .mesg_form {
+    margin: 20px 0 ;
+  }
+  .pagination {
+    text-align: right;
+    margin: 20px auto;
+  }
+</style>
+<style>
+  .mesg_form .required:before{
+    font-size: 14px!important;
+    top: 3px !important;
+  }
+  #lifeInsListImp .mesg_form .el-form-item__error { left: 150px;}
+  .el-date-editor .el-range__close-icon { line-height: initial; }
+</style>

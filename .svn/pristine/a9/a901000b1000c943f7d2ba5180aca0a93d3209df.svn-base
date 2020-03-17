@@ -1,0 +1,941 @@
+<template>
+<div ref="RenewalAllocation">
+  <el-form-item>
+    <ui-label-text labelWidth="80" label="费用类别:" >
+      <el-select slot="text" v-model="renewalRate.renewalrateData" @change="elOptionValueChange">
+        <el-option v-for="(item,index) in renewalrateList" :key="'list-'+index" :label="item.label" :value="item.value"></el-option>
+      </el-select>
+    </ui-label-text>
+  </el-form-item>
+  <el-checkbox-group v-model="checklistModel" class="checkgroup checkboxList">
+    <el-checkbox @change="getcheckboxValue" :disabled="items.menu !== '是否根据规模保费达成情况增加费率' || dialogTitleForShow === '合作经代协议费率详情'" :class="{checkboxpColor: renewalRate.title === 0}"
+    v-for="(items,index) in checkList[renewalRate.renewalrateData]" :label="items.flag" :key="'list2-'+index">{{items.menu}}</el-checkbox>
+  </el-checkbox-group>
+  <el-container class="coopContent coopMargin">
+    <el-header>计算公式</el-header>
+    <div style="padding: 20px;">
+    <!-- 费率是否与标保档次有关53 开始-->
+    <div v-show="checklistModel.includes('flag53')==true&&renewalRate.renewalrateData==1">
+      <ui-label-text label="标准保费=规模保费*系数："></ui-label-text>
+      <div class="checkboxlistCenter" v-for="(item,index) in checkboxrenewList.list1" :key="'list53-'+index">
+        <ui-label-text label="缴费年期范围："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jfnqfw1" @blur="getinputValue"></el-input>
+          <ui-label-text label="-"></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jfnqfw2" @blur="getinputValue"></el-input>
+        <ui-label-text class="marginlr" label="系数："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jfnqxs" @blur="getinputValue"></el-input>
+      </div>
+      <div class="addIcon">
+        <el-button size="small" icon="el-icon-plus" v-show="renewalRate.title === 1"
+        @click="addcheckBox(checkboxrenewList.list1)"></el-button>
+        <el-button size="small" icon="el-icon-minus" v-show="renewalRate.title === 1"
+        @click="deletecheckBox(checkboxrenewList.list1)"></el-button>
+      </div>
+    </div>
+    <!-- 是否根据继续区间调节比例 54 开始-->
+    <div v-show="checklistModel.includes('flag54')==true&&renewalRate.renewalrateData==1">
+      <div class="mg10">
+        <el-form-item prop="insurerType">
+          <ui-label-text labelWidth="80" label="继续率类别：" @change="getselectValue">
+            <el-select :disabled="renewalRate.title === 0"
+            slot="text" v-model="renewalRate.continuityCategory1" @change="getselectValue">
+                <el-option v-for="(item,index) in gradeSetting" :key="'list54-'+index" :label="item.label" :value="item.value"></el-option>
+            </el-select>
+          </ui-label-text>
+        </el-form-item>
+      </div>
+      <div class="checkboxlistCenter" v-for="(item,index) in checkboxrenewList.list2" :key="'list55-'+index">
+        <ui-label-text label="继续费率区间："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jxlqj1" @blur="getinputValue"></el-input>
+        <ui-label-text label="-"></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jxlqj2" @blur="getinputValue"></el-input>
+        <ui-label-text class="marginlr" label="调节比例："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.tjbl" @blur="getinputValue"></el-input>
+      </div>
+      <div class="addIcon">
+        <el-button size="small" icon="el-icon-plus" v-show="renewalRate.title === 1"
+        @click="addcheckBox(checkboxrenewList.list2)"></el-button>
+        <el-button size="small" icon="el-icon-minus" v-show="renewalRate.title === 1"
+        @click="deletecheckBox(checkboxrenewList.list2)"></el-button>
+      </div>
+    </div>
+    <!-- 是否根据继续区间调节比例63 开始-->
+    <div v-show="checklistModel.includes('flag63')==true&&renewalRate.renewalrateData==2">
+      <div class="mg10">
+        <el-form-item prop="insurerType">
+          <ui-label-text labelWidth="80" label="继续率类别：" @change="getselectValue">
+            <el-select :disabled="renewalRate.title === 0"
+            slot="text" v-model="renewalRate.continuityCategory2" @change="getselectValue">
+                <el-option v-for="(item,index) in gradeSetting" :key="'list63-'+index" :label="item.label" :value="item.value"></el-option>
+            </el-select>
+          </ui-label-text>
+        </el-form-item>
+      </div>
+      <div class="checkboxlistCenter" v-for="(item,index) in checkboxrenewList.list3" :key="'list64-'+index">
+        <ui-label-text label="继续费率区间："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jxlqj1" @blur="getinputValue"></el-input>
+        <ui-label-text label="-"></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jxlqj2" @blur="getinputValue"></el-input>
+        <ui-label-text class="marginlr" label="调节比例："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.tjbl" @blur="getinputValue"></el-input>
+      </div>
+      <div class="addIcon">
+        <el-button size="small" icon="el-icon-plus" v-show="renewalRate.title === 1"
+        @click="addcheckBox(checkboxrenewList.list3)"></el-button>
+        <el-button size="small" icon="el-icon-minus" v-show="renewalRate.title === 1"
+        @click="deletecheckBox(checkboxrenewList.list3)"></el-button>
+      </div>
+    </div>
+    <!-- 继续率奖金率72 开始-->
+    <div class="mg10" v-show="checklistModel.includes('flag72')==true&&renewalRate.renewalrateData==3">
+      <div class="mg10">
+        <el-form-item prop="insurerType">
+          <ui-label-text labelWidth="80" label="继续率类别：" @change="getselectValue">
+            <el-select :disabled="renewalRate.title === 0"
+            slot="text" v-model="renewalRate.continuityCategory3" @change="getselectValue">
+                <el-option v-for="(item,index) in gradeSetting" :key="'list721-'+index" :label="item.label" :value="item.value"></el-option>
+            </el-select>
+          </ui-label-text>
+        </el-form-item>
+      </div>
+      <div class="checkboxlistCenter" v-for="(item,index) in checkboxrenewList.list4" :key="'list72-'+index">
+        <ui-label-text label="继续率范围："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" :disabled="isR13" v-model="item.jxlqj1" @change="renewalRateCheck(item.jxlqj1, index, 1)" @blur="getinputValue"></el-input>
+        <ui-label-text label="-"></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" :disabled="isR13" v-model="item.jxlqj2" @change="renewalRateCheck(item.jxlqj2, index, 2)" @blur="getinputValue"></el-input>
+        <ui-label-text class="marginlr" label="继续率奖金率："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jxljjl" v-if="renewalRate.continuityCategory3 === 'R13'" @change="renewalRateCheck(item.jxljjl, index, 9)" @blur="getinputValue"></el-input>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jxljjl25" v-else-if="renewalRate.continuityCategory3 === 'R25'" @change="renewalRateCheck2(item.jxljjl25, index, 1)" @blur="getinputValue"></el-input>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jxljjl37" v-else-if="renewalRate.continuityCategory3 === 'R37'" @change="renewalRateCheck2(item.jxljjl37, index, 2)" @blur="getinputValue"></el-input>
+        <el-input :readonly="renewalRate.title === 0" v-model="item.jxljjl49" v-else-if="renewalRate.continuityCategory3 === 'R49'" @change="renewalRateCheck2(item.jxljjl49, index, 3)" @blur="getinputValue"></el-input>
+      </div>
+      <div class="addIcon">
+        <el-button size="small" icon="el-icon-plus" v-show="renewalRate.title === 1" :disabled="isR13"
+        @click="addcheckBox(checkboxrenewList.list4)"></el-button>
+        <el-button size="small" icon="el-icon-minus" v-show="renewalRate.title === 1" :disabled="isR13"
+        @click="deletecheckBox(checkboxrenewList.list4)"></el-button>
+      </div>
+    </div>
+    <!-- 年期别换算系数73 开始-->
+    <div class="mg10" v-show="checklistModel.includes('flag73')==true&&renewalRate.renewalrateData==3">
+      <div class="checkboxlistCenter" v-for="(item,index) in checkboxrenewList.list5" :key="'list73-'+index">
+        <ui-label-text label="年期范围："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" :disabled="isR13" v-model="item.nqfw1" @change="renewalRateCheck(item.nqfw1, index, 3)" @blur="getinputValue"></el-input>
+        <ui-label-text label="-"></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" :disabled="isR13" v-model="item.nqfw2" @change="renewalRateCheck(item.nqfw2, index, 4)" @blur="getinputValue"></el-input>
+        <ui-label-text class="marginlr" label="换算系数："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" :disabled="isR13" v-model="item.jfnqxs" @change="renewalRateCheck(item.jfnqxs, index, 5)" @blur="getinputValue"></el-input>
+      </div>
+      <div class="addIcon">
+        <el-button size="small" icon="el-icon-plus" v-show="renewalRate.title === 1" :disabled="isR13"
+        @click="addcheckBox(checkboxrenewList.list5)"></el-button>
+        <el-button size="small" icon="el-icon-minus" v-show="renewalRate.title === 1" :disabled="isR13"
+        @click="deletecheckBox(checkboxrenewList.list5)"></el-button>
+      </div>
+    </div>
+    <!-- 是否根据规模保费达成情况增加费率74 开始-->
+    <div class="mg10" v-show="checklistModel.includes('flag74')==true&&renewalRate.renewalrateData==3">
+      <div class="checkboxlistCenter" v-for="(item,index) in checkboxrenewList.list6" :key="'list741-'+index">
+        <ui-label-text label="规模保费范围(万元)："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" :disabled="isR13" v-model="item.gmbffw1" @change="renewalRateCheck(item.gmbffw1, index, 6)" @blur="getinputValue"></el-input>
+        <ui-label-text label="-"></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" :disabled="isR13" v-model="item.gmbffw2" @change="renewalRateCheck(item.gmbffw2, index, 7)" @blur="getinputValue"></el-input>
+        <ui-label-text class="marginlr" label="增加奖金率："></ui-label-text>
+        <el-input :readonly="renewalRate.title === 0" :disabled="isR13" v-model="item.zjjjl" @change="renewalRateCheck(item.zjjjl, index, 8)" @blur="getinputValue"></el-input>
+      </div>
+      <div class="addIcon">
+        <el-button size="small" icon="el-icon-plus" v-show="renewalRate.title === 1" :disabled="isR13"
+        @click="addcheckBox(checkboxrenewList.list6)"></el-button>
+        <el-button size="small" icon="el-icon-minus" v-show="renewalRate.title === 1" :disabled="isR13"
+        @click="deletecheckBox(checkboxrenewList.list6)"></el-button>
+      </div>
+    </div>
+  </div>
+  <el-footer>
+    <div class="tips" v-show="renewalRate.renewalrateData==(index+1)" v-for="(item,index) in renewalrateList" :key="'list99-'+index">{{item.msg}}</div>
+    <div style="color: red; margin: 5px 0;" v-show="renewalRate.renewalrateData==(index+1)" v-for="(item,index) in renewalrateList" :key="'list98-'+index">{{item.msgred}}</div>
+  </el-footer>
+</el-container>
+<ui-label-text label="续期服务费计算公式："></ui-label-text>
+<ui-label-text label="续期服务费=续期基础服务费+续期服务津贴+继续率奖金"></ui-label-text>
+</div>
+</template>
+
+<script>
+import NoticeBar from '@/components/notice-bar'
+import LabelText from '@/components/label-text'
+import LineTittle from '@/components/line-tittle'
+import IsEmpty from '@/utils/IsEmpty'
+
+export default {
+  props: ['allModel', 'parentThis', 'isEdit'],
+  data () {
+    return {
+      sonallModel: this.allModel,
+      parent: this.parentThis,
+      dialogTitleForShow: '',
+      isR13: false,
+      renewalRate: {
+        title: 1,
+        renewalrateData: '1',
+        continuityCategory1: 'R13',
+        continuityCategory2: 'R13',
+        continuityCategory3: 'R13',
+        continuityCategory4: '',
+        continuityCategory5: '',
+        continuityCategory6: ''
+      },
+      renewalrateList: [
+        {
+          label: '续期基础服务费',
+          value: '1',
+          msg: '续期基础服务费=规模保费*费率',
+          msgred: '注:费率请在手续费率导入中配置'
+        },
+        {
+          label: '续期服务津贴',
+          value: '2',
+          msg: '续期服务津贴=规模保费*费率',
+          msgred: '费率请在手续费率导入中配置'
+        },
+        {
+          label: '继续率奖金',
+          value: '3',
+          msg: '继续率奖金=继续率奖金率*规模保费*年期换算系数*(1+增加奖金率)',
+          msgred: '注:不勾选“是否根据规模保费达成情况增加奖金率”时，增加奖金率默认为0'
+        }
+      ],
+      checkList: [
+        ['不可删除'],
+        [
+          {menu: '规模保费', flag: 'flag51'},
+          {menu: '费率', flag: 'flag52'}
+        ],
+        [
+          {menu: '规模保费', flag: 'flag61'},
+          {menu: '费率', flag: 'flag62'}
+        ],
+        [
+          {menu: '规模保费', flag: 'flag71'},
+          {menu: '继续率奖金率', flag: 'flag72'},
+          {menu: '年期别换算系数', flag: 'flag73'},
+          {menu: '是否根据规模保费达成情况增加费率', flag: 'flag74'}
+        ]
+      ],
+      checklistModel: ['flag51', 'flag52', 'flag61', 'flag62', 'flag71', 'flag72', 'flag73'],
+      checkboxrenewList: {
+        list1: [],
+        list2: [],
+        list3: [],
+        list4: [],
+        list5: [],
+        list6: []
+      }
+    }
+  },
+  methods: {
+    notNull (obj) {
+      if (obj === null || obj === undefined || obj === '') {
+        return false
+      }
+    },
+    removeEmpty (obj, arr) {
+      for (var key in obj) {
+        if (obj[key] !== null) {
+          arr.push(obj)
+          break
+        }
+      }
+    },
+    elOptionValueChange () {
+      // switch (parseInt(this.renewalRate.renewalrateData)) {
+      //   case 1:
+      //     this.checklistModel = ['flag51', 'flag52']
+      //     break
+      //   case 2:
+      //     this.checklistModel = ['flag61', 'flag62']
+      //     break
+      //   case 3:
+      //     if (parseInt(this.allModel['flag74']) === 1) {
+      //       this.checklistModel = ['flag71', 'flag72', 'flag73', 'flag74']
+      //     } else {
+      //       this.checklistModel = ['flag71', 'flag72', 'flag73']
+      //     }
+      //     break
+      //   default:
+      //     break
+      // }
+    },
+    loadingData (ams) {
+      this.notNull(ams)
+      this.renewalRate.title = ams.title
+      this.renewalRate.renewalrateData = ams.renewalrateData
+      if (ams.flag55 || ams.flag64 || ams.flag75) {
+        this.renewalRate.continuityCategory1 = ams.flag55
+        this.renewalRate.continuityCategory2 = ams.flag64
+        this.renewalRate.continuityCategory3 = ams.flag75
+        this.renewalRate.continuityCategory4 = ams.flag76
+        this.renewalRate.continuityCategory5 = ams.flag77
+        this.renewalRate.continuityCategory6 = ams.flag78
+      }
+      Object.keys(ams).forEach(key => { // 回显 复选框
+        if (key.includes('flag') === true && Array.isArray(key) !== true && key !== null) {
+          if (ams[key] === '1') {
+            this.checklistModel.push(key)
+            this.checklistModel = Array.from(new Set(this.checklistModel))
+          }
+        }
+      })
+      let ab = ams.baseCoolifefeecongigdetailhisList
+      if (ab !== undefined) {
+        if (ab.length !== 0) {
+          if (ab[0] !== undefined) {
+            ab[0].feedetailList.forEach(e => {
+              let obj = {}
+              obj.jfnqfw1 = e.jfnqfw1
+              obj.jfnqfw2 = e.jfnqfw2
+              obj.jfnqxs = e.jfnqxs
+              let obj2 = {}
+              obj2.jxlqj1 = e.jxlqj1
+              obj2.jxlqj2 = e.jxlqj2
+              obj2.tjbl = e.tjbl
+              this.removeEmpty(obj, this.checkboxrenewList.list1)
+              this.removeEmpty(obj2, this.checkboxrenewList.list2)
+            })
+          }
+          if (ab[1] !== undefined) {
+            ab[1].feedetailList.forEach(e => {
+              let obj = {}
+              obj.jxlqj1 = e.jxlqj1
+              obj.jxlqj2 = e.jxlqj2
+              obj.tjbl = e.tjbl
+              this.removeEmpty(obj, this.checkboxrenewList.list3)
+            })
+          }
+          if (ab[2] !== undefined) {
+            ab[2].feedetailList.forEach(e => {
+              let obj = {}
+              obj.jxlqj1 = e.jxlqj1
+              obj.jxlqj2 = e.jxlqj2
+              obj.jxljjl = e.jxljjl
+              obj.jxljjl25 = e.jxljjl25
+              obj.jxljjl37 = e.jxljjl37
+              obj.jxljjl49 = e.jxljjl49
+              let obj2 = {}
+              obj2.nqfw1 = e.nqfw1
+              obj2.nqfw2 = e.nqfw2
+              obj2.jfnqxs = e.jfnqxs
+              let obj3 = {}
+              obj3.gmbffw1 = e.gmbffw1
+              obj3.gmbffw2 = e.gmbffw2
+              obj3.zjjjl = e.zjjjl
+              this.removeEmpty(obj, this.checkboxrenewList.list4)
+              this.removeEmpty(obj2, this.checkboxrenewList.list5)
+              this.removeEmpty(obj3, this.checkboxrenewList.list6)
+            })
+          }
+        }
+      }
+    },
+    open (type, mesg) { // 提示
+      this.$message({
+        showClose: true,
+        message: mesg,
+        type: type
+      })
+    },
+    renewalRateCheck2 (value, index1, index2) { // 页面填入数据相关校验
+      function twoNumber (number) {
+        // eslint-disable-next-line no-useless-escape
+        let patt1 = new RegExp(/(^[1-9](\d+)?(\.\d{1,4})?$)|(^\d\.\d{1,4}$)/)
+        return patt1.test(number)
+      }
+      switch (index2) {
+        case 1:
+          if (parseFloat(this.checkboxrenewList.list4[index1].jxljjl25) < 0 || parseFloat(this.checkboxrenewList.list4[index1].jxljjl25) > 1) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl25 = ''
+            return false
+          }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list4[index1].jxljjl25) !== 0) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl25 = ''
+            return false
+          }
+          if (this.checkboxrenewList.list4[index1].jxljjl25 > 0.1 || this.checkboxrenewList.list4[index1].jxljjl25 < 0) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl25 = ''
+            return false
+          }
+          break
+        case 2:
+          if (parseFloat(this.checkboxrenewList.list4[index1].jxljjl37) < 0 || parseFloat(this.checkboxrenewList.list4[index1].jxljjl37) > 1) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl37 = ''
+            return false
+          }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list4[index1].jxljjl37) !== 0) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl37 = ''
+            return false
+          }
+          if (this.checkboxrenewList.list4[index1].jxljjl37 > 0.1 || this.checkboxrenewList.list4[index1].jxljjl37 < 0) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl37 = ''
+            return false
+          }
+          break
+        case 3:
+          if (parseFloat(this.checkboxrenewList.list4[index1].jxljjl49) < 0 || parseFloat(this.checkboxrenewList.list4[index1].jxljjl49) > 1) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl49 = ''
+            return false
+          }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list4[index1].jxljjl49) !== 0) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl49 = ''
+            return false
+          }
+          if (this.checkboxrenewList.list4[index1].jxljjl49 > 0.1 || this.checkboxrenewList.list4[index1].jxljjl49 < 0) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl49 = ''
+            return false
+          }
+          break
+        default:
+          break
+      }
+    },
+    renewalRateCheck (value, index1, index2) { // 页面填入数据相关校验
+      this.parent.componentsBool = false
+      function twoNumber (number) {
+        // eslint-disable-next-line no-useless-escape
+        let patt1 = new RegExp(/(^[1-9](\d+)?(\.\d{1,4})?$)|(^\d\.\d{1,4}$)/)
+        return patt1.test(number)
+      }
+      switch (index2) {
+        case 1:
+          if (parseFloat(this.checkboxrenewList.list4[index1].jxlqj1) < 0 || parseFloat(this.checkboxrenewList.list4[index1].jxlqj1) >= 1) {
+            this.open('error', '继续率范围录入有误！')
+            this.checkboxrenewList.list4[index1].jxlqj1 = ''
+            return false
+          }
+          if (parseInt(index1) === 0) {
+            if ((parseFloat(this.checkboxrenewList.list4[index1].jxlqj2) <= parseFloat(this.checkboxrenewList.list4[index1].jxlqj1)) && parseFloat(this.checkboxrenewList.list4[index1].jxlqj2)) {
+              this.open('error', '继续率范围录入有误！')
+              this.checkboxrenewList.list4[index1].jxlqj1 = ''
+              return false
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list4.length; i++) {
+              if ((this.checkboxrenewList.list4[i].jxlqj1 < this.checkboxrenewList.list4[index1].jxlqj1 || this.checkboxrenewList.list4[i].jxlqj2 < this.checkboxrenewList.list4[index1].jxlqj1) && !IsEmpty(this.checkboxrenewList.list4[i].jxlqj1) && !IsEmpty(this.checkboxrenewList.list4[i].jxlqj2)) {
+                this.open('error', '继续率范围录入有误！')
+                this.checkboxrenewList.list4[index1].jxlqj1 = ''
+                return false
+              }
+            }
+          } else {
+            for (let i = 0; i < index1; i++) {
+              if (IsEmpty(this.checkboxrenewList.list4[i].jxlqj1) || IsEmpty(this.checkboxrenewList.list4[i].jxlqj2)) {
+                this.open('error', '有未填的继续率')
+                this.checkboxrenewList.list4[index1].jxlqj1 = ''
+                return false
+              } else if (parseFloat(this.checkboxrenewList.list4[index1].jxlqj1) < parseFloat(this.checkboxrenewList.list4[i].jxlqj1) || parseFloat(this.checkboxrenewList.list4[index1].jxlqj1) < parseFloat(this.checkboxrenewList.list4[i].jxlqj2) || ((parseFloat(this.checkboxrenewList.list4[index1].jxlqj2) <= parseFloat(this.checkboxrenewList.list4[index1].jxlqj1)) && this.checkboxrenewList.list4[index1].jxlqj2)) {
+                this.open('error', '继续率范围录入有误！')
+                this.checkboxrenewList.list4[index1].jxlqj1 = ''
+                return false
+              }
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list4.length; i++) {
+              if ((this.checkboxrenewList.list4[i].jxlqj1 < this.checkboxrenewList.list4[index1].jxlqj1 || this.checkboxrenewList.list4[i].jxlqj2 < this.checkboxrenewList.list4[index1].jxlqj1) && !IsEmpty(this.checkboxrenewList.list4[i].jxlqj1) && !IsEmpty(this.checkboxrenewList.list4[i].jxlqj2)) {
+                this.open('error', '有未填的继续率')
+                this.checkboxrenewList.list4[index1].jxlqj1 = ''
+                return false
+              }
+            }
+          }
+          // if (this.checkboxrenewList.list4[index1].jxlqj1 === this.checkboxrenewList.list4[index1].jxlqj2) {
+          //   for (let i = 0; i < this.checkboxrenewList.list4.length; i++) {
+          //     if (this.checkboxrenewList.list4[i].jxlqj1 === this.checkboxrenewList.list4[i].jxlqj2 && this.checkboxrenewList.list4[i].jxlqj2 === this.checkboxrenewList.list4[index1].jxlqj1) {
+          //       this.checkboxrenewList.list4[index1].jxlqj1 = ''
+          //       this.open('error', '继续率范围录入有误！')
+          //       return
+          //     }
+          //   }
+          // }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list4[index1].jxlqj1) !== 0) {
+            this.open('error', '继续率范围录入格式有误')
+            this.checkboxrenewList.list4[index1].jxlqj1 = ''
+            return false
+          }
+          break
+        case 2:
+          if (parseFloat(this.checkboxrenewList.list4[index1].jxlqj2) <= 0 || parseFloat(this.checkboxrenewList.list4[index1].jxlqj2) > 1) {
+            this.open('error', '继续率范围录入有误！')
+            this.checkboxrenewList.list4[index1].jxlqj2 = ''
+            return false
+          }
+          if (parseInt(index1) === 0) {
+            if ((parseFloat(this.checkboxrenewList.list4[index1].jxlqj2) <= parseFloat(this.checkboxrenewList.list4[index1].jxlqj1)) && this.checkboxrenewList.list4[index1].jxlqj2) {
+              this.open('error', '继续率范围录入有误！')
+              this.checkboxrenewList.list4[index1].jxlqj2 = ''
+              return false
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list4.length; i++) {
+              if ((this.checkboxrenewList.list4[i].jxlqj1 < this.checkboxrenewList.list4[index1].jxlqj2 || this.checkboxrenewList.list4[i].jxlqj2 < this.checkboxrenewList.list4[index1].jxlqj2) && !IsEmpty(this.checkboxrenewList.list4[i].jxlqj1) && !IsEmpty(this.checkboxrenewList.list4[i].jxlqj2)) {
+                this.open('error', '继续率范围录入有误！')
+                this.checkboxrenewList.list4[index1].jxlqj2 = ''
+                return false
+              }
+            }
+          } else {
+            for (let i = 0; i < index1; i++) {
+              if (IsEmpty(this.checkboxrenewList.list4[i].jxlqj1) || IsEmpty(this.checkboxrenewList.list4[i].jxlqj2) || IsEmpty(this.checkboxrenewList.list4[index1].jxlqj1)) {
+                this.open('error', '有未填的继续率')
+                this.checkboxrenewList.list4[index1].jxlqj2 = ''
+                return false
+              } else if (parseFloat(this.checkboxrenewList.list4[index1].jxlqj2) < parseFloat(this.checkboxrenewList.list4[i].jxlqj1) || parseFloat(this.checkboxrenewList.list4[index1].jxlqj2) < parseFloat(this.checkboxrenewList.list4[i].jxlqj2) || ((parseFloat(this.checkboxrenewList.list4[index1].jxlqj2) <= parseFloat(this.checkboxrenewList.list4[index1].jxlqj1)) && this.checkboxrenewList.list4[index1].jxlqj2)) {
+                this.open('error', '继续率范围录入有误！')
+                this.checkboxrenewList.list4[index1].jxlqj2 = ''
+                return false
+              }
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list4.length; i++) {
+              if ((this.checkboxrenewList.list4[i].jxlqj1 < this.checkboxrenewList.list4[index1].jxlqj2 || this.checkboxrenewList.list4[i].jxlqj2 < this.checkboxrenewList.list4[index1].jxlqj2) && !IsEmpty(this.checkboxrenewList.list4[i].jxlqj1) && !IsEmpty(this.checkboxrenewList.list4[i].jxlqj2)) {
+                this.open('error', '有未填的继续率')
+                this.checkboxrenewList.list4[index1].jxlqj2 = ''
+                return false
+              }
+            }
+          }
+          if (this.checkboxrenewList.list4[index1].jxlqj1 === this.checkboxrenewList.list4[index1].jxlqj2) {
+            for (let i = 1; i < this.checkboxrenewList.list4.length; i++) {
+              if (this.checkboxrenewList.list4[i].jxlqj1 === this.checkboxrenewList.list4[i].jxlqj2 && this.checkboxrenewList.list4[i].jxlqj2 === this.checkboxrenewList.list4[index1].jxlqj2) {
+                this.checkboxrenewList.list4[index1].jxlqj2 = ''
+                this.open('error', '继续率范围录入有误！')
+                return false
+              }
+            }
+          }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list4[index1].jxlqj2) !== 0) {
+            this.open('error', '继续率范围录入格式有误')
+            this.checkboxrenewList.list4[index1].jxlqj2 = ''
+            return false
+          }
+          break
+        case 3:
+          if (parseInt(index1) === 0) {
+            if ((parseFloat(this.checkboxrenewList.list5[index1].nqfw2) < parseFloat(this.checkboxrenewList.list5[index1].nqfw1)) && this.checkboxrenewList.list5[index1].nqfw2) {
+              this.open('error', '年期范围录入有误！')
+              this.checkboxrenewList.list5[index1].nqfw1 = ''
+              return false
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list5.length; i++) {
+              if ((this.checkboxrenewList.list5[i].nqfw1 <= this.checkboxrenewList.list5[index1].nqfw1 || this.checkboxrenewList.list5[i].nqfw2 <= this.checkboxrenewList.list5[index1].nqfw1) && !IsEmpty(this.checkboxrenewList.list5[i].nqfw1) && !IsEmpty(this.checkboxrenewList.list5[i].nqfw2)) {
+                this.open('error', '年期范围录入有误！')
+                this.checkboxrenewList.list5[index1].nqfw1 = ''
+                return false
+              }
+            }
+          } else {
+            for (let i = 0; i < index1; i++) {
+              if (IsEmpty(this.checkboxrenewList.list5[i].nqfw1) || IsEmpty(this.checkboxrenewList.list5[i].nqfw2)) {
+                this.open('error', '有未填的年期')
+                this.checkboxrenewList.list5[index1].nqfw1 = ''
+                return false
+              } else if (parseFloat(this.checkboxrenewList.list5[index1].nqfw1) <= parseFloat(this.checkboxrenewList.list5[i].nqfw1) || parseFloat(this.checkboxrenewList.list5[index1].nqfw1) <= parseFloat(this.checkboxrenewList.list5[i].nqfw2) || ((parseFloat(this.checkboxrenewList.list5[index1].nqfw2) < parseFloat(this.checkboxrenewList.list5[index1].nqfw1)) && this.checkboxrenewList.list5[index1].nqfw2)) {
+                this.open('error', '年期范围录入有误！')
+                this.checkboxrenewList.list5[index1].nqfw1 = ''
+                return false
+              }
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list5.length; i++) {
+              if ((this.checkboxrenewList.list5[i].nqfw1 <= this.checkboxrenewList.list5[index1].nqfw1 || this.checkboxrenewList.list5[i].nqfw2 <= this.checkboxrenewList.list5[index1].nqfw1) && !IsEmpty(this.checkboxrenewList.list5[i].nqfw1) && !IsEmpty(this.checkboxrenewList.list5[i].nqfw2)) {
+                this.open('error', '有未填的年期')
+                this.checkboxrenewList.list5[index1].nqfw1 = ''
+                return false
+              }
+            }
+          }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list5[index1].nqfw1) !== 0) {
+            this.open('error', '年期范围录入格式有误')
+            this.checkboxrenewList.list5[index1].nqfw1 = ''
+            return false
+          }
+          break
+        case 4:
+          if (parseInt(index1) === 0) {
+            if ((parseFloat(this.checkboxrenewList.list5[index1].nqfw2) < parseFloat(this.checkboxrenewList.list5[index1].nqfw1)) && this.checkboxrenewList.list5[index1].nqfw2) {
+              this.open('error', '年期范围录入有误！')
+              this.checkboxrenewList.list5[index1].nqfw2 = ''
+              return false
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list5.length; i++) {
+              if ((this.checkboxrenewList.list5[i].nqfw1 <= this.checkboxrenewList.list5[index1].nqfw2 || this.checkboxrenewList.list5[i].nqfw2 <= this.checkboxrenewList.list5[index1].nqfw2) && !IsEmpty(this.checkboxrenewList.list5[i].nqfw1) && !IsEmpty(this.checkboxrenewList.list5[i].nqfw2)) {
+                this.open('error', '年期范围录入有误！')
+                this.checkboxrenewList.list5[index1].nqfw2 = ''
+                return false
+              }
+            }
+          } else {
+            for (let i = 0; i < index1; i++) {
+              if (IsEmpty(this.checkboxrenewList.list5[i].nqfw1) || IsEmpty(this.checkboxrenewList.list5[i].nqfw2) || IsEmpty(this.checkboxrenewList.list5[index1].nqfw1)) {
+                this.open('error', '有未填的年期')
+                this.checkboxrenewList.list5[index1].nqfw2 = ''
+                return false
+              } else if (parseFloat(this.checkboxrenewList.list5[index1].nqfw2) <= parseFloat(this.checkboxrenewList.list5[i].nqfw1) || parseFloat(this.checkboxrenewList.list5[index1].nqfw2) <= parseFloat(this.checkboxrenewList.list5[i].nqfw2) || ((parseFloat(this.checkboxrenewList.list5[index1].nqfw2) < parseFloat(this.checkboxrenewList.list5[index1].nqfw1)) && this.checkboxrenewList.list5[index1].nqfw2)) {
+                this.open('error', '年期范围录入有误！')
+                this.checkboxrenewList.list5[index1].nqfw2 = ''
+                return false
+              }
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list5.length; i++) {
+              if ((this.checkboxrenewList.list5[i].nqfw1 <= this.checkboxrenewList.list5[index1].nqfw2 || this.checkboxrenewList.list5[i].nqfw2 <= this.checkboxrenewList.list5[index1].nqfw2) && !IsEmpty(this.checkboxrenewList.list5[i].nqfw1) && !IsEmpty(this.checkboxrenewList.list5[i].nqfw2)) {
+                this.open('error', '有未填的年期')
+                this.checkboxrenewList.list5[index1].nqfw2 = ''
+                return false
+              }
+            }
+          }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list5[index1].nqfw2) !== 0) {
+            this.open('error', '年期范围录入格式有误')
+            this.checkboxrenewList.list5[index1].nqfw2 = ''
+            return false
+          }
+          break
+        case 5:
+          if (parseFloat(this.checkboxrenewList.list5[index1].jfnqxs) < 0 || parseFloat(this.checkboxrenewList.list5[index1].jfnqxs) > 1) {
+            this.open('error', '换算系数录入格式有误')
+            this.checkboxrenewList.list5[index1].jfnqxs = ''
+            return false
+          }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list5[index1].jfnqxs) !== 0) {
+            this.open('error', '换算系数录入格式有误')
+            this.checkboxrenewList.list5[index1].jfnqxs = ''
+            return false
+          }
+          break
+        case 6:
+          if (parseInt(index1) === 0) {
+            if ((parseFloat(this.checkboxrenewList.list6[index1].gmbffw2) <= parseFloat(this.checkboxrenewList.list6[index1].gmbffw1)) && this.checkboxrenewList.list6[index1].gmbffw2) {
+              this.open('error', '规模保费范围录入有误！')
+              this.checkboxrenewList.list6[index1].gmbffw1 = ''
+              return false
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list6.length; i++) {
+              if ((this.checkboxrenewList.list6[i].gmbffw1 < this.checkboxrenewList.list6[index1].gmbffw1 || this.checkboxrenewList.list6[i].gmbffw2 < this.checkboxrenewList.list6[index1].gmbffw1) && !IsEmpty(this.checkboxrenewList.list6[i].gmbffw1) && !IsEmpty(this.checkboxrenewList.list6[i].gmbffw2)) {
+                this.open('error', '规模保费范围录入有误！')
+                this.checkboxrenewList.list6[index1].gmbffw1 = ''
+                return false
+              }
+            }
+          } else {
+            for (let i = 0; i < index1; i++) {
+              if (IsEmpty(this.checkboxrenewList.list6[i].gmbffw1) || IsEmpty(this.checkboxrenewList.list6[i].gmbffw2)) {
+                this.open('error', '有未填的规模保费')
+                this.checkboxrenewList.list6[index1].gmbffw1 = ''
+                return false
+              } else if (parseFloat(this.checkboxrenewList.list6[index1].gmbffw1) < parseFloat(this.checkboxrenewList.list6[i].gmbffw1) || parseFloat(this.checkboxrenewList.list6[index1].gmbffw1) < parseFloat(this.checkboxrenewList.list6[i].gmbffw2) || ((parseFloat(this.checkboxrenewList.list6[index1].gmbffw2) <= parseFloat(this.checkboxrenewList.list6[index1].gmbffw1)) && this.checkboxrenewList.list6[index1].gmbffw2)) {
+                this.open('error', '规模保费范围录入有误！')
+                this.checkboxrenewList.list6[index1].gmbffw1 = ''
+                return false
+              }
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list6.length; i++) {
+              if ((this.checkboxrenewList.list6[i].gmbffw1 < this.checkboxrenewList.list6[index1].gmbffw1 || this.checkboxrenewList.list6[i].gmbffw2 < this.checkboxrenewList.list6[index1].gmbffw1) && !IsEmpty(this.checkboxrenewList.list6[i].gmbffw1) && !IsEmpty(this.checkboxrenewList.list6[i].gmbffw2)) {
+                this.open('error', '有未填的规模保费')
+                this.checkboxrenewList.list6[index1].gmbffw1 = ''
+                return false
+              }
+            }
+          }
+          // if (this.checkboxrenewList.list6[index1].gmbffw1 === this.checkboxrenewList.list6[index1].gmbffw2) {
+          //   for (let i = 0; i < this.checkboxrenewList.list6.length; i++) {
+          //     if (this.checkboxrenewList.list6[i].gmbffw1 === this.checkboxrenewList.list6[i].gmbffw2 && this.checkboxrenewList.list6[i].gmbffw1 === this.checkboxrenewList.list6[index1].gmbffw2) {
+          //       this.checkboxrenewList.list6[index1].gmbffw1 = ''
+          //       this.open('error', '规模保费范围录入有误！')
+          //       return
+          //     }
+          //   }
+          // }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list6[index1].gmbffw1) !== 0) {
+            this.open('error', '规模保费范围录入格式有误')
+            this.checkboxrenewList.list6[index1].gmbffw1 = ''
+            return false
+          }
+          break
+        case 7:
+          if (parseInt(index1) === 0) {
+            if ((parseFloat(this.checkboxrenewList.list6[index1].gmbffw2) <= parseFloat(this.checkboxrenewList.list6[index1].gmbffw1)) && this.checkboxrenewList.list6[index1].gmbffw2) {
+              this.open('error', '规模保费范围录入有误！')
+              this.checkboxrenewList.list6[index1].gmbffw2 = ''
+              return false
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list6.length; i++) {
+              if ((this.checkboxrenewList.list6[i].gmbffw1 < this.checkboxrenewList.list6[index1].gmbffw2 || this.checkboxrenewList.list6[i].gmbffw2 < this.checkboxrenewList.list6[index1].gmbffw2) && !IsEmpty(this.checkboxrenewList.list6[i].gmbffw1) && !IsEmpty(this.checkboxrenewList.list6[i].gmbffw2)) {
+                this.open('error', '规模保费范围录入有误！')
+                this.checkboxrenewList.list6[index1].gmbffw2 = ''
+                return false
+              }
+            }
+          } else {
+            for (let i = 0; i < index1; i++) {
+              if (IsEmpty(this.checkboxrenewList.list6[i].gmbffw1) || IsEmpty(this.checkboxrenewList.list6[i].gmbffw2) || IsEmpty(this.checkboxrenewList.list6[index1].gmbffw1)) {
+                this.open('error', '有未填的规模保费')
+                this.checkboxrenewList.list6[index1].gmbffw2 = ''
+                return false
+              } else if (parseFloat(this.checkboxrenewList.list6[index1].gmbffw2) < parseFloat(this.checkboxrenewList.list6[i].gmbffw1) || parseFloat(this.checkboxrenewList.list6[index1].gmbffw2) < parseFloat(this.checkboxrenewList.list6[i].gmbffw2) || ((parseFloat(this.checkboxrenewList.list6[index1].gmbffw2) <= parseFloat(this.checkboxrenewList.list6[index1].gmbffw1)) && this.checkboxrenewList.list6[index1].gmbffw2)) {
+                this.open('error', '规模保费范围录入有误！')
+                this.checkboxrenewList.list6[index1].gmbffw2 = ''
+                return false
+              }
+            }
+            for (let i = index1 + 1; i < this.checkboxrenewList.list6.length; i++) {
+              if ((this.checkboxrenewList.list6[i].gmbffw1 < this.checkboxrenewList.list6[index1].gmbffw2 || this.checkboxrenewList.list6[i].gmbffw2 < this.checkboxrenewList.list6[index1].gmbffw2) && !IsEmpty(this.checkboxrenewList.list6[i].gmbffw1) && !IsEmpty(this.checkboxrenewList.list6[i].gmbffw2)) {
+                this.open('error', '有未填的规模保费')
+                this.checkboxrenewList.list6[index1].gmbffw2 = ''
+                return false
+              }
+            }
+          }
+          if (this.checkboxrenewList.list6[index1].gmbffw1 === this.checkboxrenewList.list6[index1].gmbffw2) {
+            for (let i = 1; i < this.checkboxrenewList.list6.length; i++) {
+              if (this.checkboxrenewList.list6[i].gmbffw1 === this.checkboxrenewList.list6[i].gmbffw2 && this.checkboxrenewList.list6[i].gmbffw2 === this.checkboxrenewList.list6[index1].gmbffw2) {
+                this.checkboxrenewList.list6[index1].gmbffw2 = ''
+                this.open('error', '规模保费范围录入有误！')
+                return false
+              }
+            }
+          }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list6[index1].gmbffw2) !== 0) {
+            this.open('error', '规模保费范围录入格式有误')
+            this.checkboxrenewList.list6[index1].gmbffw2 = ''
+            return false
+          }
+          break
+        case 8:
+          if (parseFloat(this.checkboxrenewList.list6[index1].zjjjl) < 0 || parseFloat(this.checkboxrenewList.list6[index1].zjjjl) > 1) {
+            this.open('error', '增加奖金率录入格式有误')
+            this.checkboxrenewList.list6[index1].zjjjl = ''
+            return false
+          }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list6[index1].zjjjl) !== 0) {
+            this.open('error', '增加奖金率录入格式有误')
+            this.checkboxrenewList.list6[index1].zjjjl = ''
+            return false
+          }
+          break
+        case 9:
+          if (parseFloat(this.checkboxrenewList.list4[index1].jxljjl) < 0 || parseFloat(this.checkboxrenewList.list4[index1].jxljjl) > 1) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl = ''
+            return false
+          }
+          if (!twoNumber(value) && parseFloat(this.checkboxrenewList.list4[index1].jxljjl) !== 0) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl = ''
+            return false
+          }
+          if (this.checkboxrenewList.list4[index1].jxljjl > 0.1 || this.checkboxrenewList.list4[index1].jxljjl < 0) {
+            this.open('error', '继续率奖金率录入格式有误！')
+            this.checkboxrenewList.list4[index1].jxljjl = ''
+            return false
+          }
+          break
+        default:
+          break
+      }
+      this.parent.componentsBool = true
+    },
+    getcheckboxValue () {
+      this.checkboxrenewList.list6 = []
+      this.$emit('getrenewalData1', {
+        checklistModel: this.checklistModel, // 费用类别
+        gradeSetting: this.renewalRate, // 继续率类别
+        checkboxrenewList: this.checkboxrenewList // 添加数据
+      })
+      this.$emit('getrenewalData2', {
+        checklistModel: this.checklistModel, // 费用类别
+        gradeSetting: this.renewalRate, // 继续率类别
+        checkboxrenewList: this.checkboxrenewList // 添加数据
+      })
+    },
+    getinputValue () { // 计算公式
+      this.$emit('getrenewalData1', {
+        checkboxrenewList: this.checkboxrenewList, // 添加数据
+        gradeSetting: this.renewalRate // 继续率类别
+      })
+      this.$emit('getrenewalData2', {
+        checkboxrenewList: this.checkboxrenewList, //
+        gradeSetting: this.renewalRate // 继续率类别
+      })
+    },
+    getselectValue () {
+      this.$emit('getrenewalData1', {
+        checkboxrenewList: this.checkboxrenewList, // 添加数据
+        gradeSetting: this.renewalRate // 继续率类别
+      })
+      this.$emit('getrenewalData2', {
+        checkboxrenewList: this.checkboxrenewList, // 添加数据
+        gradeSetting: this.renewalRate // 继续率类别
+      })
+    },
+    addcheckBox (e) {
+      e.push({})
+      this.getinputValue()
+    },
+    deletecheckBox (e) {
+      e.pop()
+      this.getinputValue()
+    },
+    creatModel (obj) {
+      if (obj !== '' && obj !== null && obj !== undefined) {
+        this.loadingData(obj)
+      }
+    }
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LabelText.name]: LabelText,
+    [LineTittle.name]: LineTittle
+  },
+  watch: {
+    checklistModel: {
+      handler (newValue, oldValue) {
+        if (newValue.includes('flag52') && newValue.includes('flag53')) {
+          if (newValue[newValue.length - 1] === 'flag52') {
+            newValue.splice(newValue.indexOf('flag53'), 1)
+          } else {
+            newValue.splice(newValue.indexOf('flag52'), 1)
+          }
+        } else if (newValue.includes('flag52') && newValue.includes('flag56')) {
+          if (newValue[newValue.length - 1] === 'flag52') {
+            newValue.splice(newValue.indexOf('flag56'), 1)
+          } else {
+            newValue.splice(newValue.indexOf('flag52'), 1)
+          }
+        } else if (newValue.includes('flag53') && newValue.includes('flag56')) {
+          if (newValue[newValue.length - 1] === 'flag53') {
+            newValue.splice(newValue.indexOf('flag56'), 1)
+          } else {
+            newValue.splice(newValue.indexOf('flag53'), 1)
+          }
+        }
+        this.$emit('getrenewalData1', {
+          checklistModel: this.checklistModel, // 费用类别
+          gradeSetting: this.renewalRate, // 继续率类别
+          checkboxrenewList: this.checkboxrenewList // 添加数据
+        })
+      },
+      deep: true
+    },
+    renewalRate: {
+      handler (newValue, oldValue) {
+        let NotEmpty25 = false
+        let NotEmpty37 = false
+        let NotEmpty49 = false
+        for (let i = 0; i < this.checkboxrenewList.list4.length; i++) {
+          if (this.checkboxrenewList.list4[i].jxljjl25) {
+            NotEmpty25 = true
+          }
+          if (this.checkboxrenewList.list4[i].jxljjl37) {
+            NotEmpty37 = true
+          }
+          if (this.checkboxrenewList.list4[i].jxljjl49) {
+            NotEmpty49 = true
+          }
+        }
+        switch (newValue.continuityCategory3) {
+        //   this.renewalRate.continuityCategory4 = ams.flag76
+        // this.renewalRate.continuityCategory5 = ams.flag77
+        // this.renewalRate.continuityCategory6 = ams.flag78
+          case 'R25':
+            this.renewalRate.continuityCategory4 = 'R25'
+            this.renewalRate.continuityCategory5 = NotEmpty37 ? 'R37' : ''
+            this.renewalRate.continuityCategory6 = NotEmpty49 ? 'R49' : ''
+            break
+          case 'R37':
+            this.renewalRate.continuityCategory4 = NotEmpty25 ? 'R25' : ''
+            this.renewalRate.continuityCategory5 = 'R37'
+            this.renewalRate.continuityCategory6 = NotEmpty49 ? 'R49' : ''
+            break
+          case 'R49':
+            this.renewalRate.continuityCategory4 = NotEmpty25 ? 'R25' : ''
+            this.renewalRate.continuityCategory5 = NotEmpty37 ? 'R37' : ''
+            this.renewalRate.continuityCategory6 = 'R49'
+            break
+          default:
+            break
+        }
+        if (newValue.continuityCategory3 !== 'R13') {
+          this.isR13 = true
+        } else {
+          this.isR13 = false
+        }
+      },
+      deep: true
+    },
+    allModel: {
+      handler (newValue, oldValue) {
+        this.checklistModel = ['flag51', 'flag52']
+        this.checkboxrenewList = {
+          list1: [],
+          list2: [],
+          list3: [],
+          list4: [],
+          list5: [],
+          list6: []
+        }
+        this.creatModel(newValue)
+      },
+      deep: true
+    }
+  },
+  computed: {
+    gradeSetting () {
+      let temp = [{label: 'R13', value: 'R13'}]
+      if (this.isEdit) {
+        temp = [
+          {label: 'R13', value: 'R13'},
+          {label: 'R25', value: 'R25'},
+          {label: 'R37', value: 'R37'},
+          {label: 'R49', value: 'R49'}
+        ]
+        return temp
+      } else {
+        if (this.renewalRate.continuityCategory4) {
+          temp.push({label: 'R25', value: 'R25'})
+        }
+        if (this.renewalRate.continuityCategory5) {
+          temp.push({label: 'R37', value: 'R37'})
+        }
+        if (this.renewalRate.continuityCategory6) {
+          temp.push({label: 'R49', value: 'R49'})
+        }
+        return temp
+      }
+    }
+  },
+  mounted () {
+    console.log(this.allModel['flag74'])
+    this.creatModel(this.sonallModel)
+    this.dialogTitleForShow = this.sonallModel.dialogTitleForShow
+  }
+}
+</script>
+<style lang="scss" scoped type="text/css">
+.incentiveRate{ display: flex; justify-content: flex-start; }
+.incentiveRate .el-input { height: 30px; padding: 0 6px; width: 110px !important; }
+.checkboxlistCenter { display: flex; justify-content: flex-start; align-items: center; margin: 10px 0;}
+.checkboxlistCenter .el-input { width: 60px; }
+.el-button--small {width: 50px;}
+.addIcon{ display: flex; justify-content: flex-end; margin-right: 12px; }
+.coopMargin { margin-top: 20px; }
+.checkboxList { display: flex; justify-content: flex-start; }
+.el-footer{height: auto!important;}
+.marginlr { margin-left: 20px; }
+.mg10 { margin: 10px 0; }
+.tips { width: 70%; line-height: 30px; padding-left: 10px; border: 1px solid #dcdfe6; }
+</style>
+<style>
+.checkboxpColor span{ color: #409EFF !important; }
+</style>

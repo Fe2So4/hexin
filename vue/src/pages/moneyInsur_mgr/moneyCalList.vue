@@ -1,0 +1,734 @@
+<template>
+  <div id="orgadd" >
+      <ui-notice-bar slot="breadcast" >
+        <el-breadcrumb slot="location" separator=">">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>产险佣金管理</el-breadcrumb-item>
+            <el-breadcrumb-item>产险算薪清单</el-breadcrumb-item>
+          </el-breadcrumb>
+      </ui-notice-bar>
+      <div class="ri-content" slot="content" >
+        <el-form ref="moneyCalList" :rules="rules" :model="queryInfo">
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop='policyno'>
+                <ui-label-text labelWidth="180" label="保单号：">
+                  <el-input v-model="queryInfo.policyno" clearable slot="text"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop='subpolicyno'>
+                <ui-label-text labelWidth="180" label="分保单号:" >
+                  <el-input v-model="queryInfo.subpolicyno" clearable slot="text"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop='comcode'>
+                <ui-label-text labelWidth="180" label="佰盈机构代码：">
+                  <el-input v-model="queryInfo.comcode" clearable slot="text" @dblclick.native="openComDialog(0)" placeholder="双击可选择" @blur='opensingleComDialog(0)'></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop='comname'>
+                <ui-label-text labelWidth="180" label="佰盈机构名称:" >
+                  <el-input v-model="queryInfo.comname" clearable slot="text" @dblclick.native="openComDialog(0)" placeholder="双击可选择" @blur='opensingleComDialog(0)'></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop='agentcode'>
+                <ui-label-text labelWidth="180" label="业务员代码：">
+                  <el-input v-model="queryInfo.agentcode" clearable slot="text" @dblclick.native="openComDialog(1)" placeholder="双击可选择" @blur='opensingleComDialog(1)'></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop='agentname'>
+                <ui-label-text labelWidth="180" label="业务员名称：">
+                  <el-input v-model="queryInfo.agentname" clearable slot="text" @dblclick.native="openComDialog(1)" placeholder="双击可选择" @blur='opensingleComDialog(1)'></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop='belongdate'>
+                <ui-label-text labelWidth="180" label="业绩归属月份：">
+                  <el-date-picker v-model="queryInfo.belongdate" slot="text" type="month" placeholder="选择业绩归属月份" value-format="yyyy-MM"></el-date-picker>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop='batchdate'>
+                <ui-label-text labelWidth="180" label="跑批月份：">
+                  <el-date-picker v-model="queryInfo.batchdate" slot="text" type="month" placeholder="选择跑批月份" value-format="yyyy-MM"></el-date-picker>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop='iscommission'>
+                  <ui-label-text labelWidth="180" label="是否结佣：">
+                    <el-select v-model="queryInfo.iscommission" slot="text" placeholder="请选择">
+                      <el-option label="是" value="1"></el-option>
+                      <el-option label="否" value="2"></el-option>
+                    </el-select>
+                  </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop='commissionmonth'>
+                <ui-label-text labelWidth="180" label="结佣月份：">
+                  <el-date-picker v-model="queryInfo.commissionmonth" @change="changeDate" slot="text" type="month" placeholder="选择开始日期" value-format="yyyy-MM"></el-date-picker>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <el-form-item prop='insurerName'>
+                <ui-label-text labelWidth="180" label="保单生成日期:">
+                  <el-date-picker v-model="queryInfo.frommonth" slot="text" type="date" placeholder="选择开始日期" value-format="yyyy-MM-dd"></el-date-picker>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item prop='insurerName'>
+                <ui-label-text labelWidth="180" label="至:">
+                  <el-date-picker v-model="queryInfo.tomonth" slot="text" type="date" placeholder="选择结束日期" value-format="yyyy-MM-dd"></el-date-picker>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+      </div>
+      <div class="btn-container" slot="controlbar">
+          <el-button type="primary" :disabled="quanxian.query" @click.native.prevent="submitForm('moneyCalList', 1)">查询</el-button>
+          <el-button type="primary" :disabled="quanxian.save" @click.native.prevent="submitForm('moneyCalList', 2)">保存</el-button>
+          <el-button type="primary" :disabled="quanxian.upload" @click.native.prevent="submitForm('moneyCalList', 3)">上传</el-button>
+          <el-button type="primary" :disabled="quanxian.export" @click.native.prevent="submitForm('moneyCalList', 4)">导出</el-button>
+      </div>
+      <div v-if="tableShowOrnot">
+        <el-table
+          :data="tableData"
+          style="width: 100%">
+            <el-table-column
+              v-for="(item, index) in tableColumnList"
+              v-if="item.label !== '佣金调整金额'"
+              :key="index"
+              :label="item.label"
+              :prop="item.prop"
+              width="180">
+            </el-table-column>
+            <el-table-column
+              v-else
+              :key="index"
+              :label="item.label"
+              :prop="item.prop"
+              width="180">
+                <template slot-scope="scope">
+                  <el-input v-model="tableData[scope.$index].commissionchange" @blur="changeFee(scope.$index)"></el-input>
+                </template>
+            </el-table-column>
+
+             <!-- <el-table-column
+              v-for="(item, index) in tableColumnList"
+              :key="index"
+              :label="item.label"
+              :prop="item.prop"
+              width="180">
+            </el-table-column> -->
+        </el-table>
+        <div class="block">
+          <el-pagination
+            :pager-count="5"
+            @current-change="handleCurrentChange"
+            :current-page="queryInfo.currentPage"
+            :page-size="queryInfo.pageSize"
+            @size-change="handleSizeChange"
+            :page-sizes="[5,10,20,50]"
+            :total="totalRecords"
+            layout="total, sizes, prev, pager, next, jumper"
+            >
+          </el-pagination>
+        </div>
+      </div>
+      <el-dialog title="提示" center :append-to-body='true' :visible.sync="isTip" width="30%" >
+        <p style="text-align: center; ">如果数据量比较大，整个过程会很慢，请您耐心等待</p>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="isTip = false">取 消</el-button>
+          <el-button type="primary" @click="submitUpload">确 定</el-button>
+        </span>
+      </el-dialog>
+      <el-dialog :append-to-body='true' title="导入" center :visible.sync="showImportDialog" :before-close='importDialogClose'>
+        <div class="dialogTip1">
+          <span>请选择文件路径</span>
+        </div>
+        <div>
+          <el-upload
+            ref="upload"
+            class="upload-rate"
+            :action="uploadUrl()"
+            :limit="1"
+            name="fileName"
+            :on-success="handleEXLSuccess"
+            :auto-upload="false"
+            :file-list="fileList">
+            <el-button size="small" type="primary">选取文件</el-button>
+            <div slot="tip" class="el-upload__tip"></div>
+          </el-upload>
+          <el-button type="success" @click="goUpload" >上传文件</el-button>
+        </div>
+      </el-dialog>
+      <ComDialog :vis='comDialog' :workerVis='comDialogworker' :comVis='comDialogCom' :newTableData='tempTableData' @onClose='comDialogClosing(0)' @selectDialog='dialogBackData' @comdialogChangePageFunction='changeComdialogPage1' @comdialogChangePageSizeFunction='changeComdialogPageSize1' :fenyetotal='fenyetotalData'/>
+      <ComDialog :vis='comDialog1' :workerVis='comDialogworker1' :comVis='comDialogCom1' :newTableData='tempTableData1' @onClose='comDialogClosing(1)' @selectDialog='dialogBackData1' @comdialogChangePageFunction='changeComdialogPage2' @comdialogChangePageSizeFunction='changeComdialogPageSize2' :fenyetotal='fenyetotalData'/>
+  </div>
+</template>
+
+<script>
+import replaceStr from '@/utils/myFunction'
+import NoticeBar from '@/components/notice-bar'
+import LineTittle from '@/components/line-tittle'
+import LabelText from '@/components/label-text'
+import { mapActions } from 'vuex'
+import ComDialog from '@/components/comDialog'
+import IsEmpty from '@/utils/IsEmpty'
+import {
+  api
+} from '@/api/lifeInsur_mgr/quitListMgr.js'
+export default {
+  data () {
+    return {
+      tableColumnList: [
+        { label: '跑批月份', prop: 'batchdate' },
+        { label: '业绩归属月份', prop: 'belongdate' },
+        { label: '结佣月份', prop: 'commissionmonth' },
+        { label: '省级分公司代码', prop: 'insurecode' },
+        { label: '省级分公司名称', prop: 'insurename' },
+        { label: '地市级分公司代码', prop: 'insurecomcode' },
+        { label: '地市级分公司名称', prop: 'insurecomname' },
+        { label: '业务员渠道', prop: 'agenttype' },
+        { label: '业务员代码', prop: 'agentcode' },
+        { label: '业务员名称', prop: 'agentname' },
+        { label: '保险公司代码', prop: 'companycode' },
+        { label: '保险公司名称', prop: 'companyname' },
+        { label: '保单生成日期', prop: 'signdate' },
+        { label: '起核保大者日期', prop: 'qhbdate' },
+        { label: '批单生成日期', prop: 'endorsementdate' },
+        { label: '批单生效核批大者日期', prop: 'endorsementqhbddate' },
+        { label: '新保/续保', prop: 'isnew' },
+        { label: '保单号', prop: 'policyno' },
+        { label: '分保单号', prop: 'subpolicyno' },
+        { label: '批单号', prop: 'endorsementno' },
+        { label: '分批单号', prop: 'subendorsementno' },
+        { label: '投保人名称', prop: 'insureman' },
+        { label: '被保险人名称', prop: 'insuredman' },
+        { label: '险种大类名称', prop: 'category' },
+        { label: '险种代码', prop: 'riskcode' },
+        { label: '险种名称', prop: 'riskname' },
+        { label: '保费（不含增值税）', prop: 'paidpremiumnottax' },
+        { label: '手续费（不含增值税）', prop: 'allpoundagenottax' },
+        { label: '佣金率（%）', prop: 'commissionrate' },
+        { label: '佣金', prop: 'commissionnotchange' },
+        { label: '佣金调整金额', prop: 'commissionchange' },
+        { label: '合计佣金', prop: 'commission' },
+        { label: '考核佣金率(%)', prop: 'examinecommissionrate' },
+        { label: '考核佣金', prop: 'examinecommission' }
+      ],
+      isChange: true,
+      queryInfo: {
+        policyno: '', // 保单号
+        subpolicyno: '', // 分保单号
+        comcode: '', // 佰盈机构代码
+        comname: '', // 佰盈机构名称
+        agentcode: '', // 业务员代码
+        agentname: '', // 业务员名称
+        belongdate: '', // 业绩归属月份
+        iscommission: '', // 是否结佣
+        commissionmonth: '', // 结佣月份
+        frommonth: '', // 保单生成日期起
+        tomonth: '', // 保单生成日期止
+        batchdate: '',
+        currentPage: 1,
+        pageSize: 5
+      },
+      workerInfo: {
+        agentCode: '',
+        agentName: '',
+        comCode: '',
+        comName: '',
+        validStatus: '1',
+        pageSize: 10,
+        currentPage: 1,
+        clickType: '2'
+      },
+      orgQueryInfo: {
+        clickType: '2',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10
+      },
+      quanxian: {
+        query: true,
+        save: true,
+        upload: true,
+        export: true
+      },
+      tableData: [],
+      showImportDialog: false,
+      isTip: false,
+      tempTableData: [],
+      tempTableData1: [],
+      fileList: [],
+      fenyetotalData: 0,
+      totalRecords: 0,
+      comDialog: false,
+      comDialogCom: true,
+      comDialogworker: false,
+      comDialog1: false,
+      comDialogCom1: true,
+      comDialogworker1: false,
+      tableShowOrnot: false,
+      rules: {
+      },
+      loading: ''
+    }
+  },
+  mounted () {
+    api(`/auth/findButtonByUserCodeAndPage?userId=${this.$store.state.login.loginUserId}&page=产险算薪清单`, 'get').then(result => {
+      console.log(result)
+      if (result.data.code === '000000') {
+        for (let i = 0; i < result.data.data.length; i++) {
+          this.quanxian[result.data.data[i].code] = false
+        }
+      }
+    }).catch((e) => {
+      console.log(e)
+    })
+  },
+  watch: {
+    'queryInfo.comcode' () {
+      if (this.queryInfo.comcode === '') {
+        this.queryInfo.comname = ''
+      }
+    },
+    'queryInfo.comname' () {
+      if (this.queryInfo.comname === '') {
+        this.queryInfo.comcode = ''
+      }
+    },
+    'queryInfo.agentcode' () {
+      if (this.queryInfo.agentcode === '') {
+        this.queryInfo.agentname = ''
+      }
+    },
+    'queryInfo.agentname' () {
+      if (this.queryInfo.agentname === '') {
+        this.queryInfo.agentcode = ''
+      }
+    }
+  },
+  methods: {
+    submitForm (formName, index) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          switch (index) {
+            case 1:
+              this.queryInfo.currentPage = 1
+              this.queryData()
+              break
+            case 2:
+              let boolTemp = false
+              for (let i = 0; i < this.tableData.length; i++) {
+                let validateNumZero = RegExp(/(^[1-9](\d+)?(\.\d{1,2})?$)|(^\d\.\d{1,2}$)/)
+                if (!validateNumZero.test(Math.abs(this.tableData[i].commissionchange) === 0 ? '0.00' : Math.abs(this.tableData[i].commissionchange)) && this.tableData[i].commissionchange !== '0' && this.tableData[i].commissionchange !== 0 && !IsEmpty(this.tableData[i].commissionchange)) {
+                  this.openToast('warning', '请输入最多保留两位小数的数字！')
+                  boolTemp = true
+                }
+              }
+              if (!boolTemp && this.isChange) {
+                this.saveData()
+              } else {
+                this.openToast('warning', '请输入最多保留两位小数的数字！')
+              }
+              break
+            case 3:
+              this.uploadData()
+              break
+            case 4:
+              this.exportData()
+              break
+            default:
+              break
+          }
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
+    },
+    ...mapActions([
+      'contiListCheckclickWorker', 'contiPerbatchQueryAllCom'
+    ]),
+    queryData () {
+      this.Loading()
+      api('/salaryCommissionProperty/queryPropertyCommissionList', 'post', this.queryInfo).then(result => {
+        console.log(result)
+        this.closeLoading()
+        this.tableShowOrnot = true
+        if (result.data.code !== '000000' && !IsEmpty(result.data.code)) {
+          this.openToast('warning', result.data.msg)
+          this.tableData = []
+        } else {
+          this.totalRecords = result.data.totalElements
+          this.tableData = result.data.content
+        }
+      }).catch((e) => {
+        console.log(e)
+      })
+    },
+    saveData () {
+      this.Loading()
+      api('/salaryCommissionProperty/saveSalaryPropertyChange', 'post', this.tableData).then(result => {
+        console.log(result)
+        this.closeLoading()
+        if (result.data.code !== '000000' && !IsEmpty(result.data.code)) {
+          this.openToast('warning', result.data.msg)
+        } else {
+          this.openToast('success', result.data.msg)
+          this.queryData()
+        }
+      }).catch((e) => {
+        console.log(e)
+      })
+    },
+    uploadData () {
+      this.showImportDialog = true
+      this.isTip = false
+    },
+    uploadUrl () {
+      return '/tabycore/salaryCommissionProperty/saveSalaryPropertyChagngeImport'
+    },
+    changeDate () {
+      this.queryInfo.commissionmonth = this.queryInfo.commissionmonth + '-01'
+    },
+    handleEXLSuccess (response) {
+      if (response.code === '000000') {
+        this.openToast('success', response.msg)
+        this.isTip = false
+        this.queryData()
+      } else {
+        this.openToast('error', response.msg)
+      }
+      this.closeLoading()
+      this.fileList = []
+    },
+    importDialogClose () {
+      this.showImportDialog = false
+      this.fileList = []
+    },
+    goUpload () {
+      this.showImportDialog = false
+      this.isTip = true
+    },
+    submitUpload () {
+      this.$refs.upload.submit()
+      this.isTip = false
+      this.Loading()
+    },
+    exportData () {
+      window.open(`/tabycore/salaryCommissionProperty/queryPropertyCommissionListExport?policyno=${this.queryInfo.policyno}&subpolicyno=${this.queryInfo.subpolicyno}&comcode=${this.queryInfo.comcode}&comname=${this.queryInfo.comname}&agentcode=${this.queryInfo.agentcode}&agentname=${this.queryInfo.agentname}&belongdate=${this.queryInfo.belongdate}&iscommission=${this.queryInfo.iscommission}&commissionmonth=${this.queryInfo.commissionmonth}&frommonth=${this.queryInfo.frommonth}&tomonth=${this.queryInfo.tomonth}&batchdate=${this.queryInfo.batchdate}`)
+    },
+    openComDialog (index) {
+      switch (index) {
+        case 0:
+          this.orgQueryInfo.clickType = '2'
+          if (!IsEmpty(this.queryInfo.comcode)) {
+            this.orgQueryInfo.comCodeOrName = this.queryInfo.comcode
+          } else if (!IsEmpty(this.queryInfo.comname)) {
+            this.orgQueryInfo.comCodeOrName = this.queryInfo.comname
+          } else {
+            this.orgQueryInfo.comCodeOrName = ''
+          }
+          this.contiPerbatchQueryAllCom(this.orgQueryInfo).then(
+            (res) => {
+              if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                this.openToast('warning', res.data.msg, 3000)
+              } else {
+                for (let i = 0; i < res.data.data.data.length; i++) {
+                  res.data.data.data[i].comCName = replaceStr(res.data.data.data[i].comCName)
+                }
+                this.tempTableData = res.data.data.data
+                this.fenyetotalData = res.data.data.totalRecords
+                this.comDialog = true
+                this.comDialogCom = true
+                this.comDialogworker = false
+                for (let i = 0; i < this.tempTableData.length; i++) {
+                  this.tempTableData[i]['renderData'] = `${this.tempTableData[i].comCode}-${this.tempTableData[i].comCName}`
+                }
+              }
+              console.log(this.tempTableData)
+            }
+          )
+          break
+        case 1:
+          this.workerInfo.agentCode = this.queryInfo.agentcode
+          this.workerInfo.agentName = this.queryInfo.agentname
+          this.workerInfo.clickType = '2'
+          this.contiListCheckclickWorker(this.workerInfo).then(
+            (res) => {
+              if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                this.openToast('warning', res.data.msg, 3000)
+              } else {
+                this.tempTableData1 = res.data.data.data
+                this.fenyetotalData = res.data.data.totalRecords
+                for (let i = 0; i < this.tempTableData1.length; i++) {
+                  this.tempTableData1[i]['renderData'] = `${this.tempTableData1[i].agentCode}-${this.tempTableData1[i].agentName}`
+                }
+                this.comDialog1 = true
+                this.comDialogCom1 = true
+                this.comDialogworker1 = false
+              }
+            })
+          break
+        default:
+          break
+      }
+    },
+    comDialogClosing (index) {
+      this.initshuangjiDialog()
+      this.comDialog = false
+      this.comDialog1 = false
+      switch (index) {
+        case 0:
+          this.queryInfo.comcode = ''
+          this.queryInfo.comname = ''
+          break
+        case 1:
+          this.queryInfo.agentcode = ''
+          this.queryInfo.agentname = ''
+          break
+        default:
+          break
+      }
+    },
+    opensingleComDialog (index) {
+      if (!(this.comDialog) && !(this.comDialog1)) {
+        switch (index) {
+          case 0:
+            this.orgQueryInfo.clickType = '1'
+            if (!IsEmpty(this.queryInfo.comcode)) {
+              this.orgQueryInfo.comCodeOrName = this.queryInfo.comcode
+            } else if (!IsEmpty(this.queryInfo.comname)) {
+              this.orgQueryInfo.comCodeOrName = this.queryInfo.comname
+            } else {
+              this.orgQueryInfo.comCodeOrName = ''
+            }
+            this.contiPerbatchQueryAllCom(this.orgQueryInfo).then(
+              (res) => {
+                if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                  this.openToast('warning', res.data.msg, 3000)
+                  this.queryInfo.comcode = ''
+                  this.queryInfo.comname = ''
+                } else {
+                  for (let i = 0; i < res.data.data.data.length; i++) {
+                    res.data.data.data[i].comCName = replaceStr(res.data.data.data[i].comCName)
+                  }
+                  if (!IsEmpty(res.data.data.data) && res.data.data.data.length === 1) {
+                    this.queryInfo.comcode = res.data.data.data[0].comCode
+                    this.queryInfo.comname = res.data.data.data[0].comCName
+                  } else {
+                    this.queryInfo.comcode = ''
+                    this.queryInfo.comname = ''
+                  }
+                }
+              }
+            )
+            break
+          case 1:
+            this.workerInfo.agentCode = this.queryInfo.agentcode
+            this.workerInfo.agentName = this.queryInfo.agentname
+            this.workerInfo.clickType = '1'
+            this.contiListCheckclickWorker(this.workerInfo).then(
+              (res) => {
+                if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+                  this.openToast('warning', res.data.msg, 3000)
+                  this.queryInfo.agentcode = ''
+                  this.queryInfo.agentname = ''
+                } else {
+                  if (!IsEmpty(res.data.data.data) && res.data.data.data.length === 1) {
+                    this.queryInfo.agentcode = res.data.data.data[0].agentCode
+                    this.queryInfo.agentname = res.data.data.data[0].agentName
+                  } else {
+                    this.queryInfo.agentcode = ''
+                    this.queryInfo.agentname = ''
+                  }
+                }
+              })
+            break
+          default:
+            break
+        }
+      }
+    },
+    initshuangjiDialog () {
+      this.orgQueryInfo = {
+        clickType: '2',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10
+      }
+      this.workerInfo = {
+        agentCode: '',
+        agentName: '',
+        comCode: '',
+        comName: '',
+        validStatus: '1',
+        pageSize: 10,
+        currentPage: 1,
+        clickType: '2'
+      }
+    },
+    dialogBackData (data) {
+      this.initshuangjiDialog()
+      this.comDialog = false
+      let temp = []
+      temp = data.split('-')
+      this.queryInfo.comcode = temp[0]
+      this.queryInfo.comname = temp[1]
+    },
+    dialogBackData1 (data) {
+      this.initshuangjiDialog()
+      this.comDialog1 = false
+      let temp = []
+      temp = data.split('-')
+      this.queryInfo.agentcode = temp[0]
+      this.queryInfo.agentname = temp[1]
+    },
+    changeComdialogPage1 (data) {
+      this.orgQueryInfo.currentPage = data
+      this.openComDialog(0)
+    },
+    changeComdialogPage2 (data) {
+      this.workerInfo.currentPage = data
+      this.openComDialog(1)
+    },
+    changeComdialogPageSize1 (data) {
+      this.orgQueryInfo.currentPage = 1
+      this.orgQueryInfo.pageSize = data
+      this.openComDialog(0)
+    },
+    changeComdialogPageSize2 (data) {
+      this.workerInfo.currentPage = 1
+      this.workerInfo.pageSize = data
+      this.openComDialog(1)
+    },
+    handleCurrentChange (val) {
+      this.queryInfo.currentPage = val
+      this.queryData()
+    },
+    handleSizeChange (val) {
+      this.queryInfo.pageSize = val
+      this.queryInfo.currentPage = 1
+      this.queryData()
+    },
+    changeFee (index) {
+      let validateNumZero = RegExp(/(^[1-9](\d+)?(\.\d{1,2})?$)|(^\d\.\d{1,2}$)/)
+      this.isChange = true
+      if (this.tableData.length !== 0) {
+        if (!validateNumZero.test(Math.abs(this.tableData[index].commissionchange) === 0 ? '0.00' : Math.abs(this.tableData[index].commissionchange)) && this.tableData[index].commissionchange !== '0' && this.tableData[index].commissionchange !== 0) {
+          this.openToast('warning', '请输入最多保留两位小数的数字！')
+          // this.tableData[index].commissionchange = ''
+          this.isChange = false
+        }
+      }
+    },
+    // toast提示
+    openToast (type, mesg, time = 0) {
+      this.$message({
+        showClose: true,
+        message: mesg,
+        type: type,
+        duration: time
+      })
+    },
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    closeLoading () {
+      this.loading.close()
+    }
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LineTittle.name]: LineTittle,
+    [LabelText.name]: LabelText,
+    ComDialog
+  },
+  created () {
+  }
+}
+</script>
+
+<style lang="scss" scoped type="text/css">
+.wrap{
+  padding-left: 30px;
+  padding-right: 30px;
+}
+.verify-content{
+  padding: 20px 0;
+}
+.btn{
+  text-align: center;
+}
+.btn .el-button{
+  margin-right: 10px;
+}
+.table{
+  margin: 20px 0;
+}
+.btn-export{
+  margin: 10px auto;
+}
+.upload-content{
+  width: 100%;
+  text-align: center;
+}
+.red-color{
+  color: red;
+}
+.download{
+  color:blue;
+  cursor:pointer;
+}
+.dis-top{
+  margin-top: 10px;
+}
+.dis-bottom{
+  margin-bottom: 10px;
+}
+.tableButton {
+  cursor: pointer;
+  color: #66B1FF;
+}
+.block {
+  margin-top: 10px;
+}
+.btn-container { text-align: center; margin: 30px 0; }
+#orgadd {padding-left: 30px;padding-right: 30px;}
+.center{text-align: center}
+.ri-line{margin-top: 10px;margin-bottom: 10px;}
+</style>

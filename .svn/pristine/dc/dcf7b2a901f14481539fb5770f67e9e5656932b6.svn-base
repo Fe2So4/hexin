@@ -1,0 +1,11 @@
+{
+    "eslint.autoFixOnSave": true,
+    "eslint.validate": [
+        "javascript",{
+            "language": "vue",
+            "autoFix": true
+        },"html",
+        "vue"
+    ],
+    "eggHelper.serverPort": 48148
+}

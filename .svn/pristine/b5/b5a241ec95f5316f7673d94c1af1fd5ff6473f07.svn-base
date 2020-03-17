@@ -1,0 +1,1283 @@
+<template>
+  <div class="marginTB">
+    <el-form :rules="lifePartyConditionRules" ref="lifePartyConditionForm" :model="lifePartyConditionForm">
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="insureNo">
+            <ui-label-text  label="投保人代码:" :required="false" labelWidth="230">
+              <el-input v-model="lifePartyConditionForm.insureNo" @change="changeData" readonly @dblclick.native="alertDialoginsuCode1(1)"  placeholder="双击选择" slot="text" :disabled="thisDisabled || !isSuperThis"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="insureName">
+            <ui-label-text  label="投保人名称:" :required="false" labelWidth="230">
+              <el-input  v-model="lifePartyConditionForm.insureName" @change="changeName" :readonly="namereadonly" @dblclick.native="alertDialoginsuCode1(1)"  placeholder="双击选择" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="insureAddress" >
+            <ui-label-text  label="投保人地址:" :required="false" labelWidth="230">
+              <el-input v-model="lifePartyConditionForm.insureAddress"  @change="changeData" :disabled="insureAddress1 || thisDisabled || !isSuperThis" slot="text"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="postNo" >
+            <ui-label-text  label="邮政编码:" :required="false" labelWidth="230">
+              <el-input v-model="lifePartyConditionForm.postNo"  @change="changeData" :disabled="ipostNo1 || thisDisabled || !isSuperThis"  slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+       <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="identifyType"  >
+            <ui-label-text  label="证件类型:" :required="false" labelWidth="230">
+              <el-select v-model="lifePartyConditionForm.identifyType"  @change="cIdentifyNumber" :disabled="identifyType1 || thisDisabled || !isSuperThis" slot="text" placeholder="请选择" >
+                <el-option label="身份证" value="1"></el-option>
+                <el-option label="户口本" value="2"></el-option>
+                <el-option label="军官证" value="3"></el-option>
+                <el-option label="驾驶证" value="4"></el-option>
+                <el-option label="护照" value="5"></el-option>
+                <el-option label="港澳居民来往大陆通行证" value="6"></el-option>
+                <el-option label="台湾居民来往大陆通行证" value="7"></el-option>
+                <el-option label="其他" value="8"></el-option>
+                <el-option label="出生医学证明" value="9"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <div v-if="lifePartyConditionForm.identifyType === '1'" >
+            <el-form-item  prop="identifyNumber"  >
+              <ui-label-text label="证件号码:" :required="false" labelWidth="230">
+                <el-input slot="text" id="insurantIdNum" v-model="lifePartyConditionForm.identifyNumber"  @change="changeData" :disabled="identifyNumber1 || thisDisabled || !isSuperThis" @blur="idtypeNumber()" ></el-input>
+              </ui-label-text>
+            </el-form-item>
+          </div>
+          <div v-else-if="lifePartyConditionForm.identifyType === '2'">
+            <el-form-item  prop="identifyNumber" >
+              <ui-label-text label="证件号码:" :required="false" labelWidth="230">
+                <el-input id="insurantIdNum" slot="text" @change="idtypeNumber1"  :disabled="identifyNumber1 || thisDisabled || !isSuperThis" v-model="lifePartyConditionForm.identifyNumber" ></el-input>
+              </ui-label-text>
+            </el-form-item>
+          </div>
+          <div v-else>
+            <el-form-item  prop="identifyNumber">
+              <ui-label-text label="证件号码:" :required="false" labelWidth="230">
+                <el-input id="insurantIdNum" slot="text"  @change="changeData" :disabled="identifyNumber1 || thisDisabled || !isSuperThis"  @blur="idtypeNumber2()" v-model="lifePartyConditionForm.identifyNumber" ></el-input>
+              </ui-label-text>
+            </el-form-item>
+          </div>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="birthDate" >
+            <ui-label-text  label="出生日期:" :required="false" labelWidth="230">
+              <el-date-picker @change="changeDate"  value-format="timestamp" slot="text"  :disabled="Birhdate || thisDisabled || !isSuperThis"  v-model="lifePartyConditionForm.birthDate" type="date"
+                placeholder="选择日期" > </el-date-picker>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="sexType" >
+            <ui-label-text  label="性别:" :required="false" labelWidth="230">
+              <el-select  v-model="lifePartyConditionForm.sexType" @change="checkSame" :disabled="dissex || thisDisabled || !isSuperThis" slot="text" placeholder="请选择" >
+                <el-option label="男"  value="0"></el-option>
+                <el-option label="女"  value="1"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="country"  >
+            <ui-label-text  label="国籍:" :required="false" labelWidth="230">
+              <el-input @change="changeData" v-model="lifePartyConditionForm.country" :disabled="country1 || thisDisabled || !isSuperThis"  slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="remark" >
+            <ui-label-text  label="备注:" :required="false" labelWidth="230">
+              <el-input @change="changeData" v-model="lifePartyConditionForm.remark" :disabled="remark1 || thisDisabled || !isSuperThis" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="marriage" >
+            <ui-label-text  label="婚姻状况:" :required="false" labelWidth="230" >
+              <el-select @change="changeData" v-model="lifePartyConditionForm.marriage" :disabled="marriage1 || thisDisabled || !isSuperThis" slot="text" placeholder="请选择" >
+                <el-option label="已婚" value="1"></el-option>
+                <el-option label="未婚" value="2"></el-option>
+                <el-option label="不明" value="3"></el-option>
+                <el-option label="离异" value="4"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="educationCode" >
+            <ui-label-text  label="学历:" :required="false" labelWidth="230">
+              <el-select @change="changeData" v-model="lifePartyConditionForm.educationCode" :disabled="educationCode1 || thisDisabled || !isSuperThis"  slot="text" placeholder="请选择">
+                <el-option label="小学" value="1"></el-option>
+                <el-option label="初中" value="2"></el-option>
+                <el-option label="高中" value="3"></el-option>
+                <el-option label="大专" value="4"></el-option>
+                <el-option label="本科" value="5"></el-option>
+                <el-option label="硕士" value="6"></el-option>
+                <el-option label="博士" value="7"></el-option>
+                <el-option label="其他" value="8"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item prop="identifyValiddate" >
+            <ui-label-text :required="false"  label="证件有效期：" labelWidth="230" >
+              <el-date-picker
+                @change="changeData"
+                value-format="yyyy-MM-dd"
+                slot="text"
+                v-model="lifePartyConditionForm.identifyValiddate"
+                :disabled="disabledEdit1 || thisDisabled || !isSuperThis"
+                type="date"
+                style="width: 24%; margin-right:5%"
+                placeholder="选择日期"> </el-date-picker>
+              <el-checkbox
+                class="datestyle"
+                ref="timer"
+                slot="text"
+                v-model="longFlag2"
+                :disabled="isdisabled || thisDisabled"
+                @change.native="handleValid()"
+                label='false'
+                style="display: inline-block; " >永久有效</el-checkbox>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <!-- <el-col :span="4">
+          <el-checkbox
+            @change="changeData"
+            class="datestyle"
+            ref="timer"
+            v-model="longFlag2"
+            :disabled="isdisabled || thisDisabled"
+            @change.native="handleValid()"
+            label='false'
+            style="line-height:30px;margin-left:-20%" >永久有效</el-checkbox>
+        </el-col>  -->
+        <el-col :span="12">
+          <el-form-item  prop="insureTel"  >
+            <ui-label-text  label="固定电话:" :required="false" labelWidth="230">
+               <el-input @change="changeData" v-model="lifePartyConditionForm.insureTel" :disabled="insureTel1 || thisDisabled || !isSuperThis"  placeholder="固定电话和手机号至少填写一个"  slot="text"></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="mobilePhone"  >
+            <ui-label-text  label="移动电话:" :required="false" labelWidth="230">
+              <el-input @change="changeData" v-model="lifePartyConditionForm.mobilePhone" :disabled="mobilePhone1 || thisDisabled || !isSuperThis"  placeholder="固定电话和手机号至少填写一个"   slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="workingUnit" >
+            <ui-label-text  label="工作单位:" :required="false" labelWidth="230">
+              <el-input @change="changeData" v-model="lifePartyConditionForm.workingUnit" :disabled="workingUnit1 || thisDisabled || !isSuperThis" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="job" >
+            <ui-label-text  label="职业:" :required="false" labelWidth="230">
+              <el-input @change="changeData" v-model="lifePartyConditionForm.job" :disabled="job1 || thisDisabled || !isSuperThis" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="e_mail" >
+            <ui-label-text  label="E-mail:" :required="false" labelWidth="230">
+              <el-input @change="changeData" v-model="lifePartyConditionForm.e_mail" :disabled="e_mail1 || thisDisabled || !isSuperThis" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line">
+        <el-col :span="12">
+          <el-form-item  prop="weixin" >
+            <ui-label-text  label="微信号:" :required="false" labelWidth="230">
+              <el-input @change="changeData" v-model="lifePartyConditionForm.weixin" :disabled="weixin1 || thisDisabled || !isSuperThis"  slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item  prop="habitualResidence"  >
+            <ui-label-text  label="经常居住地:" :required="false" labelWidth="230">
+              <el-input @change="changeData" v-model="lifePartyConditionForm.habitualResidence" :disabled="habitualResidence1 || thisDisabled || !isSuperThis" slot="text" ></el-input>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row class="ri-line" >
+        <el-col :span="12">
+          <el-form-item  prop="insuredrType"  >
+            <ui-label-text  label="与被保人关系:" :required="false" labelWidth="230">
+              <el-select v-model="lifePartyConditionForm.insuredrType" :disabled="insuredrType1" @change="mySelf" slot="text" placeholder="请选择">
+                <el-option label="本人" value="1"></el-option>
+                <el-option label="配偶" value="2"></el-option>
+                <el-option label="子女" value="3"></el-option>
+                <el-option label="父母" value="4"></el-option>
+                <el-option label="其他" value="5"></el-option>
+              </el-select>
+            </ui-label-text>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <div v-if="lifePartyConditionForm.insuredrType === '5'">
+            <el-form-item  prop="insuredrName"  >
+              <ui-label-text  label="关系名称:" :required="false" labelWidth="230">
+                <el-input :disabled="nameDisabled"  v-model="lifePartyConditionForm.insuredrName" slot="text"></el-input>
+              </ui-label-text>
+            </el-form-item>
+          </div>
+        </el-col>
+      </el-row>
+    </el-form>
+    <!--客户所属机构 的弹框-->
+    <el-dialog :append-to-body="true" width="50%" center title="客户所属机构" :visible.sync="dialogsustomerOrg">
+        <el-table ref="multipleTable" @row-click="customerinOrg" :data="customOfOrg" tooltip-effect="dark" style="width: 100%">
+          <el-table-column prop="comCode"  label="保险公司代码" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="comCName" label="保险公司名称" show-overflow-tooltip>
+          </el-table-column>
+        </el-table>
+        <div class="block" style="margin-top:15px;padding-bottom:15px">
+          <el-pagination
+            @current-change="handleCurrentChangeCode"
+            :current-page.sync="searchcode.currentPage"
+            :page-sizes="[10,20,50]"
+            :page-size="100"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalsOrg == totalsOrg ? totalsOrg : 0">
+          </el-pagination>
+        </div>
+    </el-dialog>
+    <!--投保人代码 的弹框-->
+    <el-dialog :append-to-body="true" width="70%" center :before-close="toubaorenClose" title="客户信息" :visible.sync="dialogInsurer">
+        <el-row class="ri-line" style="margin-bottom:22px !important">
+          <el-col :span="12">
+            <ui-label-text  label="客户代码或名称:"  labelWidth="100">
+              <el-input v-model="searchcode.customerCodeOrName" slot="text" ></el-input>
+            </ui-label-text>
+          </el-col>
+          <el-col :span="12">
+            <ui-label-text  label="证件号码:" style="text-align:right;"  labelWidth="120">
+              <el-input v-model="searchcode.idNumber" slot="text" ></el-input>
+            </ui-label-text>
+          </el-col>
+        </el-row>
+        <el-row class="ri-line" style="margin-bottom:22px !important">
+          <el-col :span="24">
+            <div class="center">
+                <el-button  type="primary" @click.native.prevent="searchCode(searchcode)">查询</el-button>
+            </div>
+          </el-col>
+        </el-row>
+        <el-table ref="multipleTable" @row-click="customerinOrg1" :data="customerfind" tooltip-effect="dark" style="width: 100%">
+          <el-table-column prop="custId"  label="客户代码" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="custName" label="客户姓名" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="idNumber" label="客户身份证号" show-overflow-tooltip>
+          </el-table-column>
+        </el-table>
+        <div class="block" style="margin-top:15px;padding-bottom:15px">
+          <el-pagination
+            @current-change="currentChangeval"
+            :current-page.sync="searchcode.currentPage"
+            @size-change="handleSizeChange"
+            :page-sizes="sizeList"
+            :page-size="info.pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="customerFindTotals === customerFindTotals ? customerFindTotals : 0">
+          </el-pagination>
+        </div>
+    </el-dialog>
+
+  </div>
+</template>
+
+<script>
+import NoticeBar from '@/components/notice-bar'
+import LabelText from '@/components/label-text'
+import LineTittle from '@/components/line-tittle'
+import IsEmpty from '@/utils/IsEmpty'
+import { mapActions } from 'vuex'
+import moment from 'moment'
+export default {
+  name: '',
+  props: ['insur', 'isEdit', 'isSuper'],
+  oldIdCard: '',
+  data () {
+    // const {noEmptyValidator,
+    //       PostValidator,
+    //       emailValidator,
+    //       IdValidator,
+    //       phoneNumberValidator,
+    //       PhoneValidator} = this.$store.getters.validators
+    const { IdValidator } = this.$store.getters.validators
+    return {
+      IdValidator: IdValidator,
+      // noEmptyValidator: noEmptyValidator,
+      thisDisabled: this.isEdit,
+      isSuperThis: this.isSuper,
+      info: {
+        currentPage: 1
+      },
+      updateTime: '',
+      // 新增的表单验证
+      lifePartyConditionForm: {
+        insureNo: '',
+        insureName: '',
+        insureAddress: '',
+        postNo: '',
+        sexType: '',
+        country: '',
+        birthDate: '',
+        remark: '',
+        marriage: '',
+        educationCode: '',
+        identifyType: '', // 证件类型 1-身份证 2-户口本 3-军官证 4-驾驶证 5-护照 6-港澳居民来往大陆通行证 7-台湾居民来往大陆通行证 8-其他 9-出生医学证明
+        identifyNumber: '',
+        identifyValiddate: '',
+        insureTel: '',
+        workingUnit: '',
+        job: '',
+        weixin: '',
+        e_mail: '',
+        insuredrType: '',
+        insuredrName: '',
+        habitualResidence: '',
+        mobilePhone: '',
+        longFlag: '',
+        updateTime: '' // 有问题  需要改为当前时间
+      },
+      lifePartyConditionRules: {
+        // proposalNo: noEmptyValidator,
+        // // insureNo: noEmptyValidator,
+        // insureName: noEmptyValidator,
+        // identifyType: noEmptyValidator,
+        // identifyNumber: IdValidator,
+        // insuredrType: noEmptyValidator,
+        // insuredrName: noEmptyValidator,
+        // postNo: PostValidator,
+        // e_mail: emailValidator,
+        // mobilePhone: phoneNumberValidator,  // 手机
+        // insureTel: PhoneValidator // 固话
+      },
+      nameDisabled: false,
+       // 新增个人客户
+      addCustom: {
+        custName: '',
+        comCode: '',
+        comCName: '',
+        paperworkType: '',
+        idNumber: '',
+        birthDate: '',
+        longFlag: '0',
+        isLongFlag: '0',
+        identifyValiddate: ''
+      },
+      // addRules: {
+      //   custName: noEmptyValidator,
+      //   comCode: noEmptyValidator,
+      //   comCName: noEmptyValidator,
+      //   paperworkType: noEmptyValidator, // 证件类型
+      //   idNumber: noEmptyValidator,
+      //   birthDate: noEmptyValidator
+      // },
+      page: '',
+      disabledEdit: false,
+      longFlag1: false,
+      Benefit: '1',
+      liveBenefit: '1',
+      // disabledEdit: false,
+      disabledEdit1: false,
+      isdisabled: false,
+      birthDisabled: false, // 出生日期的选项
+      chec: false,
+      // longFlag1: false,
+      longFlag2: false,
+      longFlag3: false,
+      dialogTableVisibleInsert: false,
+      dialogTableVisibleQuery: false,
+      dialogTableVisibleCode: false,
+      dialogTableOrg: false,
+      identifyValiddate: false,
+      dialogInsurer: false, // 投保人代码
+      dialogTableVisibleAdd: false, // 新增个人客户弹框
+      dialogsustomerOrg: false, // 客户所属机构
+      searchcode: {
+        customerCodeOrName: '',
+        idNumber: '',
+        currentPage: 1,
+        pageSize: 5
+      },
+      judgeage: '', // 根据出生日期判断的年龄
+      searchcOrg: {}, // 客户所属机构的查询对象
+      insuridNumber: '',  // 投保人证件号  需要传给基本信息组件里
+      selfinsuranted: {},
+      addcheck: {},
+      insurtype: '0',
+
+      namereadonly: false,
+
+      //  需要disabled 的数据
+      insureAddress1: false, // 地址
+      ipostNo1: false, // 邮编
+      identifyType1: false, // 证件类型
+      identifyNumber1: false, // 证件号码
+      dissex: false, // 性别的置灰
+      country1: false, // 国籍
+      Birhdate: false,
+      remark1: false,
+      marriage1: false,
+      educationCode1: false,
+      insureTel1: false,
+      mobilePhone1: false,
+      workingUnit1: false,
+      job1: false,
+      e_mail1: false,
+      weixin1: false,
+      habitualResidence1: false,
+      insuredrType1: false,
+      sizeList: [5, 10, 20, 50],
+      customerfind: [],
+      customerFindTotals: 0,
+      addCheckSame: {}, // 相似客户查询
+      selfflag: '0'
+    }
+  },
+  mounted () {
+  },
+  methods: {
+    ...mapActions([
+      'queryproposalForm_1',
+      'queryPolicyById_1',
+      'getInsurers_1',
+      'getInsurersOrg_1',
+      'customerFind_1',  // 客户查询
+      'customerOfOrg_1',
+      'customerAdd_1',
+      'checkCustomerIsExist_1',
+      'riskcode_1',
+      'checkCustomerSimilar_1'
+    ]),
+    throttle (fun, delay) {
+      let last, deferTimer
+      return function (args) {
+        let that = this
+        let _args = arguments
+        let now = +new Date()
+        if (last && now < last + delay) {
+          clearTimeout(deferTimer)
+          deferTimer = setTimeout(function () {
+            last = now
+            fun.apply(that, _args)
+          }, delay)
+        } else {
+          last = now
+          fun.apply(that, _args)
+        }
+      }
+    },
+    changeData (val) {
+      this.lifePartyConditionForm.insuredrType = ''
+    },
+    query (page) {
+      // this.info.current = page
+      this.queryproposalForm_1(this.info)
+    },
+    handleCurrentChange (val) {
+
+      // this.query(val)
+    },
+    mySelf (val) {  // 与被保险人关系为本人时
+      this.$store.state.proposalForm.insurSame = val
+      this.lifePartyConditionForm.insuredrName = ''
+      if (this.lifePartyConditionForm.insuredrType === '1') {
+        this.insurtype = '1'
+        // 投保人证件号存入store里
+        let info = {
+          insureNoD: this.lifePartyConditionForm.insureNo,
+          insureNameD: this.lifePartyConditionForm.insureName,
+          insureAddressD: this.lifePartyConditionForm.insureAddress,
+          postNoD: this.lifePartyConditionForm.postNo,
+          sexTypeD: this.lifePartyConditionForm.sexType,
+          countryD: this.lifePartyConditionForm.country,
+          educationCodeD: this.lifePartyConditionForm.educationCode,
+          marriageD: this.lifePartyConditionForm.marriage,
+          birthDateD: this.lifePartyConditionForm.birthDate,
+          remark: this.lifePartyConditionForm.remark,
+          identifyTypeD: this.lifePartyConditionForm.identifyType,
+          identifyNumberD: this.lifePartyConditionForm.identifyNumber,
+          identifyValiddateD: this.lifePartyConditionForm.identifyValiddate,
+          insureTelD: this.lifePartyConditionForm.insureTel,
+          mobilePhoneD: this.lifePartyConditionForm.mobilePhone,
+          workingUnitD: this.lifePartyConditionForm.workingUnit,
+          jobD: this.lifePartyConditionForm.job,
+          e_mailD: this.lifePartyConditionForm.e_mail,
+          weixinD: this.lifePartyConditionForm.weixin,
+          habitualResidenceD: this.lifePartyConditionForm.habitualResidence,
+          longFlagD: this.lifePartyConditionForm.longFlag
+        }
+        this.$store.state.proposalForm.formData = info
+        this.$store.state.proposalForm.change = !this.$store.state.proposalForm.change
+      } else {
+        this.insurtype = '0'
+      }
+    },
+    /** ******************开始********************** */
+    handleSizeChange (val) {
+      this.info.pageSize = val
+      this.info.currentPage = 1
+      this.searchcode.currentPage = 1
+      this.customerFind_1(this.info).then(result => {
+        if (result.code === '000000') {
+          // alert(JSON.stringify(result.data.data))
+          this.customerfind = result.data.data
+          this.customerFindTotals = result.data.totalRecords
+          this.dialogInsurer = true
+        } else {
+          this.open('error', result.msg)
+        }
+      })
+    },
+    // 客户信息查询的分页 跳转至第几页
+    currentChangeval (val) {
+      this.info.currentPage = val
+      this.info.customerCodeOrName = this.searchcode.customerCodeOrName
+      this.customerFind_1(this.info).then(result => {
+        if (result.code === '000000') {
+          this.customerfind = result.data.data
+          this.customerFindTotals = result.data.totalRecords
+          this.dialogInsurer = true
+        } else {
+          this.open('error', result.msg)
+        }
+      })
+    },
+    handleValid () {
+      if (this.longFlag3 === false) {
+        // false的话  时间不能填 longFlag == 1 永久有效
+        this.lifePartyConditionForm.longFlag = '1'
+        this.lifePartyConditionForm.identifyValiddate = ''
+
+        this.disabledEdit1 = true
+        this.longFlag3 = true
+      } else {
+        // true的话  时间可以填 longFlag == 0 有效期
+        this.lifePartyConditionForm.longFlag = '0'
+        this.disabledEdit1 = false
+        this.longFlag3 = false
+      }
+    },
+    // 保险公司代码
+    alertDialogcomCode (page) {
+      this.dialogTableVisibleCode = true
+      this.info.currentPage = page
+
+      this.getInsurers_1(this.info)
+    },
+
+    changeDate () {
+      this.lifePartyConditionForm.insuredrType = ''
+      this.checkSame()
+    },
+    changeName () {
+      this.lifePartyConditionForm.insuredrType = ''
+      this.checkSame()
+    },
+    checkSame () {  // 判断相似客户
+      if (this.lifePartyConditionForm.insureName !== '' && this.lifePartyConditionForm.sexType !== '' && this.lifePartyConditionForm.sexType !== '') {
+        this.addCheckSame.custName = this.lifePartyConditionForm.insureName
+        this.addCheckSame.sex = this.lifePartyConditionForm.sexType
+        this.addCheckSame.birthDate = this.lifePartyConditionForm.birthDate
+        this.checkCustomerSimilar_1(this.addCheckSame).then(result => {
+          if (result.flag === '0') {
+            this.$confirm('该客户与系统中的某位客户相似, 是否继续录入?', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+              this.$message({
+                type: 'success',
+                message: '继续录入!'
+              })
+              this.$store.state.proposalForm.insuridNumber = this.lifePartyConditionForm.identifyNumber
+            }).catch(() => {
+              this.lifePartyConditionForm.insureName = ''
+              this.lifePartyConditionForm.sexType = ''
+              this.lifePartyConditionForm.birthDate = ''
+
+              this.lifePartyConditionForm.insuredrType = ''
+            })
+          }
+        })
+      }
+    },
+    cIdentifyNumber (val) {
+      this.lifePartyConditionForm.identifyNumber = ''
+      this.lifePartyConditionForm.birthDate = ''
+      this.lifePartyConditionForm.sexType = ''
+      this.dissex = false
+      this.Birhdate = false
+      this.lifePartyConditionForm.insuredrType = ''
+      if (val === '1') {
+        this.dissex = true
+        this.Birhdate = true
+        this.lifePartyConditionRules['identifyNumber'] = this.IdValidator
+      } else {
+        // this.lifePartyConditionRules['identifyNumber'] = this.noEmptyValidator
+        this.lifePartyConditionRules['identifyNumber'] = ''
+      }
+      if (val === '2') {
+        this.open('error', '投保人必须大于十八周岁，故不能选择户口本!')
+        this.lifePartyConditionForm.identifyType = ''
+        return false
+      }
+    },
+    checkcusExist () { // 判断客户是否存在
+      if (this.oldIdCard !== this.lifePartyConditionForm.identifyNumber && !this.isEdit) {
+        this.addcheck.paperworkType = this.lifePartyConditionForm.paperworkType
+        this.addcheck.idNumber = this.lifePartyConditionForm.idNumber
+        this.checkCustomerIsExist_1(this.addcheck).then(result => {
+          if (result.flag === '0') {
+            this.open('error', '该客户已存在，请重新录入！')
+          }
+        })
+      }
+    },
+     // 保险机构代码
+    alertDialogcomOrg (page) {
+      this.info.currentPage = page
+
+      if (this.insertForm.companyCode === '' || this.insertForm.companyCode === undefined) {
+        // this.openMseg('error', '请先输入保险公司代码！')
+        // return false
+        this.open('error', '请先输入保险公司代码！')
+        return false
+      } else {
+        // alert(JSON.stringify(this.insertForm))
+        // this.insertForm = ''
+        this.dialogTableOrg = true
+        this.info.insurerCode = this.insertForm.companyCode
+        this.info.insurerName = this.insertForm.companyName
+        // alert(JSON.stringify(this.info))
+        this.getInsurersOrg_1(this.info)
+      }
+    },
+
+    alertDialoginsuCode (page) {  // 投保人code 双击
+      if (this.isSuper) {
+        this.info.currentPage = page
+        this.info.clickType = '2'
+        this.info.pageSize = 5
+        this.sizeList = [5, 10, 20, 50]
+        this.info.customerCodeOrName = this.lifePartyConditionForm.insureNo
+        this.searchcode.customerCodeOrName = this.lifePartyConditionForm.insureNo
+        this.customerFind_1(this.info).then(result => {
+          if (result.code === '000000' || result.code === '000002') {
+            this.customerfind = result.data.data
+            this.customerFindTotals = result.data.totalRecords
+            this.dialogInsurer = true
+          } else {
+            this.open('error', result.msg)
+          }
+        })
+      }
+    },
+    alertDialoginsuCode1 (page) {  // 投保人code 双击
+      this.info.currentPage = page
+      this.info.pageSize = 5
+      this.info.clickType = '2'
+      this.sizeList = [5, 10, 20, 50]
+      this.info.customerCodeOrName = this.lifePartyConditionForm.insureNo ? this.lifePartyConditionForm.insureNo : this.lifePartyConditionForm.insureName
+      this.searchcode.customerCodeOrName = this.lifePartyConditionForm.insureNo ? this.lifePartyConditionForm.insureNo : this.lifePartyConditionForm.insureName
+      this.customerFind_1(this.info).then(result => {
+        if (result.code === '000000' || result.code === '000002') {
+          this.customerfind = result.data.data
+          this.customerFindTotals = result.data.totalRecords
+          this.dialogInsurer = true
+        } else {
+          this.open('error', result.msg)
+        }
+      })
+    },
+    toubaorenClose () { // 关闭弹框的事件
+      // this.closeDailog().then(() => {})
+      this.sizeList = []
+      this.lifePartyConditionForm.insureName = ''
+      this.lifePartyConditionForm.insureNo = ''
+      this.lifePartyConditionForm.identifyNumber = ''
+      this.lifePartyConditionForm.insureAddress = ''
+      this.lifePartyConditionForm.postNo = ''
+      this.lifePartyConditionForm.sexType = ''
+      this.lifePartyConditionForm.country = ''
+      this.lifePartyConditionForm.birthDate = ''
+      this.lifePartyConditionForm.educationCode = ''
+      this.lifePartyConditionForm.insureTel = '' // 固话
+      this.lifePartyConditionForm.mobilePhone = ''  // 手机
+      this.lifePartyConditionForm.weixin = ''
+      this.lifePartyConditionForm.e_mail = ''
+      this.lifePartyConditionForm.job = ''
+      this.lifePartyConditionForm.workingUnit = ''
+      this.lifePartyConditionForm.identifyValiddate = ''
+      this.lifePartyConditionForm.habitualResidence = ''
+      this.lifePartyConditionForm.insureNo = ''
+      this.lifePartyConditionForm.marriage = ''
+      this.lifePartyConditionForm.longFlag = ''
+      this.lifePartyConditionForm.identifyType = ''
+      if (this.isEdit) {
+        this.lifePartyConditionForm = {
+          insureNo: '',
+          insureName: '',
+          insureAddress: '',
+          postNo: '',
+          sexType: '',
+          country: '',
+          birthDate: '',
+          remark: '',
+          marriage: '',
+          educationCode: '',
+          identifyType: '',
+          identifyNumber: '',
+          identifyValiddate: '',
+          insureTel: '',
+          workingUnit: '',
+          job: '',
+          weixin: '',
+          e_mail: '',
+          insuredrType: '',
+          insuredrName: '',
+          habitualResidence: '',
+          updateTime: '' // 有问题  需要改为当前时间
+        }
+        this.thisDisabled = false
+        this.isSuperThis = true
+      }
+      // this.$store.state.proposalForm.selfFlag = '0'
+      this.namereadonly = false
+      this.mobilePhone1 = false
+      this.insureTel1 = false
+      this.insureAddress1 = false
+      this.ipostNo1 = false
+      this.identifyType1 = false
+      this.identifyNumber1 = false
+      this.dissex = false
+      this.country1 = false
+      this.Birhdate = false
+      this.remark1 = false
+      this.marriage1 = false
+      this.educationCode1 = false
+      this.workingUnit1 = false
+      this.job1 = false
+      this.e_mail1 = false
+      this.weixin1 = false
+      this.habitualResidence1 = false
+      this.dialogInsurer = false
+      this.dissex = false
+      this.Birhdate = false
+      this.disabledEdit1 = false
+      this.isdisabled = false
+      this.longFlag2 = false
+      // this.$refs['lifePartyConditionForm'].resetFields()
+      // this.sizeList = []
+      // this.customerFindTotals = 0
+
+      // this.searchcode.customerCodeOrName = ''
+      // this.searchcode.idNumber = ''
+      // this.searchcode.currentPage = 1
+      // this.searchcode.pageSize = 5
+      this.searchcode = {
+        customerCodeOrName: '',
+        idNumber: '',
+        currentPage: 1,
+        pageSize: 5
+      }
+      // alert(JSON.stringify(this.searchcode.pageSize))
+    },
+    closeDailog () {
+      return new Promise((resolve, reject) => {
+        this.show_dialog = false
+        resolve()
+      })
+    },
+
+    // 客户所属机构点击
+    customerinOrg (row, event, column) {
+      this.addCustom.comCode = row.comCode
+      this.addCustom.comCName = row.comCName
+      this.addCustom.comName = row.address
+      this.dialogsustomerOrg = false
+    },
+    // 客户所属机构点击
+    customerinOrg1 (row, event, column) {
+      this.closeDailog().then(() => {
+        // 根据时间戳来计算年龄
+        let date = new Date(row.birthDate)
+        let Y = date.getFullYear() + '-'
+        let M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '-'
+        let D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
+        let shcformdate = Y + M + D
+        this.jsGetAge(shcformdate)
+        if (this.judgeage < 18) {
+          this.open('error', '投保人必须大于十八周岁，请重新选择!')
+          this.dialogInsurer = false
+          return false
+        }
+
+        this.searchcode.customerCodeOrName = ''
+        this.searchcode.idNumber = ''
+        this.customerFindTotals = 0
+        this.longFlag2 = false
+
+        this.lifePartyConditionForm.insureNo = row.insureNo
+        this.lifePartyConditionForm.insureName = row.custName
+        this.lifePartyConditionForm.identifyNumber = row.idNumber
+        this.lifePartyConditionForm.insureAddress = row.address
+        this.lifePartyConditionForm.postNo = row.zipCode
+        this.lifePartyConditionForm.sexType = row.sex
+        this.lifePartyConditionForm.country = row.country
+        this.lifePartyConditionForm.birthDate = row.birthDate
+
+        this.lifePartyConditionForm.educationCode = row.education
+        this.lifePartyConditionForm.insureTel = row.phone  // 固话
+        this.lifePartyConditionForm.mobilePhone = row.mobile  // 手机
+        this.lifePartyConditionForm.weixin = row.weChat
+        this.lifePartyConditionForm.e_mail = row.email
+        this.lifePartyConditionForm.job = row.job
+        this.lifePartyConditionForm.workingUnit = row.workingUnit
+        if (row.identifyValiddate) {
+          this.lifePartyConditionForm.identifyValiddate = moment(row.identifyValiddate).format('YYYY-MM-DD')
+        } else {
+          this.lifePartyConditionForm.identifyValiddate = row.identifyValiddate
+        }
+        this.lifePartyConditionForm.habitualResidence = row.habitualResidence
+        this.lifePartyConditionForm.insureNo = row.custId
+        this.lifePartyConditionForm.marriage = row.maritalStatus
+        this.lifePartyConditionForm.longFlag = row.isLongFlag
+        if (row.isLongFlag === 1 || row.isLongFlag === '1') {
+          this.longFlag2 = true
+        }
+        this.lifePartyConditionForm.insuredrType = ''
+        this.lifePartyConditionForm.identifyType = row.paperworkType
+        if (this.lifePartyConditionForm.identifyType === '1' || this.lifePartyConditionForm.identifyType === '2') {
+          this.lifePartyConditionRules['identifyNumber'] = this.IdValidator
+        } else {
+          // this.lifePartyConditionRules['identifyNumber'] = this.noEmptyValidator
+          this.lifePartyConditionRules['identifyNumber'] = ''
+        }
+        if (this.lifePartyConditionForm.identifyValiddate === null) {
+          this.lifePartyConditionForm.identifyValiddate = ''
+        }
+        this.dialogInsurer = false
+        // 将投保人id放入store里面
+        this.insuridNumber = row.idNumber
+        this.$store.state.proposalForm.insuridNumber = row.idNumber
+
+        // Bus.$emit('val', row.idNumber)
+        this.searchcode.currentPage = 1
+        this.searchcode.pageSize = '5'
+
+        this.namereadonly = true
+        this.mobilePhone1 = true // disabled掉
+        this.insureTel1 = true // disabled掉
+        this.insureAddress1 = true // disabled掉
+        this.ipostNo1 = true // disabled掉
+        this.identifyType1 = true // disabled掉
+        this.identifyNumber1 = true // disabled掉
+        this.dissex = true // disabled掉
+        this.country1 = true // disabled掉
+        this.Birhdate = true // disabled掉
+        this.remark1 = true // disabled掉
+        this.marriage1 = true // disabled掉
+        this.educationCode1 = true // disabled掉
+        this.workingUnit1 = true // disabled掉
+        this.job1 = true // disabled掉
+        this.e_mail1 = true // disabled掉
+        this.weixin1 = true // disabled掉
+        this.habitualResidence1 = true // disabled掉
+        // this.insuredrType1 = true // disabled掉
+        //  证件有效期和长期有效的判断
+        if (row.identifyValiddate !== '') {
+          this.isdisabled = true
+          this.disabledEdit1 = true
+        }
+        // this.$refs['lifePartyConditionForm'].resetFields()
+      })
+    },
+    handleCurrentChangeCode (val) {
+      this.info.currentPage = val
+
+      this.getInsurers_1(this.info)
+    },
+     // 判断户口本
+    idtypeNumber () {
+      this.lifePartyConditionForm.insuredrType = ''
+      if (this.lifePartyConditionForm.identifyType === '1') {
+        if (this.lifePartyConditionForm.identifyNumber === '') {
+
+        } else {
+          if (this.lifePartyConditionForm.identifyNumber.length === 18) {
+            let _idTypehao = this.lifePartyConditionForm.identifyNumber.substr(6, 8)
+            let idTypehao1 = _idTypehao.substring(0, 4) + '-' + _idTypehao.substring(4, 6) + '-' + _idTypehao.substr(6)
+
+            let _sex = this.lifePartyConditionForm.identifyNumber.substr(16, 1)
+
+            if (_sex === '1' || _sex === '3' || _sex === '5' || _sex === '7' || _sex === '9') {
+              this.lifePartyConditionForm.sexType = '0'
+              this.Birhdate = true
+              this.dissex = true
+            } else if (_sex === '2' || _sex === '4' || _sex === '6' || _sex === '8' || _sex === '0') {
+              this.lifePartyConditionForm.sexType = '1'
+              this.dissex = true
+              this.Birhdate = true
+            }
+            var date = new Date(idTypehao1)
+            var idTypehao = date.getTime()
+            this.lifePartyConditionForm.birthDate = idTypehao
+
+            this.jsGetAge(idTypehao1)
+            if (this.judgeage < 18) {
+              this.open('error', '投保人不能小于18周岁，请重新选择!')
+              this.lifePartyConditionForm.identifyNumber = ''
+              this.lifePartyConditionForm.birthDate = ''
+              this.lifePartyConditionForm.sexType = ''
+              this.dissex = false
+              this.Birhdate = false
+            }
+
+            this.addcheck.paperworkType = this.lifePartyConditionForm.identifyType
+            this.addcheck.idNumber = this.lifePartyConditionForm.identifyNumber
+            if (this.oldIdCard !== this.lifePartyConditionForm.identifyNumber) {
+              this.checkCustomerIsExist_1(this.addcheck).then(result => {
+                if (result.flag === '0') {
+                  this.open('error', '该客户已存在，请重新录入！')
+                  this.lifePartyConditionForm.identifyNumber = ''
+                  this.lifePartyConditionForm.birthDate = ''
+                  this.lifePartyConditionForm.sexType = ''
+                  this.dissex = false
+                  this.Birhdate = false
+                } else {
+                  // 判断相似客户
+                  this.checkSame()
+                }
+              })
+            }
+          }
+        }
+      }
+    },
+     // 判断户口本
+    idtypeNumber1 () {
+      this.lifePartyConditionForm.insuredrType = ''
+      if (this.lifePartyConditionForm.identifyType === '2') {
+        if (this.lifePartyConditionForm.identifyNumber === '') {
+
+        } else {
+          if (this.lifePartyConditionForm.identifyNumber.length === 18) {
+            let _idTypehao = this.lifePartyConditionForm.identifyNumber.substr(6, 8)
+            let idTypehao1 = _idTypehao.substring(0, 4) + '-' + _idTypehao.substring(4, 6) + '-' + _idTypehao.substr(6)
+
+            let _sex = this.lifePartyConditionForm.identifyNumber.substr(16, 1)
+
+            if (_sex === '1' || _sex === '3' || _sex === '5' || _sex === '7' || _sex === '9') {
+              this.lifePartyConditionForm.sexType = '0'
+              this.Birhdate = true
+              this.dissex = true
+            } else if (_sex === '2' || _sex === '4' || _sex === '6' || _sex === '8' || _sex === '0') {
+              this.lifePartyConditionForm.sexType = '1'
+              this.dissex = true
+              this.Birhdate = true
+            }
+            var date = new Date(idTypehao1)
+            var idTypehao = date.getTime()
+            this.lifePartyConditionForm.birthDate = idTypehao
+
+            this.jsGetAge(idTypehao1)
+            if (this.judgeage > 18) {
+              this.open('error', '大于18岁不能选择户口本，请重新选择!')
+              this.lifePartyConditionForm.identifyNumber = ''
+              this.lifePartyConditionForm.birthDate = ''
+              this.lifePartyConditionForm.sexType = ''
+              this.dissex = false
+              this.Birhdate = false
+            }
+
+            this.addcheck.paperworkType = this.lifePartyConditionForm.identifyType
+            this.addcheck.idNumber = this.lifePartyConditionForm.identifyNumber
+            this.checkCustomerIsExist_1(this.addcheck).then(result => {
+              if (result.flag === '0') {
+                this.open('error', '该客户已存在，请重新录入！')
+                this.lifePartyConditionForm.identifyNumber = ''
+                this.lifePartyConditionForm.birthDate = ''
+                this.lifePartyConditionForm.sexType = ''
+                this.dissex = false
+                this.Birhdate = false
+              }
+            })
+          }
+
+          // 判断相似客户
+          this.checkSame()
+        }
+      }
+    },
+    idtypeNumber2 () {
+      if (this.lifePartyConditionForm.identifyType === '') {
+        this.open('error', '请先选择证件类型！')
+        this.lifePartyConditionForm.identifyNumber = ''
+        return false
+      } else {
+        if (this.lifePartyConditionForm.identifyNumber === '') {
+
+        } else {
+          if (this.oldIdCard !== this.lifePartyConditionForm.identifyNumber) {
+            this.addcheck.paperworkType = this.lifePartyConditionForm.identifyType
+            this.addcheck.idNumber = this.lifePartyConditionForm.identifyNumber
+            this.checkCustomerIsExist_1(this.addcheck).then(result => {
+              if (result.flag === '0') {
+                this.open('error', '该客户已存在，请重新录入！')
+              }
+            })
+          }
+        }
+      }
+    },
+    jsGetAge (strBirthday) {  // 根据出生日期判断年龄
+      var returnAge
+      var strBirthdayArr = strBirthday.split('-')
+      var birthYear = strBirthdayArr[0]
+      var birthMonth = strBirthdayArr[1]
+      var birthDay = strBirthdayArr[2]
+
+      var d = new Date()
+      var nowYear = d.getFullYear()
+      var nowMonth = d.getMonth() + 1
+      var nowDay = d.getDate()
+
+      if (nowYear === birthYear) {
+        returnAge = 0// 同年 则为0岁
+      } else {
+        var ageDiff = nowYear - birthYear  // 年之差
+        if (ageDiff > 0) {
+          if (nowMonth === birthMonth) {
+            var dayDiff = nowDay - birthDay// 日之差
+            if (dayDiff < 0) {
+              returnAge = ageDiff - 1
+            } else {
+              returnAge = ageDiff
+            }
+          } else {
+            var monthDiff = nowMonth - birthMonth// 月之差
+            if (monthDiff < 0) {
+              returnAge = ageDiff - 1
+            } else {
+              returnAge = ageDiff
+            }
+          }
+        } else {
+          returnAge = -1// 返回-1 表示出生日期输入错误 晚于今天
+        }
+      }
+      this.judgeage = returnAge
+      return returnAge// 返回周岁年龄
+    },
+    // toast提示
+    open (type, mesg) {
+      this.$message({
+        showClose: true,
+        message: mesg,
+        type: type
+      })
+    },
+    /** *****客户信息查询********* */
+    searchCode () {
+      this.searchcode.currentPage = this.info.currentPage
+      this.customerFind_1(this.searchcode).then(result => {
+        if (result.code === '000000') {
+          this.customerfind = result.data.data
+          this.customerFindTotals = result.data.totalRecords
+        } else if (result.code === '000002') {
+          this.customerfind = []
+          this.customerFindTotals = 0
+        }
+      })
+    },
+
+    // 客户所属机构的查询
+    searchOfOrg (page) {
+      this.info.currentPage = page
+
+      this.info.comCodeOrName = this.addCustom.comCode
+
+      this.customerOfOrg_1(this.info)
+
+      this.dialogsustomerOrg = true
+    },
+     // 新增客户的提交表单
+    // _addCustom (formName) {
+    //   this.$refs[formName].validate((valid) => {
+    //     if (valid) {
+    //       alert('add成功!')
+    //       if (this.addCustom.identifyValiddate === '' &&
+    //           this.addCustom.longFlag === '0') {
+    //         this.open('warning', '请先选择证件有效日期')
+    //       } else {
+    //         // alert(JSON.stringify(this.addCustom))
+    //         this.$refs.multipleTable.clearSelection()
+    //         this.dialogTableVisibleAdd = false
+
+    //         this.customerAdd_1(this.addCustom)
+    //         this.open('success', '新增成功')
+    //       }
+    //     } else {
+    //
+    //       return false
+    //     }
+    //   })
+    // },
+    // 校验
+    validateForm () {
+      let flag = false
+      this.$refs.lifePartyConditionForm.validate((valid) => {
+        flag = valid
+      })
+      return flag
+    }
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LabelText.name]: LabelText,
+    [LineTittle.name]: LineTittle
+  },
+  computed: {
+    // byMyself1 () {
+    //   return this.$store.state.proposalForm.selfFlag
+    // },
+    getInsurers () {
+      return this.$store.state.InsuranceCo.getInsurers
+    },
+    totalrecords () {
+      return parseInt(this.$store.state.InsuranceCo.totalRecords)
+    },
+    getInsurersOrg () {
+      return this.$store.state.InsuranceCo.getInsurersOrg
+    },
+    orgRecords () {
+      return parseInt(this.$store.state.InsuranceCo.orgRecords)
+    },
+    // 客户所属机构
+    customOfOrg () {
+      return this.$store.state.proposalForm.customOfOrg
+    },
+    // 客户所属机构查询出来的总条数
+    totalsOrg () {
+      return parseInt(this.$store.state.proposalForm.totalredords)
+    }
+    // // 客户查询
+    // customerfind () {
+    //   return this.$store.state.proposalForm.customerFind
+    // },
+    // // 客户所属机构查询出来的总条数
+    // customerFindTotals () {
+    //   return parseInt(this.$store.state.proposalForm.customerFindTotals)
+    // }
+
+  },
+  created () {
+    if (this.insur !== undefined) {
+      this.lifePartyConditionForm = this.insur
+      this.oldIdCard = this.lifePartyConditionForm.identifyNumber
+      this.$store.state.proposalForm.insuridNumber = this.lifePartyConditionForm.identifyNumber
+      if (this.lifePartyConditionForm.longFlag === 1) {
+        this.longFlag2 = true
+      }
+    }
+  },
+  watch: {
+    // byMyself1 (val) {  // 这才是自保件
+    //   this.selfflag = val
+    //   if (this.selfflag === 1 || this.selfflag === '1') {
+    //     this.lifePCMainConditionForm.byMyself = '1'
+    //   } else {
+    //     this.lifePCMainConditionForm.byMyself = '0'
+    //   }
+    // },
+    lifePartyConditionForm: {
+      handler (newValue, oldValue) {
+        this.$store.state.proposalForm.insureIdRes = false
+        if (!IsEmpty(newValue.identifyNumber)) {
+          for (let i = 0; i < this.$store.state.login.allAgentData.length; i++) {
+            if (this.$store.state.login.allAgentData[i] === newValue.identifyNumber) {
+              // 投保人证件号码与获取到的所有业务员证件号码遍历比较，若有相同的就让其标志为true
+              this.$store.state.proposalForm.insureIdRes = true
+            }
+          }
+        }
+        if (this.$store.state.proposalForm.insurantIdRes || this.$store.state.proposalForm.insureIdRes) {
+          this.$store.state.proposalForm.selfFlag = '1'
+        } else {
+          this.$store.state.proposalForm.selfFlag = '0'
+        }
+      },
+      deep: true,
+      immediate: true
+    },
+    insur (val) {
+      this.lifePartyConditionForm = val
+      if (val.insureNo !== '') {
+        this.thisDisabled = true
+      }
+      this.oldIdCard = this.lifePartyConditionForm.identifyNumber
+      if (this.lifePartyConditionForm.longFlag === '1') {
+        this.longFlag2 = true
+      }
+    },
+    longFlag2 (val) {
+      if (val === true) {
+        this.lifePartyConditionForm.longFlag = '1'
+      } else {
+        this.lifePartyConditionForm.longFlag = '0'
+      }
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped type="text/css">
+ .ri-line { margin-bottom: 10px; }
+ .center{text-align: center}
+ .marginTB{margin:15px 0;}
+ .datestyle{color: #717171}
+ .el-pagination{float: right;padding-bottom: 15px}
+</style>
+<style>
+ .el-form-item__error{padding-left: 160px !important}
+</style>

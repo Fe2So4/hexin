@@ -1,0 +1,403 @@
+<template>
+  <div id="home_index" >
+      <ui-notice-bar slot="breadcast" >
+        <el-breadcrumb slot="location" separator=">">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>寿险业务报表管理</el-breadcrumb-item>
+            <el-breadcrumb-item>合作经代公司寿险清单</el-breadcrumb-item>
+          </el-breadcrumb>
+      </ui-notice-bar>
+      <div class="ri-content" slot="content" >
+        <el-form ref="fenxiaoMonthlyBillList" :rules="rules" :model="fenxiaoMonthlyBillList">
+          <el-row class="ri-line">
+            <el-col>
+              <el-form-item prop='jsny'>
+                <ui-label-text labelWidth="160" label="结算年月：" :required="true">
+                  <el-input v-model="fenxiaoMonthlyBillList.jsny" slot='text' placeholder="范例：YYYYMM(201706)"></el-input>
+                </ui-label-text>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row class="ri-line">
+            <el-col :span="12">
+              <ui-label-text labelWidth="160" label="省级分公司代码:" >
+                <el-input v-model="fenxiaoMonthlyBillList.comCode" slot="text" clearable @blur='opensingleComDialog()' @dblclick.native="openComDialog()" placeholder="双击可选择"></el-input>
+              </ui-label-text>
+            </el-col>
+            <el-col :span="12">
+              <ui-label-text labelWidth="160" label="省级分公司名称:" >
+                <el-input v-model="fenxiaoMonthlyBillList.comName" slot="text" clearable @blur='opensingleComDialog()' @dblclick.native="openComDialog()" placeholder="双击可选择"></el-input>
+              </ui-label-text>
+            </el-col>
+          </el-row>
+        </el-form>
+      </div>
+      <div class="btn-container">
+        <el-button type="primary" :disabled="quanxian.query" @click="submitForm('fenxiaoMonthlyBillList',0)">查询</el-button>
+        <el-button type="primary" :disabled="quanxian.export" @click="submitForm('fenxiaoMonthlyBillList',1)">导出excel</el-button>
+        <el-button type="primary" :disabled="quanxian.doBatch" @click="submitForm('fenxiaoMonthlyBillList',2)">执行批处理</el-button>
+      </div>
+      <el-dialog title="提示" center :append-to-body='true' :visible.sync="isTip" width="30%" >
+        <p style="text-align: center; ">如果数据量比较大，整个过程会很慢，请您耐心等待</p>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="isTip = false">取 消</el-button>
+          <el-button type="primary" @click="exportData">确 定</el-button>
+        </span>
+      </el-dialog>
+      <ComDialog :vis='comDialog1' :workerVis='comDialogworker1' :comVis='comDialogCom1' :newTableData='tempTableData1' @onClose='comDialogClosing()' @selectDialog='dialogBackData1' @comdialogChangePageFunction='changeComdialogPage1' @comdialogChangePageSizeFunction='changeComdialogPageSize1' :fenyetotal='fenyetotalData'/>
+      <div v-if='tableShowOrNot' class="tableStyle">
+        <el-table stripe id="dataTable" :data="tableData" ref="multipleTable" tooltip-effect="dark" style="width: 100%"
+        >
+          <el-table-column prop="jsny" label="保单结算年度"  width="140">
+          </el-table-column>
+          <el-table-column prop="jsrtype" label="介绍人类型"  width="140">
+          </el-table-column>
+          <el-table-column prop="companyCode" label="省级分公司名称"  width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="companyName" label="地市级分公司名称" width="300" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="proposalno" label="投保单号"  width="140">
+          </el-table-column>
+          <el-table-column prop="policyno" label="保单号" width="250" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="insureName" label="投保人姓名"  width="140">
+          </el-table-column>
+          <el-table-column prop="riskCode" label="险种编码" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="riskName" label="险种名称"  width="150">
+          </el-table-column>
+          <el-table-column prop="mainflag" label="险种标识"  width="140">
+          </el-table-column>
+          <el-table-column prop="actualMount" label="规模保费"  width="150">
+          </el-table-column>
+          <el-table-column prop="poundage" label="合同标保" width="200" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="paymentPeriod" label="缴费年期"  width="140">
+          </el-table-column>
+          <el-table-column prop="acceptdate" label="承保日期"  width="150">
+          </el-table-column>
+          <el-table-column prop="generatedate" label="生效日期"  width="150">
+          </el-table-column>
+          <el-table-column prop="backMsgSignDate" label="回执日期" width="150" show-overflow-tooltip>
+          </el-table-column>
+          <el-table-column prop="hfDate" label="回访日期"  width="150">
+          </el-table-column>
+        </el-table>
+        <div class="block">
+          <el-pagination
+            @current-change="handleCurrentChange"
+            @size-change="handleSizeChange"
+            :current-page="fenxiaoMonthlyBillList.currentPage"
+            :page-size ="fenxiaoMonthlyBillList.pageSize"
+            :page-sizes="[10,20,50]"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="totalRecords"
+            >
+          </el-pagination>
+        </div>
+      </div>
+  </div>
+</template>
+
+<script>
+import NoticeBar from '@/components/notice-bar'
+import LineTittle from '@/components/line-tittle'
+import LabelText from '@/components/label-text'
+import { mapActions } from 'vuex'
+import {
+  api
+} from '@/api/lifeInsur_mgr/quitListMgr.js'
+import IsEmpty from '@/utils/IsEmpty'
+import ComDialog from '@/components/comDialog'
+export default {
+  data () {
+    return {
+      isTip: false,
+      fenxiaoMonthlyBillList: {
+        jsny: '',
+        currentPage: 1,
+        pageSize: 10,
+        comCode: '',
+        comName: ''
+      },
+      quanxian: {
+        query: true,
+        export: true,
+        doBatch: true
+      },
+      rules: {
+        jsny: [
+          { required: true, message: '请输入结算年月', trigger: 'change' }
+        ]
+      },
+      comDialog1: false,
+      comDialogCom1: false,
+      comDialogworker1: false,
+      fenyetotalData: 0,
+      tempTableData1: [],
+      tableData: [],
+      tableShowOrNot: false,
+      totalRecords: 0,
+      shengjiQueryData: {
+        clickType: '2',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10
+      }
+    }
+  },
+  mounted () {
+    let agentComId = this.$store.state.login.showComName.split('(')[1].split(')')[0]
+    this.shengjiQueryData.clickType = '2'
+    this.shengjiQueryData.comCodeOrName = agentComId.substring(0, 6)
+    this.contiListCheckDialogDataGet1(this.shengjiQueryData).then(
+      (res) => {
+        if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+        } else {
+          for (let i = 0; i < res.data.data.data.length; i++) {
+            res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/天安佰盈保险销售有限公司/, '')
+            res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/分公司/, '')
+          }
+          this.fenxiaoMonthlyBillList.comCode = res.data.data.data[0].comCode
+          this.fenxiaoMonthlyBillList.comName = res.data.data.data[0].comCName
+        }
+      }
+    )
+    api(`/auth/findButtonByUserCodeAndPage?userId=${this.$store.state.login.loginUserId}&page=合作经代公司寿险清单`, 'get').then(result => {
+      console.log(result)
+      if (result.data.code === '000000') {
+        for (let i = 0; i < result.data.data.length; i++) {
+          this.quanxian[result.data.data[i].code] = false
+        }
+      }
+    }).catch((e) => {
+      console.log(e)
+    })
+  },
+  watch: {
+    'fenxiaoMonthlyBillList.comCode' () {
+      if (this.fenxiaoMonthlyBillList.comCode === '') {
+        this.fenxiaoMonthlyBillList.comName = ''
+      }
+    },
+    'fenxiaoMonthlyBillList.comName' () {
+      if (this.fenxiaoMonthlyBillList.comName === '') {
+        this.fenxiaoMonthlyBillList.comCode = ''
+      }
+    }
+  },
+  methods: {
+    Loading () {
+      this.loading = this.$loading({
+        lock: true,
+        text: 'Loading',
+        spinner: 'el-icon-loading',
+        background: 'rgba(0, 0, 0, 0.6)'
+      })
+    },
+    closeLoading () {
+      this.loading.close()
+    },
+    openComDialog (index) {
+      this.shengjiQueryData.clickType = '2'
+      if (IsEmpty(this.fenxiaoMonthlyBillList.comCode)) {
+        this.shengjiQueryData.comCodeOrName = this.fenxiaoMonthlyBillList.comName
+      } else {
+        this.shengjiQueryData.comCodeOrName = this.fenxiaoMonthlyBillList.comCode
+      }
+      this.contiListCheckDialogDataGet1(this.shengjiQueryData).then(
+        (res) => {
+          if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+            this.openToast('warning', res.data.msg)
+          } else {
+            for (let i = 0; i < res.data.data.data.length; i++) {
+              res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/天安佰盈保险销售有限公司/, '')
+              res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/分公司/, '')
+            }
+            this.tempTableData1 = res.data.data.data
+            this.fenyetotalData = res.data.data.totalRecords
+            for (let i = 0; i < this.tempTableData1.length; i++) {
+              this.tempTableData1[i]['renderData'] = `${this.tempTableData1[i].comCode}-${this.tempTableData1[i].comCName}`
+            }
+            this.comDialog1 = true
+            this.comDialogCom1 = true
+            this.comDialogworker1 = false
+          }
+        })
+    },
+    opensingleComDialog (index) {
+      if (!(this.comDialog1)) {
+        this.shengjiQueryData.clickType = '1'
+        if (IsEmpty(this.fenxiaoMonthlyBillList.comCode)) {
+          this.shengjiQueryData.comCodeOrName = this.fenxiaoMonthlyBillList.comName
+        } else {
+          this.shengjiQueryData.comCodeOrName = this.fenxiaoMonthlyBillList.comCode
+        }
+        this.contiListCheckDialogDataGet1(this.shengjiQueryData).then(
+          (res) => {
+            if (res.data.code !== '000000' && !IsEmpty(res.data.code)) {
+              this.openToast('warning', res.data.msg)
+            } else {
+              for (let i = 0; i < res.data.data.data.length; i++) {
+                res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/天安佰盈保险销售有限公司/, '')
+                res.data.data.data[i].comCName = res.data.data.data[i].comCName.replace(/分公司/, '')
+              }
+              if (res.data.data.data.length === 1) {
+                this.fenxiaoMonthlyBillList.comCode = res.data.data.data[0].comCode
+                this.fenxiaoMonthlyBillList.comName = res.data.data.data[0].comCName
+              }
+            }
+          }
+        )
+      }
+    },
+    initshuangjiDialog () {
+      this.shengjiQueryData = {
+        clickType: '2',
+        comCodeOrName: '',
+        currentPage: 1,
+        pageSize: 10
+      }
+    },
+    comDialogClosing (index) {
+      this.comDialog1 = false
+      this.initshuangjiDialog()
+      this.fenxiaoMonthlyBillList.comCode = ''
+      this.fenxiaoMonthlyBillList.comName = ''
+    },
+    dialogBackData1 (data) {
+      this.initshuangjiDialog()
+      this.comDialog1 = false
+      let temp = []
+      temp = data.split('-')
+      this.fenxiaoMonthlyBillList.comCode = temp[0]
+      this.fenxiaoMonthlyBillList.comName = temp[1]
+    },
+    changeComdialogPage1 (data) {
+      this.shengjiQueryData.currentPage = data
+      this.openComDialog()
+    },
+    changeComdialogPageSize1 (data) {
+      this.shengjiQueryData.currentPage = 1
+      this.shengjiQueryData.pageSize = data
+      this.openComDialog()
+    },
+    submitForm (formName, index) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          console.log('submit!')
+          switch (index) {
+            case 0:
+              this.fenxiaoMonthlyBillList.currentPage = 1
+              this.totalRecords = 0
+              this.queryData()
+              break
+            case 1:
+              this.isTip = true
+              break
+            case 2:
+              let temp = {
+                jsny: this.fenxiaoMonthlyBillList.jsny
+              }
+              this.Loading()
+              api('/CooLifeCharge/CooLife', 'post', temp).then(result => {
+                this.closeLoading()
+                if (result.data.code !== '000000' && !IsEmpty(result.data.code)) {
+                  this.openToast('warning', result.data.msg, 0)
+                } else {
+                  console.log(result)
+                  this.openToast('success', result.data.msg, 0)
+                }
+              }).catch((e) => {
+                console.log(e)
+              })
+              break
+            default:
+              break
+          }
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
+    },
+    handleCurrentChange (val) {
+      this.fenxiaoMonthlyBillList.currentPage = val
+      this.queryData()
+    },
+    handleSizeChange (val) {
+      this.fenxiaoMonthlyBillList.pageSize = val
+      this.fenxiaoMonthlyBillList.currentPage = 1
+      this.queryData()
+    },
+    queryData () {
+      this.Loading()
+      this.tableData = []
+      api('/bankReports/fxReportQuery', 'post', this.fenxiaoMonthlyBillList).then(result => {
+        this.closeLoading()
+        if (result.data.code !== '000000' && !IsEmpty(result.data.code)) {
+          this.openToast('warning', result.data.msg)
+        } else {
+          this.totalRecords = result.data.totalRecords
+          this.tableData = result.data.data
+          this.tableShowOrNot = true
+        }
+      }).catch((e) => {
+        console.log(e)
+      })
+    },
+    exportData () {
+      // api(`/bankReports/fxReportExport?jsny=${this.fenxiaoMonthlyBillList.jsny}`, 'get', {responseType: 'arraybuffer'}).then(result => {
+      //   console.log(result)
+      //   let blob = new Blob([result.data], {type: 'application/vnd.ms-excel'})
+      //   let objectUrl = URL.createObjectURL(blob)
+      //   window.location.href = objectUrl
+      //   // if (result.data.code !== '000000') {
+      //   //   this.openToast('warning', result.data.msg)
+      //   // } else {
+      //   //   this.totalRecords = result.data.data.totalElements
+      //   //   this.tableData = result.data.data.content
+      //   // }
+      // }).catch((e) => {
+      //   console.log(e)
+      // })
+      this.isTip = false
+      window.open(`/tabycore/bankReports/fxReportExport?jsny=${this.fenxiaoMonthlyBillList.jsny}&comCode=${this.fenxiaoMonthlyBillList.comCode}&comName=${this.fenxiaoMonthlyBillList.comName}`)
+    },
+    // toast提示
+    openToast (type, mesg, time = 0) {
+      this.toastMessage = this.$message({
+        showClose: true,
+        message: mesg,
+        type: type,
+        duration: time
+      })
+    },
+    ...mapActions([
+      'contiListCheckDialogDataGet1'
+    ])
+  },
+  components: {
+    [NoticeBar.name]: NoticeBar,
+    [LineTittle.name]: LineTittle,
+    [LabelText.name]: LabelText,
+    ComDialog
+  },
+  created () {
+  },
+  computed: {
+  }
+}
+</script>
+
+<style>
+#home_index{padding: 0px 30px 30px 30px;}
+.ri-content{margin-top: 10px;margin-bottom: 10px;}
+.btn-container{
+  text-align: center;margin-top: 60px;
+}
+.tableStyle{
+  margin-top: 10px
+}
+</style>
+
