@@ -214,7 +214,8 @@ export default {
       options: [
         {label: 'R13', jixilvFlag: 1},
         {label: 'R25', jixilvFlag: 2},
-        {label: 'R37', jixilvFlag: 3}
+        {label: 'R37', jixilvFlag: 3},
+        {label: 'R49', jixilvFlag: 4}
       ],
       rules: {
         jixilvFlag: {required: true, message: '继续率类型不能为空'},

@@ -85,7 +85,7 @@
         style="width: 100%">
         <el-table-column
           v-for="(item, index) in tabelColumList"
-          v-if="index < 12"
+          v-if="index < 13"
           :key="index"
           :prop="item.prop"
           :label="item.label"
@@ -214,7 +214,8 @@ export default {
       options: [
         {label: 'R13', jixilvFlag: 1},
         {label: 'R25', jixilvFlag: 2},
-        {label: 'R37', jixilvFlag: 3}
+        {label: 'R37', jixilvFlag: 3},
+        {label: 'R49', jixilvFlag: 4}
       ],
       rules: {
         jixilvFlag: {required: true, message: '继续率类型不能为空'},
@@ -234,6 +235,7 @@ export default {
         {label: 'R13月份', prop: 'crateMouth'},
         {label: 'R25月份', prop: 'r25cRateMouth'},
         {label: 'R37月份', prop: 'r37cRateMouth'},
+        {label: 'R49月份', prop: 'r49cRateMouth'},
         {label: '当月数值结果', prop: 'r13DuringMonth'},
         {label: '中月数值结果', prop: 'r13FollowingMonth'},
         {label: '宽限期数值结果', prop: 'r13EndMonth'},
