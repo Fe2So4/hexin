@@ -15,7 +15,8 @@
         data(){
             return {
                 list:[],
-                id:1
+                id:1,
+                test:'name'
             }
         },
         methods:{
