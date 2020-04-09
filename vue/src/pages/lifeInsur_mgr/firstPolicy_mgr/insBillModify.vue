@@ -200,7 +200,7 @@
               <el-col :span="12">
                 <el-form-item prop="lifePCMainCondition.proposalDate">
                   <ui-label-text :required="true"   label="投保日期：" labelWidth="160" >
-                    <el-date-picker v-model="BillNoList.lifePCMainCondition.proposalDate" slot="text" type="date" placeholder="选择日期"></el-date-picker>
+                    <el-date-picker v-model="BillNoList.lifePCMainCondition.proposalDate" slot="text" type="date" placeholder="选择日期" value-format="yyyy-MM-dd"></el-date-picker>
                   </ui-label-text>
                 </el-form-item>
               </el-col>
